@@ -18,7 +18,7 @@ def mask(img):
         for dy,dx in((1,0),(-1,0),(0,1),(0,-1)):
             ny,nx=y+dy,x+dx
             if 0<=ny<H and 0<=nx<W and not bg[ny,nx] and near[ny,nx]:bg[ny,nx]=True;q.append((ny,nx))
-    tight=np.abs(a-paper).sum(2)<24
+    tight=(np.abs(a-paper).sum(2)<42)&(a[...,2]<paper[2]+9)&(a.mean(2)<paper.mean()+7)&(sat>.05)
     hole=tight&~bg;h2,w2=hole.shape;seen=np.zeros_like(hole)
     for y in range(0,h2):
         for x in range(0,w2):

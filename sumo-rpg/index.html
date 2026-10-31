@@ -759,10 +759,14 @@ function drawSpriteRig(g,x,y,u,dir,P,L){
   g.save();g.translate(x,y);
   g.fillStyle='rgba(40,20,5,.3)';g.beginPath();g.ellipse(0,0,Ws*.75*(1-clamp(lift,0,.8)*.5),u*.12,0,0,6.283);g.fill();
   g.translate(0,-lift*u);g.rotate((P.fall||0)*dir);g.scale(-dir,1);   // art faces left; mirror toward the opponent
-  const c=clamp(P.crouch||0,0,1),sq=1-c*.42,wid=1+c*.3,hx=Ws*(m.hipx||.5);
-  const legH=Hs*(1-hipF),hipY=-legH*sq;
-  g.drawImage(im,0,ih*(hipF-.03),iw,ih*(1-hipF+.03),-hx*wid,hipY-Hs*.03*sq,Ws*wid,(legH+Hs*.03)*sq);
-  g.save();g.translate(0,hipY);g.rotate(-clamp(P.lean,-.6,1.25)*.9);
+  // legs split at the knee: shins tilt forward, thighs fold back, so the hips really drop
+  const c=clamp(P.crouch||0,0,1),hx=Ws*(m.hipx||.5),kF=.74,Lt=Hs*(kF-hipF),Ls=Hs*(1-kF),fwd=-1;
+  const st=(P.stride||0)*.12,a1=Math.min(1.15,c*1.3)+st,a2=Math.min(1.45,c*1.6)-st*.5,ov=Hs*.02;
+  const knee=[fwd*Ls*Math.sin(a1),-Ls*Math.cos(a1)];
+  const t2=-fwd*a2,hip=[knee[0]+Math.sin(t2)*Lt,knee[1]-Math.cos(t2)*Lt];
+  g.save();g.translate(knee[0],knee[1]);g.rotate(t2);g.drawImage(im,0,ih*(hipF-.02),iw,ih*(kF-hipF+.04),-hx,-Lt-ov,Ws,Lt+ov*2);g.restore();
+  g.save();g.rotate(fwd*a1);g.drawImage(im,0,ih*(kF-.015),iw,ih*(1-kF+.015),-hx,-Ls-ov*.6,Ws,Ls+ov*.6);g.restore();
+  g.save();g.translate(hip[0],hip[1]);g.rotate(-clamp(P.lean,-.6,1.25)*1.15);
   const push=Math.max(0,Math.max(P.armF||0,P.armB||0)-1)*u*.35+(P.headJolt||0)*u*.4,jig=1+(P.jig||0)*.04;
   g.translate(-push,0);g.scale(jig,1/jig);
   g.drawImage(im,0,0,iw,ih*hipF,-hx,-Hs*hipF,Ws,Hs*hipF);
@@ -781,7 +785,7 @@ function drawPoseSprite(g,x,y,u,dir,P,L){
   const Hs=u*2.75*(L.poseH[i]||1),Ws=Hs*im.naturalWidth/im.naturalHeight,f=P.fall||0,lift=(f>.6&&f<1.2)?(P.lift||0):Math.max(0,P.lift||0)*(f>.6?0:1);
   g.save();g.translate(x,y);g.fillStyle='rgba(40,20,5,.28)';g.beginPath();g.ellipse(0,0,Ws*.42,u*.12,0,0,6.283);g.fill();
   g.translate(0,-lift*u);if(i===5&&f<0)g.rotate(f*.8*dir);g.scale(dir,1);
-  const jig=1+(P.jig||0)*.03;g.scale(jig,1/jig);g.drawImage(im,-Ws/2,-Hs,Ws,Hs);g.restore();return true;}
+  const jig=1+(P.jig||0)*.03;g.scale(jig,1/jig);const front=(i>=2&&i<=4)?u*.62:null;g.drawImage(im,front===null?-Ws/2:front-Ws,-Hs,Ws,Hs);g.restore();return true;}
 function drawRikishi(g,x,y,u,dir,P,L){
   if(L.poses&&drawPoseSprite(g,x,y,u,dir,P,L))return;
   if(L.sprite&&L.sprite.complete&&L.sprite.naturalWidth)return drawSpriteRig(g,x,y,u,dir,P,L);
@@ -1793,10 +1797,14 @@ function moveBanzuke(old,w,l){
 }
 
 /* ---------- rival: an apprentice from the same intake who keeps pace ---------- */
-function oppFace(){const ids=Object.keys(AIF).filter(id=>AIF[id].meta.side&&!(st&&st.face&&st.face.img===id));return ids.length?aiFace(pick(ids)):randFace();}
+function oppFace(){const mine=st&&st.face&&st.face.img;
+  // opponents come from characters with real drawn bout poses whenever any are available
+  const cast=Object.keys(AIF).filter(id=>AIF[id].meta.cast&&id!==mine);if(cast.length)return aiFace(pick(cast));
+  const ids=Object.keys(AIF).filter(id=>AIF[id].meta.side&&id!==mine);return ids.length?aiFace(pick(ids)):randFace();}
 function makeRival(s){let name;do{name=pick(OP_A)+pick(OP_B);}while(name===s.name);
   return{name,face:randFace(),style:pick(['oshi','yotsu','waza']),edge:1.5,kg:Math.round(rnd(95,125)),height:Math.round(rnd(176,194)),w:0,l:0};}
-function rivalOpp(){const R=st.rival;if(!R.face||!R.face.img||!AIF[R.face.img])R.face=oppFace();const lvl=levelOf(st.pos)+R.edge,v=()=>lvl*rnd(.95,1.08);
+function rivalOpp(){const R=st.rival;const hasCast=Object.keys(AIF).some(id=>AIF[id].meta.cast&&id!==(st.face&&st.face.img));
+  if(!R.face||!R.face.img||!AIF[R.face.img]||(hasCast&&!AIF[R.face.img].meta.cast)||R.face.img===(st.face&&st.face.img))R.face=oppFace();const lvl=levelOf(st.pos)+R.edge,v=()=>lvl*rnd(.95,1.08);
   const s={oshi:v(),chikara:v(),waza:v(),hayasa:v()};s[{oshi:'oshi',yotsu:'chikara',waza:'waza'}[R.style]]*=1.12;
   const p=clamp(st.pos+(Math.random()<.5?-1:1),0,YOKO);
   return{name:R.name,age:ageOf(st)+1,pos:p,style:R.style,stats:s,kg:Math.round(R.kg),height:R.height,face:R.face,mawashi:p>=JURYO?'#7a1f1f':'#26262e',rival:true};}
