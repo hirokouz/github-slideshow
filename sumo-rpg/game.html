@@ -201,7 +201,7 @@ details.more summary::after{content:'▾';color:var(--kin)}details.more[open] su
 .aipick button.on{border-color:var(--shu);box-shadow:0 0 0 1px var(--shu)}
 @media (max-height:740px){.aipick{max-height:150px}}
 .rtop{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:stretch}
-#rCv{width:100%!important;max-width:none!important;aspect-ratio:3/4;border-radius:8px;display:block;margin:0}
+#rCv{width:100%!important;max-width:none!important;align-self:start;border-radius:8px;display:block;margin:0}
 .rside{display:grid;gap:8px;align-content:center;min-width:0}
 .rside .result-big{font-size:clamp(28px,8.5vw,44px);text-align:left}
 .rside .hoshi{font-size:13px;letter-spacing:.06em}
@@ -1005,7 +1005,7 @@ function drawGyoji(g,x,y,u,point,t){
 
 /* ---------- scene ---------- */
 function makeCanvas(cv,aspect){const r=cv.getBoundingClientRect();const w=Math.max(160,r.width||cv.clientWidth||300),h=w*aspect;const d=Math.min(2,devicePixelRatio||1);
-  cv.width=Math.round(w*d);cv.height=Math.round(h*d);const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return{g,W:w,H:h,d};}
+  cv.width=Math.round(w*d);cv.height=Math.round(h*d);if(cv.id==='rCv')cv.style.height=h+'px';const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return{g,W:w,H:h,d};}
 let crowdCache=null;
 function buildCrowd(W,H){
   const c=document.createElement('canvas');const d=Math.min(2,devicePixelRatio||1);c.width=W*d;c.height=H*d;const g=c.getContext('2d');g.setTransform(d,0,0,d,0,0);
@@ -1202,7 +1202,9 @@ function renderHome(){
 }
 /* home avatar: idle breathing + a short animation for each kind of training */
 function drawAvatar(t,dt){
-  if(!avatar||!st)return;const{g,W,H}=avatar;g.clearRect(0,0,W,H);
+  if(!avatar||!st)return;
+  if(aiReady(st.face))return drawAvatarPortrait(t,dt);
+  const{g,W,H}=avatar;g.clearRect(0,0,W,H);
   const u=H*.255,x0=W*.4,y0=H*.9;
   g.fillStyle='rgba(199,150,90,.35)';g.beginPath();g.ellipse(W/2,y0,W*.48,H*.06,0,0,6.283);g.fill();
   let P={lean:.06+Math.sin(t*1.6)*.015,crouch:.1,armF:.05,armB:.05,expr:(t%4.1)<.13?'blink':'normal',t,jig:0},x=x0,zz=false;
@@ -1225,6 +1227,20 @@ function drawAvatar(t,dt){
   {const L=lookFor(st.kg,st.pos,st.face,undefined,st.height,'keiko',st.b);drawRikishi(g,x,y0,u*L.hs,1,P,L);}
   stepFx(g,dt);
   if(zz){g.fillStyle='#5b5246';g.font='700 '+Math.round(u*.32)+'px "Zen Kaku Gothic New",sans-serif';for(let i=0;i<3;i++){const p=(t*.8+i/3)%1;g.globalAlpha=1-p;g.fillText('Z',x0+u*.6+p*u*.6,y0-u*2.1-p*u*.8);}g.globalAlpha=1;}
+}
+/* the chosen illustration stands in for the home avatar; its expression follows the training */
+function drawAvatarPortrait(t,dt){
+  const{g,W,H,d}=avatar;g.clearRect(0,0,W,H);const A=avatar.act;let ex=(t%4.1)<.13?'blink':'normal',dy=0,zz=false,shake=0;
+  if(A){A.t+=dt;const k=A.t/A.dur;
+    if(A.id==='rest'){ex='blink';zz=true;}
+    else if(A.id==='chanko'){ex='happy';dy=-Math.abs(Math.sin(A.t*6))*H*.03;}
+    else{ex='strain';shake=Math.sin(A.t*30)*W*.012*(1-k);dy=-Math.abs(Math.sin(A.t*(A.id==='shiko'?4:9)))*H*.035;}
+    if(A.t>=A.dur)avatar.act=null;}
+  const img=portrait(st.face,ex,st.pos>=JURYO,Math.min(400,Math.round(H*d*1.1)));
+  g.save();g.beginPath();g.roundRect(1,1,W-2,H-2,6);g.clip();g.fillStyle='#f3eadb';g.fillRect(0,0,W,H);
+  const S=H*1.08;g.drawImage(img,(W-S)/2+shake,(H-S)/2+dy+H*.02,S,S);g.restore();
+  g.strokeStyle='rgba(26,22,18,.55)';g.lineWidth=1.5;g.beginPath();g.roundRect(1,1,W-2,H-2,6);g.stroke();
+  if(zz){g.fillStyle='#5b5246';g.font='700 '+Math.round(H*.14)+'px "Zen Kaku Gothic New",sans-serif';for(let i=0;i<3;i++){const p=(t*.8+i/3)%1;g.globalAlpha=1-p;g.fillText('Z',W*.68+p*W*.18,H*.32-p*H*.2);}g.globalAlpha=1;}
 }
 function train(a){
   if(st.used>=TURNS)return;st.used++;let msg='';const D=deckFx(),AG=ageGrowth(ageOf(st));
@@ -1581,6 +1597,9 @@ function drawResult(t,dt){
     g.fillStyle='#fff';g.strokeStyle='#bdb39a';for(const sx of[-.22,0,.22]){const x=cx+sx*rw,y0=wy+ih*.02,s2=ih*.018;g.beginPath();g.moveTo(x,y0);g.lineTo(x+s2,y0+s2);g.lineTo(x,y0+2*s2);g.lineTo(x+s2,y0+3*s2);g.lineTo(x+s2*.5,y0+3.4*s2);g.lineTo(x-s2*.4,y0+2.2*s2);g.lineTo(x+s2*.5,y0+1.2*s2);g.lineTo(x-s2*.4,y0+.3*s2);g.closePath();g.fill();g.stroke();}
     g.restore();}
   if(!rcData.win&&!y){g.fillStyle='rgba(20,28,60,.18)';g.fillRect(0,0,W,H);}
+  if(st&&aiReady(st.face)&&bd.meta.own!==st.face.img){const r=W*.2,cx=r+W*.06,cy=r+H*.04;const pf=portrait(st.face,y||rcData.win?'happy':'lose',st.pos>=JURYO,256);
+    g.save();g.globalAlpha=k;g.beginPath();g.arc(cx,cy,r,0,6.283);g.fillStyle='#f3eadb';g.fill();g.clip();g.drawImage(pf,cx-r*1.25,cy-r*1.1,r*2.5,r*2.5);g.restore();
+    g.save();g.globalAlpha=k;g.strokeStyle=y?'#b3261e':'#1a1612';g.lineWidth=2.5;g.beginPath();g.arc(cx,cy,r,0,6.283);g.stroke();g.restore();}
   g.strokeStyle='rgba(26,22,18,.45)';g.lineWidth=1.5;g.strokeRect(4,4,W-8,H-8);
   if(y){const cx=W*.8,cy=H*.2+Math.sin(t*2)*3,u=W*.11;
     g.fillStyle='#d9a23a';g.beginPath();g.moveTo(cx-u*.6,cy-u*.7);g.lineTo(cx+u*.6,cy-u*.7);g.quadraticCurveTo(cx+u*.5,cy+u*.2,cx,cy+u*.3);g.quadraticCurveTo(cx-u*.5,cy+u*.2,cx-u*.6,cy-u*.7);g.fill();
