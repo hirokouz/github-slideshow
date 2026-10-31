@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>横綱への道</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yuji+Boku&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+/* Layout: one narrow column like a hanging banzuke scroll; a clay dohyo canvas is the only illustration. Single indigo-night world by design. */
+:root{
+  --ai:#121a33;        /* indigo ground */
+  --ai2:#1b2547;       /* raised panel */
+  --shiro:#f1ece0;     /* text */
+  --nezumi:#9ea5bb;    /* muted text */
+  --tsuchi:#c99a5b;    /* dohyo clay */
+  --kin:#e6b450;       /* gold */
+  --beni:#d2463f;      /* red fusa */
+  --ao:#3f8fd0;        /* blue fusa */
+  --line:rgba(230,180,80,.25);
+  --f-brush:"Yuji Boku","Hiragino Mincho ProN","Yu Mincho",serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;background:var(--ai);color:var(--shiro);font-family:var(--f-body);-webkit-tap-highlight-color:transparent}
+body{overflow-y:auto}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--kin);outline-offset:3px}
+.wrap{max-width:440px;margin:0 auto;display:grid;gap:16px;
+  padding-block:calc(env(safe-area-inset-top,0px) + 18px) calc(env(safe-area-inset-bottom,0px) + 28px);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.fusa{display:flex;height:5px;border-radius:3px;overflow:hidden}
+.fusa i{flex:1}.fusa i:nth-child(1){background:var(--ao)}.fusa i:nth-child(2){background:var(--beni)}.fusa i:nth-child(3){background:var(--shiro)}.fusa i:nth-child(4){background:#0a0a0a;border:1px solid #333}
+h1,h2,h3{margin:0;font-weight:400;text-wrap:balance}
+.brush{font-family:var(--f-brush)}
+.label{margin:0;font-size:11px;letter-spacing:.16em;color:var(--kin)}
+.muted{color:var(--nezumi)}
+p{margin:0;line-height:1.75}
+.panel{background:var(--ai2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:10px}
+.primary{width:100%;border:0;border-radius:12px;padding:15px 18px;background:var(--kin);color:#2a1a00;font-weight:700;font-size:17px;box-shadow:0 4px 0 #8a6416}
+.primary:active{transform:translateY(2px);box-shadow:0 2px 0 #8a6416}
+.primary:disabled{opacity:.5}
+.ghost{width:100%;background:transparent;border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-weight:700;font-size:15px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+
+/* title */
+.logo{font-family:var(--f-brush);font-size:clamp(56px,18vw,84px);line-height:1;color:var(--shiro);text-shadow:0 0 30px rgba(230,180,80,.25)}
+.logo small{display:block;font-family:var(--f-body);font-size:12px;letter-spacing:.3em;color:var(--kin);margin-bottom:10px}
+
+/* create */
+input[type=text]{width:100%;box-sizing:border-box;background:#0d1328;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:20px;font-family:var(--f-brush)}
+.types{display:grid;gap:8px}
+.types label{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;background:#0d1328;border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer}
+.types input{grid-row:1 / span 2;accent-color:var(--kin)}
+.types b{font-size:15px}.types span{font-size:12px;color:var(--nezumi)}
+.types label:has(input:checked){border-color:var(--kin);background:#1f2a50}
+
+/* home */
+.banzuke{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+.tate{writing-mode:vertical-rl;font-family:var(--f-brush);font-size:30px;line-height:1.05;background:#f1ece0;color:#141414;padding:10px 6px;border-radius:4px;min-height:110px;text-align:center}
+.tate small{font-size:15px;color:#7a1f1a}
+.rankline{font-family:var(--f-brush);font-size:24px;color:var(--kin)}
+.when{font-size:13px;color:var(--nezumi)}
+.stats{display:grid;gap:8px}
+.stat{display:grid;grid-template-columns:4.5em 1fr 3em;gap:10px;align-items:center;font-size:13px}
+.bar{height:8px;background:#0d1328;border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--tsuchi)}
+.stat b{text-align:right;font-variant-numeric:tabular-nums}
+.bar.fat i{background:var(--beni)}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.acts button{display:grid;gap:2px;text-align:left;background:#0d1328;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.acts button b{font-size:15px}.acts button span{font-size:11.5px;color:var(--nezumi);line-height:1.5}
+.acts button:active{background:#1f2a50}
+.turns{display:flex;gap:6px;align-items:center;font-size:13px}
+.turns i{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--kin)}
+.turns i.used{background:var(--kin)}
+.log{display:grid;gap:6px;font-size:13px}
+.log p{padding-left:10px;border-left:2px solid var(--line)}
+.log p:first-child{border-left-color:var(--kin);color:var(--shiro)}
+.log p:not(:first-child){color:var(--nezumi)}
+.hist{width:100%;border-collapse:collapse;font-size:12.5px}
+.hist td{padding:5px 4px;border-bottom:1px solid rgba(255,255,255,.06);white-space:nowrap}
+.hist td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.histbox{overflow-x:auto}
+.yusho{color:var(--kin);font-weight:700}
+
+/* bout */
+.bouthead{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.day{font-family:var(--f-brush);font-size:26px}
+.hoshi{font-size:15px;letter-spacing:.08em;word-break:break-all}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;text-align:center}
+.vs .nm{font-family:var(--f-brush);font-size:22px;line-height:1.2}
+.vs .rk{font-size:11.5px;color:var(--nezumi)}
+.vs .st{font-size:12px;color:var(--kin)}
+.vs .x{font-family:var(--f-brush);color:var(--nezumi)}
+#ring{width:100%;max-width:360px;aspect-ratio:1;margin:0 auto;display:block;touch-action:manipulation}
+.strats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.strats button{display:grid;gap:2px;background:#0d1328;border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
+.strats b{font-family:var(--f-brush);font-size:20px}
+.strats span{font-size:10.5px;color:var(--nezumi);line-height:1.4}
+.hint{font-size:12px;color:var(--nezumi);text-align:center}
+.auto{display:flex;gap:8px;align-items:center;justify-content:center;font-size:13px;color:var(--nezumi)}
+.auto input{accent-color:var(--kin);width:18px;height:18px}
+
+.result-big{font-family:var(--f-brush);font-size:clamp(40px,13vw,60px);text-align:center;color:var(--kin);line-height:1.1}
+.change{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;text-align:center;font-family:var(--f-brush);font-size:18px}
+.change .arrow{color:var(--kin)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="fusa" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+  <!-- TITLE -->
+  <section id="sTitle" class="wrap" style="padding:0">
+    <h1 class="logo"><small>SUMO CAREER RPG</small>横綱への<br>道</h1>
+    <p>序ノ口の新弟子から、稽古と本場所で番付を上げていく。<br>めざすは綱を締めるその日。</p>
+    <div class="panel" id="tCareer" hidden></div>
+    <button class="primary" id="contBtn" hidden>つづきから</button>
+    <button class="primary" id="newBtn">新弟子として入門する</button>
+    <p class="muted" style="font-size:12.5px">1回の稽古期間は5日。本場所は幕下以下が7番、十両から上は15番。勝ち越せば番付が上がる。</p>
+  </section>
+
+  <!-- CREATE -->
+  <section id="sCreate" class="wrap" style="padding:0" hidden>
+    <p class="label">入門</p>
+    <h2 class="brush" style="font-size:30px">しこ名を決める</h2>
+    <div class="row"><input type="text" id="nameIn" maxlength="6" aria-label="しこ名" class="grow"><button class="ghost" id="randName" style="width:auto">おまかせ</button></div>
+    <p class="label">体つき</p>
+    <div class="types" id="types">
+      <label><input type="radio" name="type" value="oshi" id="tOshi" checked><b>押し相撲型</b><span>押しが強い。前に出て一気に勝負</span></label>
+      <label><input type="radio" name="type" value="yotsu" id="tYotsu"><b>四つ相撲型</b><span>力が強く体も大きい。まわしを取って寄る</span></label>
+      <label><input type="radio" name="type" value="waza" id="tWaza"><b>技能派</b><span>小柄で素早い。技とスピードでかわす</span></label>
+    </div>
+    <button class="primary" id="enterBtn">入門する</button>
+  </section>
+
+  <!-- HOME -->
+  <section id="sHome" class="wrap" style="padding:0" hidden>
+    <div class="banzuke">
+      <div class="tate" id="hTate">若葉山</div>
+      <div style="display:grid;gap:6px;min-width:0">
+        <p class="label" id="hSide">東</p>
+        <div class="rankline" id="hRank">序ノ口20枚目</div>
+        <div class="when" id="hWhen">入門1年目　初場所まで</div>
+        <div class="turns" id="hTurns"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <p class="label">体と技</p>
+      <div class="stats" id="hStats"></div>
+    </div>
+    <div>
+      <p class="label" style="margin-bottom:8px">今日の稽古</p>
+      <div class="acts" id="hActs"></div>
+    </div>
+    <button class="primary" id="bashoBtn" hidden>本場所へ</button>
+    <div class="panel">
+      <p class="label">親方と部屋のようす</p>
+      <div class="log" id="hLog"></div>
+    </div>
+    <div class="panel">
+      <p class="label">これまでの成績</p>
+      <div class="histbox"><table class="hist" id="hHist"></table></div>
+    </div>
+    <button class="ghost" id="toTitle">タイトルへ（自動で保存されます）</button>
+  </section>
+
+  <!-- BOUT -->
+  <section id="sBout" class="wrap" style="padding:0" hidden>
+    <div class="bouthead"><span class="day" id="bDay">初日</span><span class="muted" id="bBasho">初場所</span></div>
+    <div class="hoshi" id="bHoshi"></div>
+    <div class="vs">
+      <div><div class="rk" id="bMyRank"></div><div class="nm" id="bMy"></div><div class="st" id="bMySt"></div></div>
+      <div class="x">対</div>
+      <div><div class="rk" id="bOpRank"></div><div class="nm" id="bOp"></div><div class="st" id="bOpSt"></div></div>
+    </div>
+    <canvas id="ring" aria-label="土俵"></canvas>
+    <div id="bPick">
+      <p class="hint" style="margin-bottom:8px">どう攻める？　押しは四つに、四つは技に、技は押しに強い</p>
+      <div class="strats">
+        <button data-s="oshi"><b>押し</b><span>押し・体重</span></button>
+        <button data-s="yotsu"><b>四つ</b><span>力・体重</span></button>
+        <button data-s="waza"><b>技</b><span>技・速さ</span></button>
+      </div>
+    </div>
+    <div id="bTachi" hidden>
+      <button class="primary" id="tachiBtn">立つ！</button>
+      <p class="hint" style="margin-top:8px">外の輪が金の輪に重なった瞬間に立つ。早すぎると「待った」</p>
+    </div>
+    <div id="bNext" hidden><button class="primary" id="nextBtn">次の一番へ</button></div>
+    <label class="auto"><input type="checkbox" id="autoChk">残りの取組をおまかせで取る</label>
+  </section>
+
+  <!-- BASHO RESULT -->
+  <section id="sResult" class="wrap" style="padding:0" hidden>
+    <p class="label" id="rBasho">初場所</p>
+    <div class="result-big" id="rBig">勝ち越し</div>
+    <div class="hoshi" id="rHoshi" style="text-align:center"></div>
+    <p id="rMsg" style="text-align:center"></p>
+    <div class="panel">
+      <p class="label">番付発表</p>
+      <div class="change"><span id="rOld"></span><span class="arrow">→</span><span id="rNew"></span></div>
+    </div>
+    <button class="primary" id="backHome">部屋に帰る</button>
+  </section>
+  <div class="fusa" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+</div>
+
+<script>
+(()=>{
+"use strict";
+const $=id=>document.getElementById(id);
+const rnd=(a,b)=>a+Math.random()*(b-a), pick=a=>a[Math.floor(Math.random()*a.length)];
+const KAN=['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五'];
+const BASHO=['初場所','春場所','夏場所','名古屋場所','秋場所','九州場所'];
+const MONTH=[1,3,5,7,9,11];
+const NAMES=['若葉山','蒼龍','春風','剛ノ峰','錦川','翔嵐','雷光','嶺乃海','大鷲','風早'];
+const OP_A=['若','大','海','風','雷','錦','春','剛','嶺','蒼','翔','鷹','雲','白波'];
+const OP_B=['山','海','川','富士','嵐','浪','ノ花','桜','丸','龍','錦','国','里','岳'];
+const STYLE={oshi:'押し相撲',yotsu:'四つ相撲',waza:'技能派'};
+const BEATS={oshi:'yotsu',yotsu:'waza',waza:'oshi'};
+const KIMARITE={oshi:['押し出し','突き出し','押し倒し'],yotsu:['寄り切り','上手投げ','寄り倒し','下手投げ'],waza:['はたき込み','引き落とし','突き落とし','送り出し']};
+
+/* ---------- banzuke ---------- */
+const DIVS=[{n:'序ノ口',c:20,b:7,step:3},{n:'序二段',c:40,b:7,step:5},{n:'三段目',c:40,b:7,step:5},{n:'幕下',c:30,b:7,step:3.5},{n:'十両',c:14,b:15,step:1.3},{n:'前頭',c:17,b:15,step:1.3}];
+const SAN=['小結','関脇','大関','横綱'];const KOMU=161,SEKI=162,OZEKI=163,YOKO=164,JURYO=130,MAKU=144;
+function rank(pos){
+  if(pos>=KOMU)return{div:SAN[pos-KOMU],name:SAN[pos-KOMU],bouts:15};
+  let s=0;for(const d of DIVS){if(pos<s+d.c){const num=d.c-(pos-s);return{div:d.n,name:d.n+(d.n==='前頭'&&num===1?'筆頭':num+'枚目'),bouts:d.b,step:d.step};}s+=d.c;}
+}
+const side=pos=>pos%2?'西':'東';
+
+/* ---------- save ---------- */
+const KEY='sumo-rpg-v1';let st=null;
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){return null;}}
+
+/* ---------- screens ---------- */
+const SCR=['sTitle','sCreate','sHome','sBout','sResult'];
+function show(id){for(const s of SCR)$(s).hidden=s!==id;window.scrollTo(0,0);}
+
+/* ---------- title ---------- */
+function renderTitle(){
+  const s=load();const box=$('tCareer');
+  if(s&&s.name){box.hidden=false;$('contBtn').hidden=false;$('newBtn').textContent='最初から入門しなおす';
+    box.innerHTML='';const a=document.createElement('p');a.className='label';a.textContent='現在の力士';
+    const b=document.createElement('div');b.className='rankline';b.textContent=s.name;
+    const c=document.createElement('p');c.className='muted';c.style.fontSize='13px';
+    c.textContent=side(s.pos)+' '+rank(s.pos).name+'　入門'+(Math.floor(s.b/6)+1)+'年目　幕内優勝'+s.makuYusho+'回';
+    box.append(a,b,c);}
+  else{box.hidden=true;$('contBtn').hidden=true;$('newBtn').textContent='新弟子として入門する';}
+  show('sTitle');
+}
+
+/* ---------- create ---------- */
+const START={oshi:{oshi:14,chikara:10,waza:8,hayasa:10,kg:100},yotsu:{oshi:9,chikara:14,waza:10,hayasa:8,kg:106},waza:{oshi:8,chikara:8,waza:14,hayasa:13,kg:88}};
+function openCreate(){$('nameIn').value=pick(NAMES);show('sCreate');}
+function enter(){
+  const name=($('nameIn').value||'').trim()||pick(NAMES);
+  const type=document.querySelector('input[name=type]:checked').value;const s0=START[type];
+  st={name,type,stats:{oshi:s0.oshi,chikara:s0.chikara,waza:s0.waza,hayasa:s0.hayasa},kg:s0.kg,fat:10,inj:0,pos:0,b:0,used:0,
+      hist:[],yusho:0,makuYusho:0,kadoban:false,yokozunaShown:false,log:[],basho:null};
+  addLog('親方「今日からお前は'+name+'だ。まずは序ノ口で勝ち越せ」');
+  persist();renderHome();
+}
+
+/* ---------- home ---------- */
+const TURNS=5;
+const ACTS=[
+  {id:'shiko', name:'四股',     desc:'力 ↑　疲れ +12',         fat:12,gain:{chikara:1}},
+  {id:'teppo', name:'てっぽう', desc:'押し ↑　疲れ +12',       fat:12,gain:{oshi:1}},
+  {id:'suri',  name:'すり足',   desc:'速さ ↑　疲れ +10',       fat:10,gain:{hayasa:1}},
+  {id:'moushi',name:'申し合い', desc:'技 ↑↑ 力 ↑　疲れ +18',  fat:18,gain:{waza:1.4,chikara:.5}},
+  {id:'chanko',name:'ちゃんこ', desc:'体重 +3kg　疲れ −12',    fat:-12,kg:3},
+  {id:'rest',  name:'休む',     desc:'疲れ −35　けがが治る',   fat:-35,rest:true},
+];
+const STAT_LABEL={oshi:'押し',chikara:'力',waza:'技',hayasa:'速さ'};
+function addLog(t){st.log.unshift(t);st.log=st.log.slice(0,5);}
+function renderHome(){
+  const r=rank(st.pos);
+  $('hTate').innerHTML='';const n=document.createElement('span');n.textContent=st.name;$('hTate').append(n);
+  if(st.pos===YOKO){const sm=document.createElement('small');sm.textContent='　横綱';$('hTate').append(sm);}
+  $('hSide').textContent=side(st.pos)+(st.kadoban&&st.pos===OZEKI?'　カド番':'');
+  $('hRank').textContent=r.name;
+  $('hWhen').textContent='入門'+(Math.floor(st.b/6)+1)+'年目　'+BASHO[st.b%6]+'（'+MONTH[st.b%6]+'月）まで';
+  const tu=$('hTurns');tu.innerHTML='';const lab=document.createElement('span');lab.textContent='稽古 ';tu.append(lab);
+  for(let i=0;i<TURNS;i++){const d=document.createElement('i');if(i<st.used)d.className='used';tu.append(d);}
+  // stats
+  const sb=$('hStats');sb.innerHTML='';
+  const row=(label,val,max,txt,cls)=>{const d=document.createElement('div');d.className='stat';
+    d.innerHTML='<span></span><div class="bar '+(cls||'')+'"><i></i></div><b></b>';d.children[0].textContent=label;
+    d.querySelector('i').style.width=Math.min(100,val/max*100)+'%';d.querySelector('b').textContent=txt;sb.append(d);};
+  for(const k of['oshi','chikara','waza','hayasa'])row(STAT_LABEL[k],st.stats[k],100,Math.floor(st.stats[k]));
+  row('体重',st.kg-60,140,Math.round(st.kg)+'kg');
+  row('疲れ',st.fat,100,Math.round(st.fat),'fat');
+  if(st.inj>0){const d=document.createElement('p');d.style.cssText='font-size:12.5px;color:var(--beni)';d.textContent='けが：休めば治る（本場所で力が出ない）';sb.append(d);}
+  // acts
+  const ab=$('hActs');ab.innerHTML='';const done=st.used>=TURNS;
+  for(const a of ACTS){const b=document.createElement('button');b.type='button';b.disabled=done;b.style.opacity=done?.4:1;
+    b.innerHTML='<b></b><span></span>';b.children[0].textContent=a.name;b.children[1].textContent=a.desc;
+    b.addEventListener('click',()=>train(a));ab.append(b);}
+  $('bashoBtn').hidden=!done;$('bashoBtn').textContent=BASHO[st.b%6]+'へ（'+r.bouts+'番）';
+  // log
+  const lg=$('hLog');lg.innerHTML='';for(const t of st.log){const p=document.createElement('p');p.textContent=t;lg.append(p);}
+  // history
+  const ht=$('hHist');ht.innerHTML='';
+  if(!st.hist.length){const tr=ht.insertRow();const td=tr.insertCell();td.textContent='まだ本場所に出ていない';td.className='muted';}
+  for(const h of st.hist.slice(-10).reverse()){const tr=ht.insertRow();
+    tr.insertCell().textContent=h.when;tr.insertCell().textContent=h.rank;const c=tr.insertCell();c.textContent=h.w+'勝'+h.l+'敗'+(h.yusho?' 優勝':'');if(h.yusho)c.className='yusho';}
+  show('sHome');
+}
+function train(a){
+  if(st.used>=TURNS)return;st.used++;
+  let msg='';
+  if(a.rest){st.fat=Math.max(0,st.fat+a.fat);if(st.inj>0){st.inj=0;msg='ゆっくり休んで、けがが治った。';}else msg=pick(['よく眠った。体が軽い。','部屋の掃除をして英気を養った。','近所のお寺で静かに過ごした。']);}
+  else if(a.kg){st.kg=Math.min(200,st.kg+a.kg+rnd(-.5,1));st.fat=Math.max(0,st.fat+a.fat);msg=pick(['ちゃんこを五杯おかわりした。','タニマチから牛肉の差し入れ。','兄弟子と鍋を囲んだ。']);}
+  else{
+    const tired=st.fat>75;
+    if(tired&&Math.random()<.3){st.inj=1;st.fat=Math.min(100,st.fat+a.fat);msg='無理がたたってけがをした……。休んで治そう。';}
+    else{
+      const crit=Math.random()<.12;const mul=(crit?2:1)*(st.inj?.5:1)*(tired?.6:1);const parts=[];
+      for(const k in a.gain){const g=a.gain[k]*rnd(1.6,2.6)*(1-st.stats[k]/120)*mul;st.stats[k]+=g;parts.push(STAT_LABEL[k]+' +'+g.toFixed(1));}
+      if(a.id==='moushi'||a.id==='shiko')st.kg=Math.min(200,st.kg+.4);
+      st.fat=Math.min(100,st.fat+a.fat);
+      msg=(crit?'親方「今日の'+a.name+'はいいぞ！」　':a.name+'をこなした。　')+parts.join('　')+(tired?'（疲れで身が入らない）':'');
+    }
+  }
+  addLog(msg);persist();renderHome();
+}
+
+/* ---------- basho ---------- */
+let B=null,anim=null,autoMode=false;
+function genOpp(myPos,used){
+  let p;if(st.pos>=KOMU)p=Math.round(rnd(150,163));else p=Math.max(0,Math.min(KOMU,myPos+Math.round(rnd(-6,6))));
+  if(st.pos===YOKO)p=Math.round(rnd(153,163));
+  let name;do{name=pick(OP_A)+pick(OP_B);}while(name===st.name||used.includes(name));
+  const lvl=10+p*.34,v=()=>lvl*rnd(.88,1.12);const style=pick(['oshi','yotsu','waza']);
+  const s={oshi:v(),chikara:v(),waza:v(),hayasa:v()};s[{oshi:'oshi',yotsu:'chikara',waza:'waza'}[style]]*=1.12;
+  return{name,pos:Math.min(p,YOKO-1),style,stats:s,kg:Math.round(95+p*.4+rnd(-10,12))};
+}
+function power(s,kg,strat,fat,inj){
+  const wf=(kg-90)*.22,sp=s.hayasa-Math.max(0,kg-170)*.3;
+  let v=strat==='oshi'?s.oshi+s.chikara*.3+wf:strat==='yotsu'?s.chikara+s.waza*.3+wf:s.waza+sp*.5+wf*.3;
+  v+=sp*.2;v-=Math.max(0,fat-60)*.25;if(inj)v-=8;return v;
+}
+function startBasho(){
+  const r=rank(st.pos);
+  if(!st.basho)st.basho={n:r.bouts,day:0,w:0,l:0,marks:'',used:[],startPos:st.pos};
+  B=st.basho;autoMode=false;$('autoChk').checked=false;persist();show('sBout');sizeRing();nextBout();
+}
+function dayLabel(){return B.n===15?(B.day===0?'初日':B.day===14?'千秋楽':KAN[B.day]+'日目'):KAN[B.day]+'番相撲';}
+function nextBout(){
+  if(B.day>=B.n){endBasho();return;}
+  B.opp=genOpp(st.pos,B.used);B.used.push(B.opp.name);
+  $('bDay').textContent=dayLabel();$('bBasho').textContent=BASHO[st.b%6];
+  $('bHoshi').textContent=(B.marks||'')+'　'+B.w+'勝'+B.l+'敗';
+  $('bMy').textContent=st.name;$('bMyRank').textContent=side(st.pos)+' '+rank(st.pos).name;$('bMySt').textContent=Math.round(st.kg)+'kg';
+  $('bOp').textContent=B.opp.name;$('bOpRank').textContent=side(B.opp.pos+1)+' '+rank(B.opp.pos).name;$('bOpSt').textContent=STYLE[B.opp.style]+'・'+B.opp.kg+'kg';
+  anim={phase:'ready',t:0};$('bPick').hidden=false;$('bTachi').hidden=true;$('bNext').hidden=true;
+  if(autoMode)setTimeout(()=>{if(anim&&anim.phase==='ready')choose(Math.random()<.55?counterOf(B.opp.style):pick(['oshi','yotsu','waza']));},250);
+}
+const counterOf=s=>Object.keys(BEATS).find(k=>BEATS[k]===s);
+function choose(s){
+  if(!anim||anim.phase!=='ready')return;B.strat=s;$('bPick').hidden=true;
+  if(autoMode){anim={phase:'clash',t:0,tq:'normal'};resolve('normal');return;}
+  $('bTachi').hidden=false;anim={phase:'tachi',t:0,speed:rnd(.75,1)+st.pos/400,matta:0};
+}
+function tachi(){
+  if(!anim||anim.phase!=='tachi')return;
+  const r=1-anim.t*anim.speed;const target=.32,d=r-target;
+  if(d>.2&&anim.matta<2){anim.matta++;anim.t=0;anim.msg='待った！';anim.msgT=.8;return;}
+  const q=Math.abs(d)<=.045?'sharp':Math.abs(d)<=.12?'normal':'late';
+  $('bTachi').hidden=true;resolve(q);
+}
+function resolve(q){
+  const o=B.opp,s=B.strat;
+  const ostrat=Math.random()<.65?o.style:pick(['oshi','yotsu','waza']);
+  let me=power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q]);
+  const op=power(o.stats,o.kg,ostrat,0,0);
+  if(BEATS[s]===ostrat)me+=7;else if(BEATS[ostrat]===s)me-=7;
+  const pw=1/(1+Math.exp(-(me-op)/5)),win=Math.random()<pw;
+  const km=pick(KIMARITE[win?s:ostrat]);
+  st.fat=Math.min(100,st.fat+2.5);
+  const k=win?{oshi:'oshi',yotsu:'chikara',waza:'waza'}[s]:null;if(k)st.stats[k]+=.25*(1-st.stats[k]/120);
+  if(win){B.w++;B.marks+='○';}else{B.l++;B.marks+='●';}B.day++;
+  anim={phase:'clash',t:0,win,km,strat:win?s:ostrat,tq:q,dir:rnd(-.6,.6)};
+  persist();
+}
+function afterBout(){
+  $('bHoshi').textContent=B.marks+'　'+B.w+'勝'+B.l+'敗';
+  if(autoMode){setTimeout(nextBout,500);return;}
+  $('bNext').hidden=false;$('nextBtn').textContent=B.day>=B.n?'場所を終える':'次の一番へ';
+}
+
+/* ---------- basho end / banzuke ---------- */
+function endBasho(){
+  const w=B.w,l=B.l,old=st.pos,r=rank(old);let p=old,msg='';
+  const top=old>=JURYO;let yusho=false;
+  if(!top)yusho=w===7;else yusho=w>=14||(w===13&&Math.random()<.5)||(w===12&&Math.random()<.15);
+  const prev=st.hist[st.hist.length-1];
+  if(old<KOMU){let d=(w-l)*r.step;d=w>l?Math.max(1,Math.round(d)):Math.min(-1,Math.round(d));
+    if(w>=12&&old>=MAKU)d+=4;p=Math.max(0,Math.min(KOMU,old+d));}
+  else if(old===KOMU){p=w>=8?(w>=10?SEKI:KOMU+(Math.random()<.5?1:0)):Math.max(MAKU,KOMU-1-Math.round((l-w)*1.3));if(w>=8&&p===KOMU)msg='小結の地位を守った。';}
+  else if(old===SEKI){const last3=w+st.hist.slice(-2).reduce((a,h)=>a+h.w,0);
+    if(w>=13||(w>=10&&last3>=33)){p=OZEKI;msg='大関昇進！ 伝達式で「謹んでお受けいたします」';}else if(w<8)p=KOMU;}
+  else if(old===OZEKI){
+    if(w<8){if(st.kadoban){p=SEKI;st.kadoban=false;msg='カド番で負け越し、大関から陥落……。';}else{st.kadoban=true;msg='負け越し。次の場所はカド番だ。';}}
+    else{st.kadoban=false;const good=yusho||w>=13;const prevGood=prev&&prev.pos===OZEKI&&(prev.yusho||prev.w>=13);
+      if(good&&prevGood){p=YOKO;msg='横綱昇進！ 綱を締める日が来た。';}else if(good)msg='来場所は綱取りの場所だ。';}}
+  if(yusho){st.yusho++;if(old>=MAKU)st.makuYusho++;}
+  const when=(Math.floor(st.b/6)+1)+'年目 '+BASHO[st.b%6];
+  st.hist.push({when,rank:r.name,pos:old,w,l,yusho});
+  st.pos=p;st.b++;st.used=0;st.basho=null;st.fat=Math.max(0,st.fat-25);
+  // result screen
+  $('rBasho').textContent=when;
+  $('rBig').textContent=yusho?(old>=MAKU?'幕内優勝':r.div+'優勝'):w>l?'勝ち越し':'負け越し';
+  $('rHoshi').textContent=B.marks+'　'+w+'勝'+l+'敗';
+  if(!msg){if(old<JURYO&&p>=JURYO)msg='十両昇進！ これで関取の仲間入りだ。';else if(old<MAKU&&p>=MAKU)msg='新入幕！ 幕内の土俵に上がる。';
+    else if(old<KOMU&&p>=KOMU)msg='新三役！ 小結に昇進した。';else msg=w>l?pick(['この調子で上を目指そう。','親方「まずまずだな」']):pick(['悔しさを稽古にぶつけよう。','親方「下を向くな、四股を踏め」']);}
+  $('rMsg').textContent=msg;
+  $('rOld').textContent=side(old)+' '+r.name;$('rNew').textContent=side(p)+' '+rank(p).name;
+  addLog(when+'は'+w+'勝'+l+'敗。'+msg);
+  persist();B=null;anim=null;show('sResult');
+}
+
+/* ---------- dohyo canvas ---------- */
+const cv=$('ring'),ctx=cv.getContext('2d');let CW=300;
+function sizeRing(){const r=cv.getBoundingClientRect();CW=Math.max(200,r.width||300);const d=Math.min(2,devicePixelRatio||1);cv.width=CW*d;cv.height=CW*d;ctx.setTransform(d,0,0,d,0,0);}
+addEventListener('resize',sizeRing);
+function rikishi(x,y,col,mawashi,face,lean){
+  ctx.save();ctx.translate(x,y);ctx.rotate(face);
+  ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(3,4,CW*.075,CW*.06,0,0,6.283);ctx.fill();
+  ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(0,0,CW*.07,CW*.058,0,0,6.283);ctx.fill();          // shoulders/belly from above
+  ctx.strokeStyle=mawashi;ctx.lineWidth=CW*.018;ctx.beginPath();ctx.ellipse(-2,0,CW*.05,CW*.045,0,0,6.283);ctx.stroke();
+  ctx.fillStyle='#1a1410';ctx.beginPath();ctx.arc(CW*.03+lean,0,CW*.024,0,6.283);ctx.fill();        // head with mage
+  ctx.fillStyle='#2b211a';ctx.beginPath();ctx.ellipse(CW*.022+lean,0,CW*.012,CW*.006,0,0,6.283);ctx.fill();
+  ctx.restore();
+}
+function drawRing(now){
+  const c=CW/2,R=CW*.38;
+  ctx.clearRect(0,0,CW,CW);
+  ctx.fillStyle='#b98a50';ctx.fillRect(CW*.04,CW*.04,CW*.92,CW*.92);
+  ctx.fillStyle='#c99a5b';ctx.beginPath();ctx.arc(c,c,R+CW*.03,0,6.283);ctx.fill();
+  ctx.strokeStyle='#e8d8a8';ctx.lineWidth=CW*.022;ctx.beginPath();ctx.arc(c,c,R,0,6.283);ctx.stroke();      // tawara
+  ctx.fillStyle='#f1ece0';ctx.fillRect(c-CW*.08,c-CW*.035,CW*.012,CW*.07);ctx.fillRect(c+CW*.068,c-CW*.035,CW*.012,CW*.07); // shikiri-sen
+  // four fusa colors at corners
+  [['#3f8fd0',.06,.06],['#f1ece0',.94,.06],['#d2463f',.06,.94],['#111',.94,.94]].forEach(([col,x,y])=>{ctx.fillStyle=col;ctx.beginPath();ctx.arc(CW*x,CW*y,CW*.025,0,6.283);ctx.fill();});
+  if(!anim){rikishi(c-CW*.13,c,'#e9c8a8','#3a3f8f',0,0);rikishi(c+CW*.13,c,'#e2bb98','#7a1f1a',Math.PI,0);return;}
+  let mx=c-CW*.13,ox=c+CW*.13,my=c,oy=c,mf=0,of=Math.PI;
+  const a=anim;
+  if(a.phase==='clash'||a.phase==='done'){
+    const t=a.t;const meet=Math.min(1,t/.25);mx=c-CW*.13+meet*CW*.075;ox=c+CW*.13-meet*CW*.075;
+    if(t>.25){const jig=Math.sin(t*30)*CW*.006*(t<.9?1:0);mx+=jig;ox+=jig;}
+    if(t>.9){const k=Math.min(1,(t-.9)/.7),e=1-Math.pow(1-k,2);
+      const push=R*.95*e;const ang=a.dir;
+      if(a.strat==='waza'){ // loser stumbles forward and spins out past the winner
+        if(a.win){ox=c+CW*.055-Math.cos(ang)*push*1.1-CW*.11*e;oy=c+Math.sin(ang)*push;of=Math.PI+e*4;}
+        else{mx=c-CW*.055+Math.cos(ang)*push*1.1+CW*.11*e;my=c+Math.sin(ang)*push;mf=e*4;}
+      }else{
+        if(a.win){ox=c+CW*.055+Math.cos(ang)*push;oy=c+Math.sin(ang)*push;mx=ox-CW*.11*Math.cos(ang);my=oy-CW*.11*Math.sin(ang);mf=ang;of=Math.PI+ang;}
+        else{mx=c-CW*.055-Math.cos(ang)*push;my=c-Math.sin(ang)*push;ox=mx+CW*.11*Math.cos(ang);oy=my+CW*.11*Math.sin(ang);of=Math.PI+ang;mf=ang;}
+      }
+    }
+  }
+  rikishi(mx,my,'#e9c8a8','#3a3f8f',mf,0);rikishi(ox,oy,'#e2bb98','#7a1f1a',of,0);
+  if(a.phase==='tachi'){
+    const r=Math.max(0,1-a.t*a.speed);
+    ctx.strokeStyle='#e6b450';ctx.lineWidth=4;ctx.beginPath();ctx.arc(c,c,R*.32,0,6.283);ctx.stroke();
+    ctx.strokeStyle='rgba(241,236,224,.9)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(c,c,Math.max(1,R*r),0,6.283);ctx.stroke();
+    ctx.fillStyle='rgba(241,236,224,.9)';ctx.font='700 '+Math.round(CW*.045)+'px "Zen Kaku Gothic New",sans-serif';ctx.textAlign='center';
+    ctx.fillText('はっけよい',c,CW*.16);
+  }
+  if(a.msg&&a.msgT>0){ctx.fillStyle='#e6b450';ctx.font=Math.round(CW*.1)+'px "Yuji Boku",serif';ctx.textAlign='center';ctx.fillText(a.msg,c,CW*.2);}
+  if(a.phase==='done'){
+    ctx.fillStyle='rgba(18,26,51,.72)';ctx.fillRect(0,CW*.36,CW,CW*.28);
+    ctx.textAlign='center';ctx.fillStyle=a.win?'#f1ece0':'#9ea5bb';ctx.font=Math.round(CW*.12)+'px "Yuji Boku",serif';
+    ctx.fillText(a.km,c,CW*.52);ctx.font='700 '+Math.round(CW*.045)+'px "Zen Kaku Gothic New",sans-serif';ctx.fillStyle=a.win?'#e6b450':'#d2463f';
+    const tq={sharp:'鋭い立ち合い',normal:'',late:'立ち遅れ'}[a.tq]||'';
+    ctx.fillText((a.win?'○ '+st.name+'の勝ち':'● '+B.opp.name+'の勝ち')+(tq?'　'+tq:''),c,CW*.6);
+  }
+}
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(!$('sBout').hidden){
+    if(anim){if(anim.phase==='tachi'){anim.t+=dt;if(1-anim.t*anim.speed<-.05){$('bTachi').hidden=true;resolve('late');}}
+      else if(anim.phase==='clash'){anim.t+=dt*(autoMode?1.8:1);if(anim.t>=1.7&&anim.win!==undefined){anim.phase='done';afterBout();}}
+      if(anim.msgT>0)anim.msgT-=dt;}
+    drawRing(now);
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ---------- wire ---------- */
+$('newBtn').addEventListener('click',openCreate);
+$('contBtn').addEventListener('click',()=>{st=load();if(!st)return;if(st.basho)startBasho();else renderHome();});
+$('randName').addEventListener('click',()=>{$('nameIn').value=pick(NAMES);});
+$('enterBtn').addEventListener('click',enter);
+$('bashoBtn').addEventListener('click',()=>{sizeRing();startBasho();sizeRing();});
+$('toTitle').addEventListener('click',()=>{persist();renderTitle();});
+document.querySelectorAll('.strats button').forEach(b=>b.addEventListener('click',()=>choose(b.dataset.s)));
+$('tachiBtn').addEventListener('click',tachi);
+cv.addEventListener('pointerdown',()=>{if(anim&&anim.phase==='tachi')tachi();});
+$('nextBtn').addEventListener('click',nextBout);
+$('backHome').addEventListener('click',renderHome);
+$('autoChk').addEventListener('change',e=>{autoMode=e.target.checked;
+  if(autoMode&&anim){if(anim.phase==='ready')choose(counterOf(B.opp.style));else if(anim.phase==='tachi'){$('bTachi').hidden=true;resolve('normal');}else if(anim.phase==='done')nextBout();}});
+addEventListener('keydown',e=>{if(e.code==='Space'&&anim&&anim.phase==='tachi'){e.preventDefault();tachi();}});
+
+renderTitle();sizeRing();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
