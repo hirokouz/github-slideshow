@@ -343,12 +343,12 @@ const side=pos=>pos%2?'西':'東';
 
 /* ---------- face ---------- */
 const FACE_OPTS={
-  shape:{n:'輪郭',v:['まる','たまご','えら張り','しもぶくれ']},
-  brow: {n:'眉',  v:['太い','細い','八の字','つり']},
-  eye:  {n:'目',  v:['細目','どんぐり','きりっと','たれ目']},
-  nose: {n:'鼻',  v:['だんご','高い','ちいさい']},
-  mouth:{n:'口',  v:['一文字','への字','にっこり','おちょぼ']},
-  extra:{n:'特徴',v:['なし','もみあげ','ひげ','赤ほっぺ']},
+  shape:{n:'輪郭',v:['シャープ','たまご','精悍','やさしげ']},
+  brow: {n:'眉',  v:['凛々しい','細め','太眉','きりり']},
+  eye:  {n:'目',  v:['切れ長','ぱっちり二重','涼しげ','甘いたれ目']},
+  nose: {n:'鼻',  v:['すっと高い','通った鼻筋','小鼻']},
+  mouth:{n:'口',  v:['微笑み','引き締め','口角上げ','ふっくら']},
+  extra:{n:'特徴',v:['なし','もみあげ','無精ひげ','泣きぼくろ']},
   skin: {n:'肌',  v:['色白','うす小麦','小麦','日焼け']},
 };
 const SKIN=['#f2d3b6','#e3b892','#cd9c74','#b07b55'];
@@ -396,7 +396,7 @@ function limbR(g,pts,sk){
 function softSpot(g,x,y,r,col,a){const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,'rgba('+col+','+a+')');gr.addColorStop(1,'rgba('+col+',0)');g.fillStyle=gr;g.fillRect(x-r,y-r,r*2,r*2);}
 
 /* ---- head ---- */
-const SHAPES=[{rx:.95,ry:.98,jw:.98,jy:.4},{rx:.86,ry:1.05,jw:.8,jy:.42},{rx:.92,ry:.96,jw:1.1,jy:.36},{rx:.9,ry:.95,jw:1.16,jy:.5}];
+const SHAPES=[{rx:.9,ry:1.0,jw:.82,jy:.42},{rx:.86,ry:1.05,jw:.76,jy:.44},{rx:.92,ry:.98,jw:.9,jy:.4},{rx:.92,ry:.98,jw:.94,jy:.44}];
 function headShape(g,r,F,fx){const S=SHAPES[F.shape];g.moveTo(r*S.rx,0);g.ellipse(0,-r*.06,r*S.rx,r*S.ry,0,0,6.283);
   g.moveTo(fx*.5+r*S.jw*.82,r*S.jy);g.ellipse(fx*.5,r*S.jy,r*S.jw*.82,r*.6,0,0,6.283);}
 function drawHead(g,r,F,yaw,expr,oicho){
@@ -417,8 +417,8 @@ function drawHead(g,r,F,yaw,expr,oicho){
   // back of head falls into shade (three-quarter view)
   if(!front){const bg=g.createLinearGradient(-r,0,fx,0);bg.addColorStop(0,'rgba(60,30,15,.38)');bg.addColorStop(1,'rgba(60,30,15,0)');g.fillStyle=bg;g.fillRect(-r*1.3,-r*1.3,r*2.6,r*2.6);}
   softSpot(g,fx-r*.05,r*.95,r*.75,'60,30,15',.35);                         // under-jaw shadow
-  softSpot(g,fx+r*.32,r*.3,r*.3,'205,90,70',F.extra===3?.32:.12);           // cheek warmth
-  softSpot(g,fx-r*.34*(1-.55*yaw),r*.3,r*.26*(1-.4*yaw),'205,90,70',F.extra===3?.28:.1);
+  softSpot(g,fx+r*.32,r*.3,r*.3,'205,90,70',.08);           // cheek warmth
+  softSpot(g,fx-r*.34*(1-.55*yaw),r*.3,r*.26*(1-.4*yaw),'205,90,70',.07);
   // stubble
   if(F.extra===2){g.fillStyle='rgba(40,30,30,.38)';const hr=k=>{const v=Math.sin(k*12.9898)*43758.5453;return v-Math.floor(v);};for(let i=0;i<220;i++){const a=hr(i)*6.283,rr=Math.sqrt(hr(i+500));const x=fx*.6+Math.cos(a)*rr*r*.78,y=r*.6+Math.sin(a)*rr*r*.42;if(y<r*.42&&Math.abs(x-fx)<r*.3)continue;g.fillRect(x,y,r*.022,r*.022);}}
   // hair cap with a hairline
@@ -599,9 +599,9 @@ function portrait(F,expr,oicho,N){
 function grain(N){if(grainCache&&grainCache.width===N)return grainCache;const c=document.createElement('canvas');c.width=c.height=N;const g=c.getContext('2d');
   const im=g.createImageData(N,N),rr=seeded(7);for(let i=0;i<im.data.length;i+=4){const v=110+rr()*60;im.data[i]=v;im.data[i+1]=v*.95;im.data[i+2]=v*.9;im.data[i+3]=255;}g.putImageData(im,0,0);grainCache=c;return c;}
 function paintPortrait(g,N,F,expr,oicho){
-  const R=N*.25,cx=N/2,cy=N*.44,sk=SKIN[F.skin];
+  const R=N*.265,cx=N/2,cy=N*.45,sk=SKIN[F.skin];
   const dk=a=>'rgba(88,38,20,'+a+')',wm=a=>'rgba(200,78,60,'+a+')',lt=a=>'rgba(255,240,226,'+a+')';
-  const SH=[{rx:1,ry:1.06,jw:.98,jy:.42},{rx:.9,ry:1.12,jw:.8,jy:.45},{rx:.97,ry:1.02,jw:1.1,jy:.38},{rx:.94,ry:1.0,jw:1.18,jy:.52}][F.shape];
+  const SH=[{rx:.9,ry:1.08,jw:.8,jy:.44},{rx:.88,ry:1.12,jw:.74,jy:.46},{rx:.93,ry:1.05,jw:.9,jy:.42},{rx:.94,ry:1.05,jw:.92,jy:.46}][F.shape];
   const rnd2=seeded(F.shape*7+F.brow*13+F.eye*17+F.nose*19+F.mouth*23+F.extra*29+F.skin*31+11);
   const facePath=p=>{p.moveTo(cx+SH.rx*R,cy-.08*R);p.ellipse(cx,cy-.08*R,SH.rx*R,SH.ry*R,0,0,6.283);p.moveTo(cx+SH.jw*.86*R,cy+SH.jy*R);p.ellipse(cx,cy+SH.jy*R,SH.jw*.86*R,.6*R,0,0,6.283);};
   const cranium=p=>{p.moveTo(cx+SH.rx*R*1.03,cy-.08*R);p.ellipse(cx,cy-.08*R,SH.rx*R*1.03,SH.ry*R*1.03,0,0,6.283);};
@@ -620,9 +620,9 @@ function paintPortrait(g,N,F,expr,oicho){
   g.fillStyle=ng;g.beginPath();g.moveTo(cx-.84*R*SH.jw,cy+.45*R);g.bezierCurveTo(cx-.95*R,cy+.95*R,cx-1.15*R,cy+1.05*R,cx-1.45*R,cy+1.18*R);
   g.lineTo(cx+1.45*R,cy+1.18*R);g.bezierCurveTo(cx+1.15*R,cy+1.05*R,cx+.95*R,cy+.95*R,cx+.84*R*SH.jw,cy+.45*R);g.closePath();g.fill();
   softF(g,R*.12,shade(sk,-.02),EL(cx,cy+1.2*R,1.35*R,.1*R));softF(g,R*.2,shade(sk,-.08),EL(cx,cy+1.3*R,1.1*R,.12*R));
-  softF(g,R*.18,dk(.45),EL(cx,cy+1.08*R,.8*R*SH.jw,.18*R));
+  softF(g,R*.16,dk(.35),EL(cx,cy+1.1*R,.75*R*SH.jw,.14*R));
   softF(g,R*.08,shade(sk,-.04),EL(cx,cy+.95*R,.6*R*SH.jw,.2*R));
-  softS(g,R*.06,dk(.3),R*.03,p=>{p.moveTo(cx-.55*R*SH.jw,cy+1.0*R);p.quadraticCurveTo(cx,cy+1.16*R,cx+.55*R*SH.jw,cy+1.0*R);});
+  softS(g,R*.07,dk(.14),R*.03,p=>{p.moveTo(cx-.5*R*SH.jw,cy+1.03*R);p.quadraticCurveTo(cx,cy+1.16*R,cx+.5*R*SH.jw,cy+1.03*R);});
   // ears
   for(const s of[-1,1]){const ex=cx+s*SH.rx*R*.96,ey=cy+.02*R;g.fillStyle=shade(sk,-.06);g.beginPath();g.ellipse(ex,ey,.17*R,.28*R,s*.12,0,6.283);g.fill();
     softF(g,R*.05,dk(.45),EL(ex+s*.03*R,ey,.07*R,.15*R,s*.12));softF(g,R*.08,wm(.3),EL(ex,ey,.14*R,.24*R,s*.12));}
@@ -636,10 +636,12 @@ function paintPortrait(g,N,F,expr,oicho){
   // eye sockets, warm cheeks/nose, highlights
   const exs=[cx-.36*R,cx+.36*R],ey=cy-.04*R;
   for(const x of exs){softF(g,R*.1,dk(.3),EL(x,ey-.04*R,.25*R,.14*R));softF(g,R*.14,dk(.12),EL(x,ey+.14*R,.2*R,.08*R));}
-  for(const s of[-1,1])softF(g,R*.22,wm(F.extra===3||expr==='happy'?.42:.22),EL(cx+s*.5*R,cy+.33*R,.27*R,.2*R));
+  for(const s of[-1,1]){softF(g,R*.22,wm(expr==='happy'?.3:.12),EL(cx+s*.5*R,cy+.33*R,.27*R,.2*R));
+    softS(g,R*.1,dk(.28),R*.08,p=>{p.moveTo(cx+s*.78*R,cy+.15*R);p.quadraticCurveTo(cx+s*.72*R,cy+.75*R,cx+s*.2*R,cy+1.0*R);});    // jaw contour
+    softF(g,R*.12,dk(.16),EL(cx+s*.62*R,cy+.45*R,.12*R,.22*R,s*.3));}                                                                // under-cheekbone
   softF(g,R*.12,wm(.22),EL(cx,cy+.3*R,.13*R,.1*R));
   softF(g,R*.25,lt(.35),EL(cx-.08*R,cy-.48*R,.38*R,.2*R));
-  for(const s of[-1,1])softF(g,R*.12,lt(.22),EL(cx+s*.48*R,cy+.12*R,.15*R,.07*R));
+  for(const s of[-1,1])softF(g,R*.1,lt(.32),EL(cx+s*.5*R,cy+.1*R,.17*R,.06*R,s*-.3));softF(g,R*.08,lt(.3),EL(cx,cy+.92*R,.12*R,.05*R));
   if(expr==='happy')for(const s of[-1,1])softF(g,R*.12,lt(.25),EL(cx+s*.45*R,cy+.26*R,.16*R,.1*R));
   softF(g,R*.06,dk(.32),EL(cx,cy+.44*R,.17*R,.04*R));          // under the nose
   softF(g,R*.06,dk(.3),EL(cx,cy+.75*R,.18*R,.05*R));           // under the lower lip
@@ -647,14 +649,14 @@ function paintPortrait(g,N,F,expr,oicho){
   const fold=expr==='happy'||expr==='strain'?.38:.2;
   for(const s of[-1,1])softS(g,R*.05,dk(fold),R*.03,p=>{p.moveTo(cx+s*.18*R,cy+.34*R);p.quadraticCurveTo(cx+s*.33*R,cy+.5*R,cx+s*.3*R,cy+.72*R);});
   // stubble
-  if(F.extra===2){softF(g,R*.2,'rgba(70,80,95,.18)',EL(cx,cy+.75*R,.7*R*SH.jw,.38*R));
-    g.fillStyle='rgba(30,25,28,.32)';const d=Math.max(1,N/300);for(let i=0;i<2600;i++){const a=rnd2()*6.283,r=Math.sqrt(rnd2());const x=cx+Math.cos(a)*r*.78*R*SH.jw,y=cy+.78*R+Math.sin(a)*r*.4*R;
+  if(F.extra===2){softF(g,R*.2,'rgba(70,80,95,.12)',EL(cx,cy+.75*R,.7*R*SH.jw,.38*R));
+    g.fillStyle='rgba(30,25,28,.22)';const d=Math.max(1,N/320);for(let i=0;i<1500;i++){const a=rnd2()*6.283,r=Math.sqrt(rnd2());const x=cx+Math.cos(a)*r*.78*R*SH.jw,y=cy+.78*R+Math.sin(a)*r*.4*R;
       if(Math.abs(x-cx)<.26*R&&y<cy+.8*R&&y>cy+.5*R)continue;g.fillRect(x,y,d,d);}}
   g.restore();
   // ---- hair, combed and oiled ----
   g.save();g.beginPath();cranium(g);g.clip();
-  const hairPath=p=>{p.moveTo(cx-SH.rx*R*1.1,cy+.08*R);p.lineTo(cx-SH.rx*R*.95,cy-.05*R);p.quadraticCurveTo(cx-.86*R,cy-.4*R,cx-.6*R,cy-.55*R);p.quadraticCurveTo(cx,cy-.74*R,cx+.6*R,cy-.55*R);
-    p.quadraticCurveTo(cx+.86*R,cy-.4*R,cx+SH.rx*R*.95,cy-.05*R);p.lineTo(cx+SH.rx*R*1.1,cy+.08*R);p.lineTo(cx+SH.rx*R*1.2,cy-1.4*R);p.lineTo(cx-SH.rx*R*1.2,cy-1.4*R);p.closePath();};
+  const hairPath=p=>{p.moveTo(cx-SH.rx*R*1.1,cy+.08*R);p.lineTo(cx-SH.rx*R*.95,cy-.08*R);p.quadraticCurveTo(cx-.88*R,cy-.48*R,cx-.55*R,cy-.62*R);p.quadraticCurveTo(cx-.25*R,cy-.68*R,cx,cy-.6*R);p.quadraticCurveTo(cx+.25*R,cy-.68*R,cx+.55*R,cy-.62*R);
+    p.quadraticCurveTo(cx+.88*R,cy-.48*R,cx+SH.rx*R*.95,cy-.08*R);p.lineTo(cx+SH.rx*R*1.1,cy+.08*R);p.lineTo(cx+SH.rx*R*1.2,cy-1.4*R);p.lineTo(cx-SH.rx*R*1.2,cy-1.4*R);p.closePath();};
   const hg=g.createLinearGradient(0,cy-1.2*R,0,cy-.3*R);hg.addColorStop(0,'#2c241f');hg.addColorStop(1,'#0c0907');
   g.save();g.shadowColor='#0c0907';g.shadowBlur=R*.04;g.fillStyle=hg;g.beginPath();hairPath(g);g.fill();g.restore();
   if(F.extra===1)for(const s of[-1,1])softF(g,R*.03,'rgba(12,9,7,.95)',p=>{p.moveTo(cx+s*.82*R,cy-.42*R);p.lineTo(cx+s*.95*R,cy-.38*R);p.lineTo(cx+s*.93*R,cy+.15*R);p.lineTo(cx+s*.84*R,cy+.1*R);p.closePath();});
@@ -662,7 +664,7 @@ function paintPortrait(g,N,F,expr,oicho){
   for(let i=0;i<150;i++){const q=rnd2(),sx=lerp(cx-.9*R,cx+.9*R,q),sy=cy-.45*R-Math.sin(q*Math.PI)*.25*R;
     g.strokeStyle='rgba(255,255,255,'+(.03+rnd2()*.08)+')';g.lineWidth=R*(.004+rnd2()*.006);g.beginPath();g.moveTo(sx,sy);
     g.quadraticCurveTo(lerp(sx,cx,.5)+(rnd2()-.5)*.1*R,cy-.95*R,cx+(rnd2()-.5)*.12*R,cy-1.18*R);g.stroke();}
-  softF(g,R*.2,lt(.2),EL(cx-.18*R,cy-.88*R,.4*R,.12*R,-.15));
+  softF(g,R*.16,lt(.32),EL(cx-.18*R,cy-.86*R,.42*R,.1*R,-.15));softF(g,R*.1,lt(.18),EL(cx+.3*R,cy-.72*R,.2*R,.05*R,.3));
   g.restore();
   // topknot
   g.save();g.translate(cx,cy-1.13*R);const kg=g.createLinearGradient(0,-.3*R,0,.1*R);kg.addColorStop(0,'#3a312a');kg.addColorStop(1,'#0c0907');g.fillStyle=kg;
@@ -671,16 +673,17 @@ function paintPortrait(g,N,F,expr,oicho){
   else{g.beginPath();g.ellipse(0,-.06*R,.2*R,.14*R,0,0,6.283);g.fill();softF(g,R*.06,lt(.25),EL(-.05*R,-.12*R,.1*R,.04*R));}
   g.fillStyle='#f2efe6';g.fillRect(-.07*R,.0,.14*R,.06*R);g.restore();
   // ---- brows: underlayer + individual hairs ----
-  const bt=[.075,.035,.055,.055][F.brow]*R,outerDy=[0,0,.06,-.07][F.brow]*R;
+  const bt=[.06,.04,.075,.055][F.brow]*R,outerDy=[-.02,0,-.01,-.06][F.brow]*R;
   let innerDy=0;if(expr==='strain'||expr==='win')innerDy=.05*R;if(expr==='lose'||expr==='sleep')innerDy=-.05*R;if(expr==='happy')innerDy=-.02*R;
   for(const s of[-1,1]){const by=cy-.3*R,ax=cx+s*.12*R,ay=by+innerDy,bx=cx+s*.62*R,byy=by+outerDy,mx=cx+s*.4*R,my=by-.07*R;
     const at=q=>[(1-q)*(1-q)*ax+2*(1-q)*q*mx+q*q*bx,(1-q)*(1-q)*ay+2*(1-q)*q*my+q*q*byy];
-    softS(g,bt*.6,'rgba(30,20,14,.35)',bt*.8,p=>{p.moveTo(ax,ay);p.quadraticCurveTo(mx,my,bx,byy);});
-    g.strokeStyle='rgba(24,15,10,.6)';g.lineCap='round';
-    for(let i=0;i<90;i++){const q=rnd2(),[px,py]=at(q),th=bt*(1.1-q*.7);const oy=(rnd2()-.5)*th;const ang=lerp(-1.2,-.25,Math.min(1,q*2))+(rnd2()-.5)*.3;
-      const len=R*(.045+rnd2()*.03);g.lineWidth=R*(.006+rnd2()*.005);g.beginPath();g.moveTo(px,py+oy+th*.3);g.lineTo(px+s*Math.cos(ang)*len,py+oy+th*.3+Math.sin(ang)*len*.7);g.stroke();}}
+    // solid tapered brow body, then fine hairs lying along it
+    softF(g,R*.012,'rgba(22,14,9,.82)',p=>{const [tx,ty]=at(1);p.moveTo(ax,ay+bt*.55);p.quadraticCurveTo(mx,my+bt*.45,tx,ty+bt*.12);p.quadraticCurveTo(mx,my-bt*.55,ax,ay-bt*.45);p.closePath();});
+    g.strokeStyle='rgba(14,8,5,.55)';g.lineCap='round';
+    for(let i=0;i<110;i++){const q=rnd2(),[px,py]=at(q),th=bt*(1-q*.75);const oy=(rnd2()-.5)*th;const ang=(q<.15?-.9:-.18)+(rnd2()-.5)*.2;
+      const len=R*(.035+rnd2()*.025);g.lineWidth=R*(.005+rnd2()*.004);g.beginPath();g.moveTo(px,py+oy);g.lineTo(px+s*Math.cos(ang)*len,py+oy+Math.sin(ang)*len*.6);g.stroke();}}
   // ---- eyes ----
-  const EH=[.055,.11,.08,.08][F.eye]*R,EW=[.25,.21,.24,.24][F.eye]*R,TILT=[0,0,.06,-.06][F.eye]*R;
+  const EH=[.07,.105,.075,.09][F.eye]*R,EW=[.26,.22,.25,.23][F.eye]*R,TILT=[.04,.01,.05,-.045][F.eye]*R;
   for(const s of[-1,1]){const x=cx+s*.36*R,inX=x-s*EW,outX=x+s*EW,outY=ey-TILT,inY=ey+TILT*.2;
     let eh=EH;if(expr==='strain')eh*=.55;
     if(closed){
@@ -690,35 +693,38 @@ function paintPortrait(g,N,F,expr,oicho){
       if(expr==='lose')for(let k=0;k<3;k++)softS(g,R*.01,dk(.35),R*.01,p=>{p.moveTo(outX+s*.02*R,outY-.03*R+k*.035*R);p.lineTo(outX+s*.09*R,outY-.06*R+k*.05*R);});
       continue;}
     const almond=p=>{p.moveTo(inX,inY);p.quadraticCurveTo(x,ey-eh*2.1,outX,outY);p.quadraticCurveTo(x,ey+eh*1.4,inX,inY);p.closePath();};
-    softS(g,R*.015,dk(.45),R*.012,p=>{p.moveTo(inX+s*.02*R,inY-eh*.7);p.quadraticCurveTo(x,ey-eh*3.1,outX+s*.02*R,outY-eh*.5);});   // lid crease
+    softS(g,R*.01,dk(.55),R*.012,p=>{p.moveTo(inX+s*.03*R,inY-eh*.9);p.quadraticCurveTo(x,ey-eh*2.9,outX+s*.01*R,outY-eh*.7);});   // double-lid crease
+    softF(g,R*.06,dk(.12),EL(x,ey-eh*1.9,EW*.8,eh*.8));
     g.save();g.beginPath();almond(g);g.clip();
     g.fillStyle='#ebe3d8';g.fillRect(x-EW*1.2,ey-eh*3,EW*2.4,eh*6);
     softF(g,R*.03,'rgba(120,70,50,.35)',EL(inX,inY,.05*R,.05*R));
-    const ir=.088*R,ix=x+s*.01*R,iy=ey-eh*.25;
-    const igr=g.createRadialGradient(ix,iy,ir*.2,ix,iy,ir);igr.addColorStop(0,'#1a0e08');igr.addColorStop(.35,'#3a2214');igr.addColorStop(.78,'#6a4226');igr.addColorStop(1,'#20120a');
+    const ir=.095*R,ix=x+s*.01*R,iy=ey-eh*.2;
+    const igr=g.createRadialGradient(ix,iy,ir*.2,ix,iy,ir);igr.addColorStop(0,'#160b06');igr.addColorStop(.35,'#3e2416');igr.addColorStop(.72,'#8a5a34');igr.addColorStop(.9,'#4a2c18');igr.addColorStop(1,'#140a05');
     g.fillStyle=igr;g.beginPath();g.arc(ix,iy,ir,0,6.283);g.fill();
     g.fillStyle='#070403';g.beginPath();g.arc(ix,iy,ir*.42,0,6.283);g.fill();
     const lg=g.createLinearGradient(0,ey-eh*2,0,ey+eh*.2);lg.addColorStop(0,'rgba(40,20,10,.65)');lg.addColorStop(1,'rgba(40,20,10,0)');g.fillStyle=lg;g.fillRect(x-EW*1.2,ey-eh*3,EW*2.4,eh*3.2);
-    softF(g,R*.008,'rgba(255,255,255,.95)',EL(ix+.03*R,iy-.035*R,.017*R,.017*R));
+    softF(g,R*.006,'rgba(255,255,255,.98)',EL(ix+.03*R,iy-.035*R,.02*R,.02*R));softF(g,R*.006,'rgba(255,255,255,.6)',EL(ix-.035*R,iy+.03*R,.009*R,.009*R));
     g.restore();
-    softS(g,R*.006,'rgba(22,13,8,.95)',R*.022,p=>{p.moveTo(inX,inY);p.quadraticCurveTo(x,ey-eh*2.1,outX,outY);});        // upper lid + lashes
-    softS(g,R*.01,'rgba(22,13,8,.6)',R*.016,p=>{p.moveTo(x+s*EW*.4,ey-eh*1.6);p.quadraticCurveTo(outX,outY-eh*.6,outX+s*.03*R,outY-eh*.2);});
+    softS(g,R*.005,'rgba(18,10,6,.98)',R*.028,p=>{p.moveTo(inX,inY);p.quadraticCurveTo(x,ey-eh*2.1,outX,outY);});        // upper lid + lash line
+    softS(g,R*.008,'rgba(18,10,6,.75)',R*.016,p=>{p.moveTo(x+s*EW*.4,ey-eh*1.6);p.quadraticCurveTo(outX,outY-eh*.4,outX+s*.025*R,outY-eh*.3);});   // lash weight at the outer corner
+    g.strokeStyle='rgba(18,10,6,.7)';g.lineWidth=R*.006;for(let k=0;k<7;k++){const q=.35+k/12,lx=lerp(inX,outX,q),lyy=ey-eh*2.1*4*q*(1-q)*.5-eh*.1;g.beginPath();g.moveTo(lx,lyy);g.lineTo(lx+s*.012*R,lyy-.02*R);g.stroke();}
     softS(g,R*.006,dk(.35),R*.008,p=>{p.moveTo(inX,inY);p.quadraticCurveTo(x,ey+eh*1.4,outX,outY);});
-    softS(g,R*.03,dk(.18),R*.03,p=>{p.moveTo(inX+s*.03*R,ey+eh*1.6);p.quadraticCurveTo(x,ey+eh*3,outX,ey+eh*1.4);});            // eye bag
+    softS(g,R*.03,dk(.08),R*.025,p=>{p.moveTo(inX+s*.03*R,ey+eh*1.6);p.quadraticCurveTo(x,ey+eh*2.8,outX,ey+eh*1.4);});            // soft under-eye
+    if(F.extra===3&&s<0)softF(g,R*.006,'rgba(40,20,14,.85)',EL(outX+.01*R,ey+eh*2.4,.016*R,.016*R));   // beauty mark
     if(expr==='strain')for(let k=0;k<2;k++)softS(g,R*.01,dk(.35),R*.01,p=>{p.moveTo(outX+s*.03*R,ey+k*.04*R);p.lineTo(outX+s*.1*R,ey-.03*R+k*.07*R);});
   }
   // ---- nose: form only, no outline ----
-  const nw=[1.25,.9,.75][F.nose],ny=cy+.3*R,hi=F.nose===1?.4:.24;
+  const nw=[.9,.84,.74][F.nose],ny=cy+.3*R,hi=F.nose===2?.24:.36;
   for(const s of[-1,1])softS(g,R*.05,dk(hi),R*.035,p=>{p.moveTo(cx+s*.08*R*nw,cy-.14*R);p.quadraticCurveTo(cx+s*.1*R*nw,cy+.08*R,cx+s*.13*R*nw,ny);});
-  softF(g,R*.05,lt(F.nose===1?.5:.35),EL(cx,cy+.05*R,.035*R,.2*R));
-  softF(g,R*.06,wm(.22),EL(cx,ny,.13*R*nw,.1*R*nw));
+  softF(g,R*.03,lt(F.nose===2?.4:.6),EL(cx,cy+.04*R,.026*R,.24*R));
+  softF(g,R*.06,wm(.12),EL(cx,ny,.12*R*nw,.09*R*nw));
   softF(g,R*.03,lt(.55),EL(cx-.015*R,ny-.03*R,.045*R*nw,.035*R*nw));
   for(const s of[-1,1]){softS(g,R*.025,dk(.4),R*.022,p=>{p.moveTo(cx+s*.1*R*nw,ny-.04*R);p.quadraticCurveTo(cx+s*.2*R*nw,ny+.02*R,cx+s*.11*R*nw,ny+.08*R);});
     softF(g,R*.012,'rgba(45,18,10,.8)',EL(cx+s*.065*R*nw,ny+.065*R,.045*R*nw,.022*R,s*.25));}
   // ---- mouth ----
-  const my=cy+.6*R,mw=(F.mouth===3?.15:.22)*R;let cd=[0,.035,-.035,0][F.mouth]*R;if(expr==='happy'||expr==='win')cd=-.05*R;
+  const my=cy+.6*R,mw=.21*R;let cd=[-.014,.0,-.03,-.006][F.mouth]*R;if(expr==='happy'||expr==='win')cd=-.05*R;
   for(const s of[-1,1])softS(g,R*.02,dk(.15),R*.02,p=>{p.moveTo(cx+s*.04*R,cy+.43*R);p.lineTo(cx+s*.055*R,my-.06*R);});
-  const lipU='rgba(160,78,64,.9)',lipL='rgba(188,100,84,.9)';
+  const lipU='rgba(166,82,72,.88)',lipL=F.mouth===3?'rgba(198,110,98,.95)':'rgba(190,104,92,.9)';
   if(expr==='happy'||expr==='strain'||expr==='lose'||expr==='sleep'){
     const open=expr==='lose'?.12:expr==='sleep'?.03:expr==='happy'?.08:.06;
     const top=my-.01*R,bot=my+open*R;
@@ -731,13 +737,13 @@ function paintPortrait(g,N,F,expr,oicho){
   }else{
     softF(g,R*.008,lipU,p=>{p.moveTo(cx-mw,my+cd);p.quadraticCurveTo(cx-.05*R,my-.08*R,cx-.002*R,my-.04*R);p.quadraticCurveTo(cx+.05*R,my-.08*R,cx+mw,my+cd);p.quadraticCurveTo(cx,my+.01*R,cx-mw,my+cd);});
     softF(g,R*.008,lipL,p=>{p.moveTo(cx-mw*.92,my+cd*.8+.005*R);p.quadraticCurveTo(cx,my+.0*R,cx+mw*.92,my+cd*.8+.005*R);p.quadraticCurveTo(cx,my+.11*R,cx-mw*.92,my+cd*.8+.005*R);});
-    softF(g,R*.02,lt(.4),EL(cx,my+.05*R,.07*R,.016*R));
+    softF(g,R*.015,lt(.5),EL(cx,my+.05*R,.08*R,.014*R));
     softS(g,R*.01,'rgba(62,24,16,.85)',R*.013,p=>{p.moveTo(cx-mw,my+cd);p.quadraticCurveTo(cx-mw*.4,my+.012*R,cx,my+.005*R);p.quadraticCurveTo(cx+mw*.4,my+.012*R,cx+mw,my+cd);});
     for(const s of[-1,1])softF(g,R*.02,dk(.35),EL(cx+s*mw,my+cd,.02*R,.015*R));
   }
   // ---- skin grain over everything skin-coloured ----
   const tmp=document.createElement('canvas');tmp.width=tmp.height=N;const tg=tmp.getContext('2d');tg.drawImage(grain(N),0,0);tg.globalCompositeOperation='destination-in';tg.drawImage(g.canvas,0,0);
-  g.save();g.globalCompositeOperation='soft-light';g.globalAlpha=.5;g.drawImage(tmp,0,0);g.restore();
+  g.save();g.globalCompositeOperation='soft-light';g.globalAlpha=.28;g.drawImage(tmp,0,0);g.restore();
 }
 function drawGyoji(g,x,y,u,point,t){
   g.save();g.translate(x,y);
