@@ -779,13 +779,13 @@ function drawSpriteRig(g,x,y,u,dir,P,L){
 /* frame-by-frame: pick the drawn pose that matches the choreography */
 function poseIndex(P){const f=P.fall||0,lean=P.lean||0,c=P.crouch||0,arm=Math.max(P.armF||0,P.armB||0);
   if(f>.6)return 6;if(f<-.15||(P.expr==='lose'&&lean<.3))return 5;if(P.hd>.5&&c>.75)return 1;if(lean<.3)return 0;
-  if(arm>1.08)return 3;if(lean>=.45&&arm<.62)return 4;return 2;}
+  if(P.charge)return 2;if(arm>1.08)return 3;return 4;}
 function drawPoseSprite(g,x,y,u,dir,P,L){
   const i=poseIndex(P),im=L.poses[i];if(!im||!im.complete||!im.naturalWidth)return false;
   const Hs=u*2.75*(L.poseH[i]||1),Ws=Hs*im.naturalWidth/im.naturalHeight,f=P.fall||0,lift=(f>.6&&f<1.2)?(P.lift||0):Math.max(0,P.lift||0)*(f>.6?0:1);
   g.save();g.translate(x,y);g.fillStyle='rgba(40,20,5,.28)';g.beginPath();g.ellipse(0,0,Ws*.42,u*.12,0,0,6.283);g.fill();
   g.translate(0,-lift*u);if(i===5&&f<0)g.rotate(f*.8*dir);g.scale(dir,1);
-  const jig=1+(P.jig||0)*.03;g.scale(jig,1/jig);const front=(i>=2&&i<=4)?u*.62:null;g.drawImage(im,front===null?-Ws/2:front-Ws,-Hs,Ws,Hs);g.restore();return true;}
+  const jig=1+(P.jig||0)*.03;g.scale(jig,1/jig);const front=i===2?u*.55:i===3?u*.85:i===4?u*1.05:null;g.drawImage(im,front===null?-Ws/2:front-Ws,-Hs,Ws,Hs);g.restore();return true;}
 function drawRikishi(g,x,y,u,dir,P,L){
   if(L.poses&&drawPoseSprite(g,x,y,u,dir,P,L))return;
   if(L.sprite&&L.sprite.complete&&L.sprite.naturalWidth)return drawSpriteRig(g,x,y,u,dir,P,L);
@@ -1420,7 +1420,7 @@ function choreo(a,T,W,cx,edge){
   const hitArmF=grip?.5:1.08,hitArmB=grip?.46:.98;
   // 1) tachiai: rise out of the crouch and collide
   if(T<L.imp){const k=easeIn(T/L.imp),m=(p,q)=>lerp(p,q,k);
-    const p={lean:m(.95,.7),crouch:m(1,.5),hd:m(1,0),armF:m(.2,hitArmF),armB:m(.2,hitArmB)};
+    const p={lean:m(.95,.7),crouch:m(1,.5),hd:m(1,0),armF:m(.2,hitArmF),armB:m(.2,hitArmB),charge:true};
     return{wX:lerp(wS,c0-dw*gap/2,k),lX:lerp(lS,c0+dw*gap/2,k),wP:{...wP,...p},lP:{...lP,...p}};}
   // 2) the exchange in the middle
   const back=a.kind==='slap'?-dw*W*.04:dw*W*.035;
