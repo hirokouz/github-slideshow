@@ -143,6 +143,40 @@ input[type=text]{width:100%;box-sizing:border-box;background:#fffaf0;color:var(-
 .rk-card .del{background:none;border:0;color:#7a6e5e;font-size:11.5px;text-decoration:underline;padding:2px}
 .rk-card .del.armed{color:var(--shu);font-weight:700}
 .rk-card.active{box-shadow:0 0 0 2px var(--kin),0 12px 30px rgba(0,0,0,.35)}
+.purse{font-size:13px;color:var(--nezumi)}.purse b{color:var(--kin);font-size:20px;font-variant-numeric:tabular-nums;margin-left:4px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.primary:disabled{opacity:.45;box-shadow:none}
+.rates{font-size:11.5px;text-align:center}
+.gres{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
+.gbook{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
+.scard{position:relative;display:grid;grid-template-columns:auto 1fr;gap:2px 8px;align-items:center;padding:10px;border-radius:10px;background:var(--washi);color:var(--sumi);
+  border:2px solid #8a8f9c;min-width:0;text-align:left}
+.scard .rar{position:absolute;top:-8px;right:8px;font-size:10px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:6px;background:#8a8f9c;color:#fff}
+.scard .kk{grid-row:1 / span 2;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-brush);font-size:19px;background:var(--sumi);color:var(--washi)}
+.scard .cn{font-weight:700;font-size:12.5px;line-height:1.3;min-width:0}
+.scard .cr{font-size:10.5px;color:#7a6e5e}
+.scard .cd{grid-column:1 / -1;font-size:11px;line-height:1.45;color:#3d352c}
+.scard .stars{grid-column:1 / -1;font-size:11px;color:var(--shu);letter-spacing:.06em}
+.scard .newb{position:absolute;top:-8px;left:8px;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;background:var(--shu);color:#fff}
+.scard.r-R{border-color:#3f8fd0}.scard.r-R .rar{background:#3f8fd0}
+.scard.r-SR{border-color:var(--kin);box-shadow:0 0 14px rgba(226,176,74,.35)}.scard.r-SR .rar{background:var(--kin);color:#2a1700}
+.scard.r-SSR{border-color:transparent;background:linear-gradient(var(--washi),var(--washi)) padding-box,linear-gradient(120deg,#ff6b6b,#ffd166,#6bffb8,#6bc5ff,#c86bff) border-box;box-shadow:0 0 22px rgba(255,210,120,.5)}
+.scard.r-SSR .rar{background:linear-gradient(90deg,#ff6b6b,#ffd166,#6bc5ff,#c86bff)}
+.scard.locked{opacity:.45;filter:grayscale(1)}
+.scard.pickable{cursor:pointer}.scard.pickable:hover{transform:translateY(-1px)}
+.scard.reveal{animation:flipin .45s cubic-bezier(.2,.9,.3,1.3) both}
+@keyframes flipin{from{transform:perspective(500px) rotateY(90deg) scale(.9);opacity:0}to{transform:none;opacity:1}}
+.ssr-hit{animation:ssrflash 1.2s ease-out}
+@keyframes ssrflash{0%{filter:brightness(2.2)}100%{filter:none}}
+.deck{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.slot{display:grid;justify-items:center;gap:3px;padding:10px 6px;border-radius:10px;background:#0d1328;border:1.5px dashed var(--line);min-height:84px;align-content:center;text-align:center}
+.slot.on{outline:2px solid var(--kin)}
+.slot .kk{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-brush);font-size:18px;background:var(--washi);color:var(--sumi)}
+.slot .sn{font-size:11px;font-weight:700;line-height:1.3}.slot .ss{font-size:10px;color:var(--nezumi)}
+.slot .empty{font-size:12px;color:var(--nezumi)}
+.slot.r-R{border:1.5px solid #3f8fd0}.slot.r-SR{border:1.5px solid var(--kin)}.slot.r-SSR{border:1.5px solid #ffd166;box-shadow:0 0 12px rgba(255,210,120,.4)}
+#hPick{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(128px,1fr))}
+#hPick .ghost{grid-column:1 / -1}
 .prof{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;padding:12px 14px}
 #bFace{width:64px;height:64px;display:block;border-radius:50%;background:radial-gradient(circle at 50% 40%,#fff6e0,#d9c7a2);box-shadow:inset 0 0 0 1.5px rgba(26,22,18,.5)}
 .prof .top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
@@ -188,6 +222,7 @@ input[type=text]{width:100%;box-sizing:border-box;background:#fffaf0;color:var(-
     <p class="label" id="rosterLabel" hidden>部屋の力士</p>
     <div class="roster" id="roster"></div>
     <button class="primary" id="newBtn">新弟子として入門する</button>
+    <div class="row" style="justify-content:space-between"><span class="purse">ご祝儀<b id="tMoney">0</b></span><button class="ghost" id="tGacha" style="width:auto">ご祝儀ガチャ</button></div>
     <p class="muted" style="font-size:12.5px;text-align:center">稽古は1場所ごとに5回。幕下以下は7番、十両から上は15番。勝ち越せば番付が上がる。</p>
   </section>
 
@@ -204,6 +239,12 @@ input[type=text]{width:100%;box-sizing:border-box;background:#fffaf0;color:var(-
         <canvas id="facePrev" aria-label="顔のプレビュー"></canvas>
         <div class="fopts" id="faceOpts"></div>
       </div>
+    </div>
+    <p class="label">入門の年齢</p>
+    <div class="types">
+      <label><input type="radio" name="age" value="15" id="a15" checked><span class="k">15</span><b>15歳・中学卒業</b><span class="d">はじめの能力は低いが、伸びしろは最大。長く強くなれる</span></label>
+      <label><input type="radio" name="age" value="18" id="a18"><span class="k">18</span><b>18歳・高校卒業</b><span class="d">体ができていて能力やや高め。伸びもまずまず</span></label>
+      <label><input type="radio" name="age" value="22" id="a22"><span class="k">22</span><b>22歳・大学卒業</b><span class="d">即戦力で三段目付出デビュー。ただし伸びは早く止まる</span></label>
     </div>
     <p class="label">体つき</p>
     <div class="types">
@@ -232,6 +273,11 @@ input[type=text]{width:100%;box-sizing:border-box;background:#fffaf0;color:var(-
       <div class="row" style="justify-content:space-between"><p class="label">体と技</p><span class="muted" style="font-size:11px" id="hPower"></span></div>
       <div class="stats" id="hStats"></div>
     </div>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between"><p class="label">サポートカード（3枚まで）</p><button class="ghost" id="hGacha" style="width:auto;padding:6px 12px;font-size:13px">ガチャ</button></div>
+      <div class="deck" id="hDeck"></div>
+      <div id="hPick" hidden></div>
+    </div>
     <div>
       <p class="label" style="margin-bottom:8px">今日の稽古</p>
       <div class="acts" id="hActs"></div>
@@ -246,6 +292,18 @@ input[type=text]{width:100%;box-sizing:border-box;background:#fffaf0;color:var(-
       <div class="histbox"><table class="hist" id="hHist"></table></div>
     </div>
     <button class="ghost" id="toTitle">ほかの力士に切り替える・新しく入門させる</button>
+  </section>
+
+  <!-- GACHA -->
+  <section id="sGacha" class="scr" hidden>
+    <div class="row" style="justify-content:space-between"><h2 class="brush" style="font-size:32px">ご祝儀ガチャ</h2><span class="purse">ご祝儀<b id="gMoney">0</b></span></div>
+    <p class="muted" style="font-size:12.5px">勝ち星・勝ち越し・優勝でご祝儀がたまる。カードは部屋のみんなで共有。同じカードが出ると強くなる（最大★5）。</p>
+    <div class="row2"><button class="primary" id="g1">1回引く（100）</button><button class="primary" id="g10">10連（900）</button></div>
+    <p class="muted rates">提供割合　SSR 3%・SR 12%・R 35%・N 50%　／　10連は1枚以上SR以上確定</p>
+    <div class="gres" id="gRes"></div>
+    <div class="row" style="justify-content:space-between"><p class="label">カード図鑑</p><span class="muted" style="font-size:12px" id="gOwned"></span></div>
+    <div class="gbook" id="gBook"></div>
+    <button class="ghost" id="gBack">もどる</button>
   </section>
 
   <!-- BOUT -->
@@ -355,6 +413,7 @@ function migrate(s){if(!s)return s;if(!s.face){s.face=defaultFace();if(typeof s.
   if(s.age0===undefined)Object.assign(s,profileSeed(s.type));if(!s.id)s.id='r'+Date.now().toString(36)+Math.floor(Math.random()*1e4);if(!s.touched)s.touched=Date.now();return s;}
 function loadRoster(){
   try{const r=JSON.parse(localStorage.getItem(ROSTER_KEY)||'null');if(r&&r.list){roster=r;}}catch(e){}
+  if(roster.money===undefined)roster.money=300;if(!roster.cards)roster.cards={};
   if(!Object.keys(roster.list).length){try{const old=JSON.parse(localStorage.getItem(KEY)||'null');if(old&&old.name){const m=migrate(old);roster.list[m.id]=m;roster.active=m.id;}}catch(e){}}
   for(const id in roster.list)migrate(roster.list[id]);
 }
@@ -812,7 +871,7 @@ function stepCushions(g,dt){
 }
 
 /* ---------- screens ---------- */
-const SCR=['sTitle','sCreate','sHome','sBout','sResult'];let cur='sTitle';
+const SCR=['sTitle','sCreate','sHome','sBout','sResult','sGacha'];let cur='sTitle';
 function show(id){for(const s of SCR)$(s).hidden=s!==id;cur=id;window.scrollTo(0,0);}
 
 /* ---------- title ---------- */
@@ -835,6 +894,7 @@ function renderTitle(){
     del.addEventListener('click',()=>{if(!del.classList.contains('armed')){del.classList.add('armed');del.textContent='本当に引退？もう一度押す';setTimeout(()=>{del.classList.remove('armed');del.textContent='引退させる';},3000);return;}
       delete roster.list[id];if(roster.active===id)roster.active=null;if(st&&st.id===id)st=null;saveRoster();renderTitle();});
     btns.append(go,del);card.append(img,info,btns);box.append(card);}
+  $('tMoney').textContent=roster.money||0;
   $('newBtn').textContent=ids.length?'新しい力士を入門させる':'新弟子として入門する';$('newBtn').className=ids.length?'ghost':'primary';
   show('sTitle');hero=makeCanvas($('heroCv'),.75);
 }
@@ -849,7 +909,7 @@ function drawHero(t){
 /* ---------- create ---------- */
 const START={oshi:{oshi:14,chikara:10,waza:8,hayasa:10,kg:100},yotsu:{oshi:9,chikara:14,waza:10,hayasa:8,kg:106},waza:{oshi:8,chikara:8,waza:14,hayasa:13,kg:88}};
 let draftFace=randFace(),facePrev=null,facePop=0;
-function openCreate(){$('nameIn').value=pick(NAMES);draftFace=randFace();buildFaceOpts();show('sCreate');facePrev=makeCanvas($('facePrev'),1);}
+function openCreate(){const a15=$('a15');if(a15)a15.checked=true;$('nameIn').value=pick(NAMES);draftFace=randFace();buildFaceOpts();show('sCreate');facePrev=makeCanvas($('facePrev'),1);}
 function buildFaceOpts(){
   const box=$('faceOpts');box.innerHTML='';
   for(const k in FACE_OPTS){const o=FACE_OPTS[k];const row=document.createElement('div');row.className='fopt';
@@ -870,9 +930,10 @@ function drawFacePrev(t){
 function enter(){
   const name=($('nameIn').value||'').trim()||pick(NAMES);
   const type=document.querySelector('input[name=type]:checked').value;const s0=START[type];
-  st={id:'r'+Date.now().toString(36)+Math.floor(Math.random()*1e4),name,type,stats:{oshi:s0.oshi,chikara:s0.chikara,waza:s0.waza,hayasa:s0.hayasa},kg:s0.kg,fat:10,inj:0,pos:0,b:0,used:0,
-      hist:[],yusho:0,makuYusho:0,kadoban:false,log:[],basho:null,face:Object.assign({},draftFace),...profileSeed(type)};
-  addLog('親方「今日からお前は'+name+'だ。まずは序ノ口で勝ち越せ」');
+  const age=+document.querySelector('input[name=age]:checked').value,AB=AGE_START[age];
+  st={id:'r'+Date.now().toString(36)+Math.floor(Math.random()*1e4),name,type,stats:{oshi:s0.oshi+AB.b,chikara:s0.chikara+AB.b,waza:s0.waza+AB.b,hayasa:s0.hayasa+AB.b},kg:s0.kg+AB.kg,fat:10,inj:0,pos:AB.pos,b:0,used:0,
+      hist:[],yusho:0,makuYusho:0,kadoban:false,log:[],basho:null,deck:[],face:Object.assign({},draftFace),...profileSeed(type),age0:age};
+  addLog(age===22?'親方「大学で鍛えた体だ。三段目付出から一気に駆け上がれ」':age===18?'親方「高校相撲の経験を生かせ。まずは序ノ口で勝ち越しだ」':'親方「今日からお前は'+name+'だ。若さが武器だ、とことん鍛えるぞ」');
   persist();facePrev=null;renderHome();
 }
 
@@ -909,12 +970,13 @@ function renderHome(){
   row('疲れ',st.fat,100,Math.round(st.fat),'fat');
   lastGain={};
   if(st.inj>0){const d=document.createElement('p');d.style.cssText='font-size:12.5px;color:#ff8a80';d.textContent='けがをしている。休めば治る（このままだと本場所で力が出ない）';sb.append(d);}
-  $('hPower').textContent='総合力 '+Math.round((st.stats.oshi+st.stats.chikara+st.stats.waza+st.stats.hayasa)/4+(st.kg-90)*.1);
+  $('hPower').textContent=growthLabel(ageOf(st))+'（成長×'+ageGrowth(ageOf(st)).toFixed(2)+'）　総合力 '+Math.round((st.stats.oshi+st.stats.chikara+st.stats.waza+st.stats.hayasa)/4+(st.kg-90)*.1);
   const ab=$('hActs');ab.innerHTML='';const done=st.used>=TURNS;
   for(const a of ACTS){const b=document.createElement('button');b.type='button';b.disabled=done;
     b.innerHTML='<span class="k"></span><b></b><span class="d"></span>';b.children[0].textContent=a.k;b.children[1].textContent=a.name;b.children[2].textContent=a.desc;
     b.addEventListener('click',()=>train(a));ab.append(b);}
   $('bashoBtn').hidden=!done;$('bashoBtn').textContent=BASHO[st.b%6]+'へ（'+r.bouts+'番）';
+  renderDeck();
   const lg=$('hLog');lg.innerHTML='';for(const t of st.log){const p=document.createElement('p');p.textContent=t;lg.append(p);}
   const ht=$('hHist');ht.innerHTML='';
   if(!st.hist.length){const tr=ht.insertRow();const td=tr.insertCell();td.textContent='まだ本場所に出ていない';td.style.color='#5b5246';}
@@ -951,15 +1013,15 @@ function drawAvatar(t,dt){
   if(zz){g.fillStyle='#5b5246';g.font='700 '+Math.round(u*.32)+'px "Zen Kaku Gothic New",sans-serif';for(let i=0;i<3;i++){const p=(t*.8+i/3)%1;g.globalAlpha=1-p;g.fillText('Z',x0+u*.6+p*u*.6,y0-u*2.1-p*u*.8);}g.globalAlpha=1;}
 }
 function train(a){
-  if(st.used>=TURNS)return;st.used++;let msg='';
-  if(a.rest){st.fat=Math.max(0,st.fat+a.fat);if(st.inj>0){st.inj=0;msg='ゆっくり休んで、けがが治った。';}else msg=pick(['よく眠った。体が軽い。','部屋の掃除をして英気を養った。','近所のお寺で静かに過ごした。']);}
-  else if(a.kg){const g=a.kg+rnd(-.5,1);st.kg=Math.min(200,st.kg+g);lastGain.kg=g;st.fat=Math.max(0,st.fat+a.fat);msg=pick(['ちゃんこを五杯おかわりした。','タニマチから牛肉の差し入れ。','兄弟子と鍋を囲んだ。']);}
+  if(st.used>=TURNS)return;st.used++;let msg='';const D=deckFx(),AG=ageGrowth(ageOf(st));
+  if(a.rest){st.fat=Math.max(0,st.fat+a.fat*(1+D.rest));if(st.inj>0){st.inj=0;msg='ゆっくり休んで、けがが治った。';}else msg=pick(['よく眠った。体が軽い。','部屋の掃除をして英気を養った。','近所のお寺で静かに過ごした。']);}
+  else if(a.kg){const g=(a.kg+rnd(-.5,1))*(1+D.kg);st.kg=Math.min(200,st.kg+g);lastGain.kg=g;st.fat=Math.max(0,st.fat+a.fat*(1+D.rest));msg=pick(['ちゃんこを五杯おかわりした。','タニマチから牛肉の差し入れ。','兄弟子と鍋を囲んだ。']);}
   else{const tired=st.fat>75;
-    if(tired&&Math.random()<.3){st.inj=1;st.fat=Math.min(100,st.fat+a.fat);msg='無理がたたってけがをした……。休んで治そう。';}
-    else{const crit=Math.random()<.12;const mul=(crit?2:1)*(st.inj?.5:1)*(tired?.6:1);const parts=[];
-      for(const k in a.gain){const g=a.gain[k]*rnd(1.6,2.6)*(1-st.stats[k]/120)*mul;st.stats[k]+=g;lastGain[k]=g;parts.push(STAT_LABEL[k]+' +'+g.toFixed(1));}
+    if(tired&&Math.random()<.3*(1+D.inj)){st.inj=1;st.fat=Math.min(100,st.fat+a.fat*(1+D.fat));msg='無理がたたってけがをした……。休んで治そう。';}
+    else{const crit=Math.random()<.12+D.crit;const mul=(crit?2:1)*(st.inj?.5:1)*(tired?.6:1);const parts=[];
+      for(const k in a.gain){const g=a.gain[k]*rnd(1.6,2.6)*(1-st.stats[k]/120)*mul*AG*(1+D.all+(D[a.id]||0));st.stats[k]+=g;lastGain[k]=g;parts.push(STAT_LABEL[k]+' +'+g.toFixed(1));}
       if(a.id==='moushi'||a.id==='shiko')st.kg=Math.min(200,st.kg+.4);
-      st.fat=Math.min(100,st.fat+a.fat);
+      st.fat=Math.min(100,st.fat+a.fat*(1+D.fat));
       msg=(crit?'親方「今日の'+a.name+'はいいぞ！」　':a.name+'をこなした。　')+parts.join('　')+(tired?'（疲れで身が入らない）':'');}}
   addLog(msg);persist();
   const act={id:a.id,t:0,dur:a.id==='rest'?2.4:1.5};
@@ -1029,7 +1091,7 @@ const TL={out:{imp:.16,drive:1.0,edge:1.45,land:1.8,end:2.5},down:{imp:.16,drive
 function resolve(q){
   const o=B.opp,s=B.strat;
   const ostrat=Math.random()<.65?o.style:pick(['oshi','yotsu','waza']);
-  let me=power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q]);
+  const D=deckFx();let me=power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q])+D.power+(q!=='late'?D.tachi:0);
   const op=power(o.stats,o.kg,ostrat,0,0);
   if(BEATS[s]===ostrat)me+=7;else if(BEATS[ostrat]===s)me-=7;
   const win=Math.random()<1/(1+Math.exp(-(me-op)/5));
@@ -1037,7 +1099,7 @@ function resolve(q){
   const kind=ws==='waza'&&km!=='送り出し'?'slap':km.includes('投げ')?'throw':km.includes('倒し')?'down':'out';
   st.fat=Math.min(100,st.fat+2.5);
   const k=win?{oshi:'oshi',yotsu:'chikara',waza:'waza'}[s]:null;if(k)st.stats[k]+=.25*(1-st.stats[k]/120);
-  if(win){B.w++;B.marks+='○';}else{B.l++;B.marks+='●';}B.day++;
+  if(win){B.w++;B.marks+='○';B.earn=(B.earn||0)+earn(st.pos>=MAKU?50:st.pos>=JURYO?30:10);}else{B.l++;B.marks+='●';}B.day++;
   const upset=win&&o.pos-st.pos>=6;
   anim={phase:'clash',t:0,win,km,ws,kind,tq:q,TL:TL[kind],dw:win?1:-1,c0:(q==='sharp'?.03:q==='late'?-.03:0),hit:{},freeze:0,upset,thrust:ws==='oshi'};
   persist();
@@ -1232,14 +1294,17 @@ function endBasho(){
   if(yusho){st.yusho++;if(old>=MAKU)st.makuYusho++;}
   const when=(Math.floor(st.b/6)+1)+'年目 '+BASHO[st.b%6];
   st.hist.push({when,rank:r.name,pos:old,w,l,yusho});
+  if(w>l)B.earn=(B.earn||0)+earn(30);if(yusho)B.earn=(B.earn||0)+earn(old>=MAKU?300:150);
   st.pos=p;st.b++;st.used=0;st.basho=null;st.fat=Math.max(0,st.fat-25);
+  if(st.b%6===0&&ageOf(st)>=31){for(const k in st.stats)st.stats[k]*=.97;addLog(ageOf(st)+'歳になった。体の衰えを感じる……（能力 −3%）');}
+  else if(st.b%6===0)addLog(ageOf(st)+'歳になった。');
   $('rBasho').textContent=when;
   const big=$('rBig');big.textContent=yusho?(old>=MAKU?'幕内優勝':r.div+'優勝'):w>l?'勝ち越し':'負け越し';
   big.className='result-big '+(yusho||p>old?'gold':w>l?'':'down');
   $('rHoshi').textContent=B.marks+'　'+w+'勝'+l+'敗';
   if(!msg){if(old<JURYO&&p>=JURYO)msg='十両昇進！ 関取の仲間入り。大銀杏を結い、絹のまわしを締められる。';else if(old<MAKU&&p>=MAKU)msg='新入幕！ 幕内の土俵に上がる。';
     else if(old<KOMU&&p>=KOMU)msg='新三役！ 小結に昇進した。';else msg=w>l?pick(['この調子で上を目指そう。','親方「まずまずだな」']):pick(['悔しさを稽古にぶつけよう。','親方「下を向くな、四股を踏め」']);}
-  $('rMsg').textContent=msg;
+  $('rMsg').textContent=msg+(B.earn?'　ご祝儀 +'+B.earn:'');
   const vp=(el,pos)=>{el.innerHTML='';const s=document.createElement('small');s.textContent=side(pos);const n=document.createElement('span');n.textContent=rank(pos).name;el.append(s,n);};
   vp($('rOld'),old);vp($('rNew'),p);
   addLog(when+'は'+w+'勝'+l+'敗。'+msg);
@@ -1263,6 +1328,85 @@ function drawResult(t,dt){
   else drawRikishi(g,W*.5,H*.88,u,1,{lean:.35+Math.sin(t*1.2)*.02,crouch:.22,armF:0,armB:0,expr:'lose',headJolt:.15,t},L);
 }
 
+/* ---------- entry age ---------- */
+const AGE_START={15:{b:0,kg:0,pos:0},18:{b:5,kg:8,pos:0},22:{b:13,kg:16,pos:60}};
+function ageGrowth(age){return age<=20?1.2:age<=25?1.0:age<=29?.85:age<=32?.6:.35;}
+function growthLabel(age){const g=ageGrowth(age);return g>=1.2?'伸び盛り':g>=1?'充実期':g>=.85?'円熟期':g>=.6?'ベテラン':'晩年';}
+
+/* ---------- support cards & gacha ---------- */
+const CARDS=[
+  {id:'tenrei',   r:'SSR',k:'綱',name:'元横綱 天嶺',          role:'親方',     desc:'すべての稽古 +25%・会心の稽古が出やすい',fx:{all:.25,crit:.08}},
+  {id:'onigawara',r:'SSR',k:'親',name:'名伯楽 鬼瓦親方',      role:'親方',     desc:'四股・てっぽう +35%・けがをしにくい',  fx:{shiko:.35,teppo:.35,inj:-.5}},
+  {id:'okami',    r:'SSR',k:'谷',name:'大タニマチ 銀座の女将',role:'タニマチ', desc:'ちゃんこの増量 +50%・ご祝儀 +50%',     fx:{kg:.5,money:.5}},
+  {id:'goryo',    r:'SR', k:'兄',name:'兄弟子 剛ノ嶺',        role:'兄弟子',   desc:'てっぽう +30%・取組の力 +1',            fx:{teppo:.3,power:1}},
+  {id:'maizuru',  r:'SR', k:'技',name:'技能派の兄弟子 舞鶴',  role:'兄弟子',   desc:'申し合い +30%',                          fx:{moushi:.3}},
+  {id:'saeki',    r:'SR', k:'ト',name:'トレーナー 佐伯',      role:'トレーナー',desc:'すり足 +30%・疲れにくい（−20%）',       fx:{suri:.3,fat:-.2}},
+  {id:'onabe',    r:'SR', k:'鍋',name:'ちゃんこ番 大鍋',      role:'裏方',     desc:'ちゃんこの増量 +40%・休むと疲れがよく取れる',fx:{kg:.4,rest:.3}},
+  {id:'kotaro',   r:'R',  k:'付',name:'付け人 小太郎',        role:'付け人',   desc:'疲れにくい（−10%）',                    fx:{fat:-.1}},
+  {id:'yui',      r:'R',  k:'髪',name:'床山 結',              role:'床山',     desc:'立ち合いが少し鋭くなる',                fx:{tachi:2}},
+  {id:'kaicho',   r:'R',  k:'会',name:'後援会長',             role:'後援者',   desc:'ご祝儀 +20%',                            fx:{money:.2}},
+  {id:'iwami',    r:'R',  k:'先',name:'部屋の先輩 岩見',      role:'兄弟子',   desc:'四股 +15%',                              fx:{shiko:.15}},
+  {id:'hibiki',   r:'R',  k:'呼',name:'呼出 響',              role:'呼出',     desc:'取組の力 +1',                            fx:{power:1}},
+  {id:'kodomo',   r:'N',  k:'子',name:'近所の子ども',         role:'ファン',   desc:'すべての稽古 +5%',                       fx:{all:.05}},
+  {id:'obaachan', r:'N',  k:'婆',name:'相撲好きのおばあちゃん',role:'ファン',  desc:'休むと疲れがよく取れる',                 fx:{rest:.15}},
+  {id:'nakama',   r:'N',  k:'仲',name:'新弟子仲間',           role:'同期',     desc:'すり足 +10%',                            fx:{suri:.1}},
+  {id:'minarai',  r:'N',  k:'箒',name:'見習い呼出',           role:'呼出',     desc:'申し合い +10%',                          fx:{moushi:.1}},
+];
+const CARD=Object.fromEntries(CARDS.map(c=>[c.id,c]));
+const RATES=[['SSR',.03],['SR',.12],['R',.35],['N',.5]];
+const PULL1=100,PULL10=900,MAXLV=5;
+const cardLv=id=>Math.min(MAXLV,roster.cards[id]||0);
+function deckFx(){const D={all:0,crit:0,inj:0,kg:0,money:0,fat:0,rest:0,power:0,tachi:0,shiko:0,teppo:0,suri:0,moushi:0};
+  if(!st||!st.deck)return D;
+  for(const id of st.deck){const c=CARD[id];if(!c||!cardLv(id))continue;const m=1+.2*(cardLv(id)-1);for(const k in c.fx)D[k]+=c.fx[k]*m;}
+  return D;}
+function earn(base){const D=deckFx();const v=Math.round(base*(1+D.money));roster.money=(roster.money||0)+v;return v;}
+function drawOne(guarantee){let r=Math.random(),rar='N';for(const[k,p]of RATES){if(r<p){rar=k;break;}r-=p;}
+  if(guarantee&&(rar==='R'||rar==='N'))rar='SR';
+  const c=pick(CARDS.filter(x=>x.r===rar));const isNew=!roster.cards[c.id];roster.cards[c.id]=(roster.cards[c.id]||0)+1;return{c,isNew};}
+function pull(n){const cost=n===10?PULL10:PULL1;if((roster.money||0)<cost)return;roster.money-=cost;const res=[];
+  for(let i=0;i<n;i++){const last=n===10&&i===9&&!res.some(x=>x.c.r==='SR'||x.c.r==='SSR');res.push(drawOne(last));}
+  saveRoster();renderGacha(res);}
+function cardEl(c,opts={}){
+  const lv=opts.lv!==undefined?opts.lv:cardLv(c.id),own=lv>0||opts.force;
+  const el=document.createElement('div');el.className='scard r-'+c.r+(own?'':' locked');
+  el.innerHTML='<span class="rar"></span><span class="kk"></span><span class="cn"></span><span class="cr"></span><span class="cd"></span><span class="stars"></span>';
+  el.querySelector('.rar').textContent=c.r;el.querySelector('.kk').textContent=own?c.k:'？';
+  el.querySelector('.cn').textContent=own?c.name:'？？？';el.querySelector('.cr').textContent=own?c.role:'';
+  el.querySelector('.cd').textContent=own?c.desc:'まだ持っていない';el.querySelector('.stars').textContent=own?'★'.repeat(Math.max(1,lv))+'☆'.repeat(MAXLV-Math.max(1,lv)):'';
+  if(opts.isNew){const nb=document.createElement('span');nb.className='newb';nb.textContent='NEW';el.append(nb);}
+  return el;}
+let gachaFrom='sTitle';
+function openGacha(from){gachaFrom=from;renderGacha(null);show('sGacha');}
+function renderGacha(res){
+  $('gMoney').textContent=roster.money||0;
+  $('g1').disabled=(roster.money||0)<PULL1;$('g10').disabled=(roster.money||0)<PULL10;
+  const box=$('gRes');box.innerHTML='';
+  if(res){res.forEach((x,i)=>{const el=cardEl(x.c,{isNew:x.isNew});el.classList.add('reveal');el.style.animationDelay=(i*.12)+'s';box.append(el);});
+    if(res.some(x=>x.c.r==='SSR'))box.classList.add('ssr-hit');else box.classList.remove('ssr-hit');}
+  const book=$('gBook');book.innerHTML='';for(const c of CARDS)book.append(cardEl(c));
+  $('gOwned').textContent=CARDS.filter(c=>cardLv(c.id)).length+' / '+CARDS.length;
+}
+/* deck on the home screen: three slots */
+let pickSlot=null;
+function renderDeck(){
+  if(!st.deck)st.deck=[];
+  const box=$('hDeck');box.innerHTML='';
+  for(let i=0;i<3;i++){const id=st.deck[i],b=document.createElement('button');b.type='button';b.className='slot'+(pickSlot===i?' on':'');
+    if(id&&CARD[id]){const c=CARD[id];b.classList.add('r-'+c.r);b.innerHTML='<span class="kk"></span><span class="sn"></span><span class="ss"></span>';
+      b.querySelector('.kk').textContent=c.k;b.querySelector('.sn').textContent=c.name;b.querySelector('.ss').textContent=c.r+' ★'+cardLv(id);}
+    else b.innerHTML='<span class="empty">＋ 空き</span>';
+    b.addEventListener('click',()=>{pickSlot=pickSlot===i?null:i;renderDeck();});box.append(b);}
+  const pk=$('hPick');pk.innerHTML='';pk.hidden=pickSlot===null;
+  if(pickSlot!==null){
+    const owned=CARDS.filter(c=>cardLv(c.id)&&!st.deck.includes(c.id)).sort((a,b)=>'SSR SR R N'.indexOf(a.r)-'SSR SR R N'.indexOf(b.r));
+    if(st.deck[pickSlot]){const rm=document.createElement('button');rm.type='button';rm.className='ghost';rm.textContent='このカードを外す';
+      rm.addEventListener('click',()=>{st.deck.splice(pickSlot,1);pickSlot=null;persist();renderDeck();});pk.append(rm);}
+    if(!owned.length){const p=document.createElement('p');p.className='muted';p.style.fontSize='12.5px';p.textContent='付けられるカードがない。ご祝儀ガチャで手に入れよう。';pk.append(p);}
+    for(const c of owned){const el=cardEl(c);el.classList.add('pickable');el.addEventListener('click',()=>{st.deck[pickSlot]=c.id;st.deck=st.deck.filter(Boolean);pickSlot=null;persist();renderDeck();});pk.append(el);}
+  }
+}
+
 /* ---------- loop ---------- */
 let last=performance.now();
 function loop(now){
@@ -1280,6 +1424,10 @@ addEventListener('resize',()=>{crowdCache=null;if(cur==='sTitle')hero=makeCanvas
 
 /* ---------- wire ---------- */
 $('newBtn').addEventListener('click',openCreate);
+$('tGacha').addEventListener('click',()=>{loadRoster();openGacha('sTitle');});
+$('hGacha').addEventListener('click',()=>{persist();openGacha('sHome');});
+$('g1').addEventListener('click',()=>pull(1));$('g10').addEventListener('click',()=>pull(10));
+$('gBack').addEventListener('click',()=>{if(gachaFrom==='sHome'&&st)renderHome();else renderTitle();});
 $('randName').addEventListener('click',()=>{$('nameIn').value=pick(NAMES);});
 $('faceRand').addEventListener('click',()=>{draftFace=randFace();buildFaceOpts();facePop=1;});
 $('enterBtn').addEventListener('click',enter);
