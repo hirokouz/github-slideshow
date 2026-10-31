@@ -525,6 +525,7 @@ details.more summary::after{content:'▾';color:var(--kin)}details.more[open] su
 </div>
 
 <script src="faces.js"></script>
+<script src="cast.js"></script>
 <script>
 (()=>{
 "use strict";
@@ -611,7 +612,8 @@ function lookFor(kg,pos,face,mawashi,height,ctx,b){const h=height||182,bmi=kg/((
   const hair=ctx==='keiko'?(young&&!seki?'zan':'chon'):seki?'oicho':(young?'zan':'chon');
   const maw=mawashi||(!seki?'#26262e':ctx==='keiko'?'#efeadc':(silkOf(face)||mawashiFor(pos)));
   const so=face&&face.img&&AIF[face.img];const sprite=so&&so.side?(seki?so.side:so.sideLow):null;
-  return{w:clamp(.6+(bmi-34)*.026,.5,1.18),hs:clamp(h/182,.9,1.1),face,skin:SKIN[face.skin],mawashi:maw,tsuna:ctx==='ceremony'&&pos>=YOKO,oicho:hair==='oicho',hair,sprite,sm:so&&so.meta};}
+  const pk=seki&&ctx!=='keiko'?'seki':'low',poses=so&&so.poses?so.poses[pk]:null,poseH=poses?so.meta.poses[pk].map(p=>p.h):null;
+  return{w:clamp(.6+(bmi-34)*.026,.5,1.18),hs:clamp(h/182,.9,1.1),face,skin:SKIN[face.skin],mawashi:maw,tsuna:ctx==='ceremony'&&pos>=YOKO,oicho:hair==='oicho',hair,sprite,sm:so&&so.meta,poses,poseH};}
 
 /* ===== realistic rendering: shaded capsule limbs, sculpted torso, painted head ===== */
 function capsules(g,pts){
@@ -770,7 +772,18 @@ function drawSpriteRig(g,x,y,u,dir,P,L){
     g.fillStyle='#f2efe6';g.fillRect(-fw*.12,fh*.2,fw*.24,fh*.5);g.restore();}
   g.restore();g.restore();
 }
+/* frame-by-frame: pick the drawn pose that matches the choreography */
+function poseIndex(P){const f=P.fall||0,lean=P.lean||0,c=P.crouch||0,arm=Math.max(P.armF||0,P.armB||0);
+  if(f>.6)return 6;if(f<-.15||(P.expr==='lose'&&lean<.3))return 5;if(P.hd>.5&&c>.75)return 1;if(lean<.3)return 0;
+  if(arm>1.08)return 3;if(lean>=.45&&arm<.62)return 4;return 2;}
+function drawPoseSprite(g,x,y,u,dir,P,L){
+  const i=poseIndex(P),im=L.poses[i];if(!im||!im.complete||!im.naturalWidth)return false;
+  const Hs=u*2.75*(L.poseH[i]||1),Ws=Hs*im.naturalWidth/im.naturalHeight,f=P.fall||0,lift=(f>.6&&f<1.2)?(P.lift||0):Math.max(0,P.lift||0)*(f>.6?0:1);
+  g.save();g.translate(x,y);g.fillStyle='rgba(40,20,5,.28)';g.beginPath();g.ellipse(0,0,Ws*.42,u*.12,0,0,6.283);g.fill();
+  g.translate(0,-lift*u);if(i===5&&f<0)g.rotate(f*.8*dir);g.scale(dir,1);
+  const jig=1+(P.jig||0)*.03;g.scale(jig,1/jig);g.drawImage(im,-Ws/2,-Hs,Ws,Hs);g.restore();return true;}
 function drawRikishi(g,x,y,u,dir,P,L){
+  if(L.poses&&drawPoseSprite(g,x,y,u,dir,P,L))return;
   if(L.sprite&&L.sprite.complete&&L.sprite.naturalWidth)return drawSpriteRig(g,x,y,u,dir,P,L);
   const w=L.w,sk=L.skin,skB=shade(sk,-.12),lift=P.lift||0,jig=P.jig||0,t=P.t||0;
   const X=v=>v*u*w,Y=v=>v*u;
@@ -852,13 +865,16 @@ const EL=(x,y,rx,ry,rot)=>g=>{g.moveTo(x+rx*Math.cos(rot||0),y+rx*Math.sin(rot||
 function seeded(n){let s=n>>>0||1;return()=>{s^=s<<13;s>>>=0;s^=s>>17;s^=s<<5;s>>>=0;return s/4294967296;};}
 const portraitCache=new Map();let grainCache=null;
 const AIF={};
-for(const f of [...(window.AI_CHARS||[]),...(window.AI_FACES||[])]){const o={meta:f,img:new Image(),ex:{}};o.img.src=f.src;if(f.ring){o.ring=new Image();o.ring.src=f.ring;}if(f.side){o.side=new Image();o.side.src=f.side;o.sideLow=new Image();o.sideLow.src=f.sideLow;}if(f.ex)for(const k in f.ex){const im=new Image();im.src=f.ex[k];o.ex[k]=im;}AIF[f.id]=o;}
+const IMG=u=>{const im=new Image();im.src=u;return im;};
+for(const f of [...(window.AI_CAST||[]),...(window.AI_CHARS||[]),...(window.AI_FACES||[])]){const o={meta:f,img:new Image(),ex:{}};o.img.src=f.src;
+  if(f.faces){o.faces={};for(const k in f.faces)o.faces[k]=IMG(f.faces[k]);o.poses={low:f.poses.low.map(p=>IMG(p.src)),seki:f.poses.seki.map(p=>IMG(p.src))};}if(f.ring){o.ring=new Image();o.ring.src=f.ring;}if(f.side){o.side=new Image();o.side.src=f.side;o.sideLow=new Image();o.sideLow.src=f.sideLow;}if(f.ex)for(const k in f.ex){const im=new Image();im.src=f.ex[k];o.ex[k]=im;}AIF[f.id]=o;}
 const EXMAP={blink:'blink',sleep:'blink',happy:'happy',win:'happy',lose:'lose',strain:'strain',surprise:'surprise',normal:'normal'};
 function aiReady(F){const o=F&&F.img&&AIF[F.img];return o&&o.img.complete&&o.img.naturalWidth>0?o:null;}
 function portrait(F,expr,oicho,N){
   const o=aiReady(F);
-  if(o){const k=EXMAP[expr]||'normal';let im=o.ex[k]&&o.ex[k].complete&&o.ex[k].naturalWidth?o.ex[k]:o.img;
-    const key='ai,'+F.img+','+(im===o.img?'base':k)+','+N;let c=portraitCache.get(key);if(c)return c;
+  if(o){const k=EXMAP[expr]||'normal';let im=o.ex[k]&&o.ex[k].complete&&o.ex[k].naturalWidth?o.ex[k]:o.img;let hk='';
+    if(o.faces&&im===o.img){hk=oicho===true?'oicho':(st&&F===st.face&&st.b<4&&st.pos<JURYO)?'zan':'chon';const fi=o.faces[hk];if(fi&&fi.complete&&fi.naturalWidth)im=fi;}
+    const key='ai,'+F.img+','+(im===o.img?'base':k)+hk+','+N;let c=portraitCache.get(key);if(c)return c;
     c=document.createElement('canvas');c.width=c.height=N;c.getContext('2d').drawImage(im,0,0,N,N);c.isAi=true;
     if(portraitCache.size>48)portraitCache.clear();portraitCache.set(key,c);return c;}
   const key=[F.shape,F.brow,F.eye,F.nose,F.mouth,F.extra,F.skin,expr,oicho?1:0,N].join(',');
@@ -1608,7 +1624,9 @@ function endBasho(){
 /* full-body illustrations for the banzuke announcement and the yusho screen */
 const BODY={};for(const b of (window.AI_BODIES||[])){const im=new Image();im.src=b.src;BODY[b.id]={meta:b,img:im};}
 for(const c of (window.AI_CHARS||[])){const im=new Image();im.src=c.body;BODY['b_'+c.id]={meta:{id:'b_'+c.id,build:c.build,skin:c.skin,own:c.id,dark:c.darkBody,waist:c.waist,formal:c.formal},img:im};}
-function pickBody(s){const own=s.face&&s.face.img&&BODY['b_'+s.face.img];
+for(const c of (window.AI_CAST||[]))c.bodies.forEach((u,i)=>{BODY['b_'+c.id+'_'+i]={meta:{id:'b_'+c.id+'_'+i,build:i===5?'yokozuna':c.build,skin:c.skin,own:c.id,dark:i<2,waist:.36},img:IMG(u)};});
+function pickBody(s){const cid=s.face&&s.face.img;if(cid&&BODY['b_'+cid+'_0']){const k=s.pos>=YOKO?5:s.pos>=JURYO?4:(s.b<4?0:1);return 'b_'+cid+'_'+k;}
+  const own=s.face&&s.face.img&&BODY['b_'+s.face.img];
   // only the rikishi's own body; below juryo it is shown only once art in black cotton exists
   if(own&&(s.pos>=JURYO||own.meta.dark))return own.meta.id;return null;}
 function drawResult(t,dt){
