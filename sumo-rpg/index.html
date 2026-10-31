@@ -867,13 +867,15 @@ const portraitCache=new Map();let grainCache=null;
 const AIF={};
 const IMG=u=>{const im=new Image();im.src=u;return im;};
 for(const f of [...(window.AI_CAST||[]),...(window.AI_CHARS||[]),...(window.AI_FACES||[])]){const o={meta:f,img:new Image(),ex:{}};o.img.src=f.src;
-  if(f.faces){o.faces={};for(const k in f.faces)o.faces[k]=IMG(f.faces[k]);o.poses={low:f.poses.low.map(p=>IMG(p.src)),seki:f.poses.seki.map(p=>IMG(p.src))};}if(f.ring){o.ring=new Image();o.ring.src=f.ring;}if(f.side){o.side=new Image();o.side.src=f.side;o.sideLow=new Image();o.sideLow.src=f.sideLow;}if(f.ex)for(const k in f.ex){const im=new Image();im.src=f.ex[k];o.ex[k]=im;}AIF[f.id]=o;}
+  if(f.faces){o.faces={};for(const k in f.faces)o.faces[k]=IMG(f.faces[k]);o.poses={low:f.poses.low.map(p=>IMG(p.src)),seki:f.poses.seki.map(p=>IMG(p.src))};}
+  if(f.exprs){o.exprs={};for(const h in f.exprs){o.exprs[h]={};for(const e in f.exprs[h])o.exprs[h][e]=IMG(f.exprs[h][e]);}}if(f.ring){o.ring=new Image();o.ring.src=f.ring;}if(f.side){o.side=new Image();o.side.src=f.side;o.sideLow=new Image();o.sideLow.src=f.sideLow;}if(f.ex)for(const k in f.ex){const im=new Image();im.src=f.ex[k];o.ex[k]=im;}AIF[f.id]=o;}
 const EXMAP={blink:'blink',sleep:'blink',happy:'happy',win:'happy',lose:'lose',strain:'strain',surprise:'surprise',normal:'normal'};
 function aiReady(F){const o=F&&F.img&&AIF[F.img];return o&&o.img.complete&&o.img.naturalWidth>0?o:null;}
 function portrait(F,expr,oicho,N){
   const o=aiReady(F);
   if(o){const k=EXMAP[expr]||'normal';let im=o.ex[k]&&o.ex[k].complete&&o.ex[k].naturalWidth?o.ex[k]:o.img;let hk='';
-    if(o.faces&&im===o.img){hk=oicho===true?'oicho':(st&&F===st.face&&st.b<4&&st.pos<JURYO)?'zan':'chon';const fi=o.faces[hk];if(fi&&fi.complete&&fi.naturalWidth)im=fi;}
+    if(o.exprs){hk=oicho===true?'oicho':(st&&F===st.face&&st.b<4&&st.pos<JURYO)?'zan':'chon';const set=o.exprs[hk]||o.exprs.chon,ok=x=>x&&x.complete&&x.naturalWidth;im=ok(set[k])?set[k]:ok(set.normal)?set.normal:im;hk+=k;}
+    else if(o.faces&&im===o.img){hk=oicho===true?'oicho':(st&&F===st.face&&st.b<4&&st.pos<JURYO)?'zan':'chon';const fi=o.faces[hk];if(fi&&fi.complete&&fi.naturalWidth)im=fi;}
     const key='ai,'+F.img+','+(im===o.img?'base':k)+hk+','+N;let c=portraitCache.get(key);if(c)return c;
     c=document.createElement('canvas');c.width=c.height=N;c.getContext('2d').drawImage(im,0,0,N,N);c.isAi=true;
     if(portraitCache.size>48)portraitCache.clear();portraitCache.set(key,c);return c;}
