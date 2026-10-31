@@ -806,7 +806,7 @@ function drawRikishi(g,x,y,u,dir,P,L){
   // thick neck rising into the head
   const ng=g.createLinearGradient(X(-.1),0,X(.4),0);ng.addColorStop(0,shade(sk,-.22));ng.addColorStop(1,shade(sk,-.02));
   g.fillStyle=ng;g.beginPath();g.ellipse(X(.14),Y(-1.38),.3*u*w,.2*u,0,0,6.283);g.fill();
-  g.save();g.translate(X(.2)+.05*u,-1.62*u);g.rotate(-P.lean*.72+(P.headJolt||0));drawHead(g,.3*u,L.face,.62,P.expr||'normal',L.hair||(L.oicho?'oicho':'chon'));g.restore();
+  g.save();g.translate(X(.2)+.05*u,-1.62*u);g.rotate(-P.lean*.72+(P.headJolt||0));{const RI=ringImg(L.face);if(RI)drawRingHead(g,RI,u,L);else drawHead(g,.3*u,L.face,.62,P.expr||'normal',L.hair||(L.oicho?'oicho':'chon'));}g.restore();
   // front arm
   const H=arm(P.armF,1,sk);
   if(P.bowl){const ax=H[0],ay=H[1];g.fillStyle='#6b3a1e';g.beginPath();g.ellipse(ax+.05*u,ay-.08*u,.24*u,.12*u,0,0,Math.PI);g.fill();g.fillStyle='#f1e2c2';g.beginPath();g.ellipse(ax+.05*u,ay-.08*u,.24*u,.05*u,0,0,6.283);g.fill();
@@ -823,7 +823,7 @@ const EL=(x,y,rx,ry,rot)=>g=>{g.moveTo(x+rx*Math.cos(rot||0),y+rx*Math.sin(rot||
 function seeded(n){let s=n>>>0||1;return()=>{s^=s<<13;s>>>=0;s^=s>>17;s^=s<<5;s>>>=0;return s/4294967296;};}
 const portraitCache=new Map();let grainCache=null;
 const AIF={};
-for(const f of [...(window.AI_CHARS||[]),...(window.AI_FACES||[])]){const o={meta:f,img:new Image(),ex:{}};o.img.src=f.src;if(f.ex)for(const k in f.ex){const im=new Image();im.src=f.ex[k];o.ex[k]=im;}AIF[f.id]=o;}
+for(const f of [...(window.AI_CHARS||[]),...(window.AI_FACES||[])]){const o={meta:f,img:new Image(),ex:{}};o.img.src=f.src;if(f.ring){o.ring=new Image();o.ring.src=f.ring;}if(f.ex)for(const k in f.ex){const im=new Image();im.src=f.ex[k];o.ex[k]=im;}AIF[f.id]=o;}
 const EXMAP={blink:'blink',sleep:'blink',happy:'happy',win:'happy',lose:'lose',strain:'strain',surprise:'surprise',normal:'normal'};
 function aiReady(F){const o=F&&F.img&&AIF[F.img];return o&&o.img.complete&&o.img.naturalWidth>0?o:null;}
 function portrait(F,expr,oicho,N){
@@ -985,6 +985,17 @@ function paintPortrait(g,N,F,expr,oicho){
   // ---- skin grain over everything skin-coloured ----
   const tmp=document.createElement('canvas');tmp.width=tmp.height=N;const tg=tmp.getContext('2d');tg.drawImage(grain(N),0,0);tg.globalCompositeOperation='destination-in';tg.drawImage(g.canvas,0,0);
   g.save();g.globalCompositeOperation='soft-light';g.globalAlpha=.28;g.drawImage(tmp,0,0);g.restore();
+}
+/* the chosen illustration as the head of the in-ring figure */
+function ringImg(face){const o=face&&face.img&&AIF[face.img];return o&&o.ring&&o.ring.complete&&o.ring.naturalWidth?o.ring:null;}
+function drawRingHead(g,im,u,L){const S=u*1.08;
+  g.drawImage(im,-S*.52,-S*.56,S,S);
+  if(L.hair==='oicho'){ // sekitori fight with the ōichō: fan it over the illustrated topknot
+    const fw=S*.24,fh=S*.2;g.save();g.translate(-S*.04,-S*.5);
+    const kg=g.createLinearGradient(0,-fh,0,0);kg.addColorStop(0,'#3a322b');kg.addColorStop(1,'#0d0a08');g.fillStyle=kg;
+    g.beginPath();g.moveTo(0,fh*.25);g.quadraticCurveTo(-fw*1.15,-fh*.1,-fw,-fh);g.quadraticCurveTo(0,-fh*1.35,fw,-fh);g.quadraticCurveTo(fw*1.15,-fh*.1,0,fh*.25);g.fill();
+    g.strokeStyle='rgba(255,255,255,.18)';g.lineWidth=Math.max(.6,S*.008);for(let i=-3;i<=3;i++){g.beginPath();g.moveTo(0,fh*.15);g.lineTo(i*fw*.3,-fh*1.05+Math.abs(i)*fh*.08);g.stroke();}
+    g.fillStyle='#f2efe6';g.fillRect(-S*.025,0,S*.05,S*.03);g.restore();}
 }
 function drawGyoji(g,x,y,u,point,t){
   g.save();g.translate(x,y);
