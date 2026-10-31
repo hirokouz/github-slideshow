@@ -1,0 +1,149 @@
+<title>力士の顔サンプル</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yuji+Boku&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+/* Layout: one column of washi cards on the game's indigo ground; a 2-up grid of portraits, then an expression strip. */
+:root{
+  --ai:#0f1630;--washi:#efe6d0;--sumi:#1a1612;--shu:#b3261e;--kin:#e2b04a;--shiro:#f3eee2;--nezumi:#9aa2bd;
+  --f-brush:"Yuji Boku","Hiragino Mincho ProN","Yu Mincho",serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  color-scheme:dark;
+}
+body{margin:0;background:var(--ai);color:var(--shiro);font-family:var(--f-body)}
+.wrap{max-width:760px;margin:0 auto;display:grid;gap:18px;padding-block:24px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{margin:0;font-family:var(--f-brush);font-weight:400;font-size:clamp(34px,8vw,48px);line-height:1.1}
+p{margin:0;line-height:1.7}
+.lead{color:var(--nezumi);font-size:14px;max-width:62ch}
+.label{font-size:11px;letter-spacing:.18em;color:var(--kin);margin:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.card{background:var(--washi);color:var(--sumi);border-radius:6px;padding:12px;display:grid;gap:6px;box-shadow:0 10px 26px rgba(0,0,0,.35)}
+.card svg{width:100%;height:auto;display:block;border-radius:4px}
+.card .no{font-size:11px;color:var(--shu);font-weight:700;letter-spacing:.12em}
+.card .nm{font-family:var(--f-brush);font-size:22px;line-height:1.1}
+.card .ds{font-size:12px;color:#5b5246;line-height:1.55}
+.strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.strip .card{padding:8px;gap:4px}
+.strip .nm{font-size:16px;text-align:center}
+@media (max-width:520px){.strip{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+
+<div class="wrap">
+  <p class="label">YOKOZUNA NO MICHI ／ FACE SAMPLES</p>
+  <h1>力士の顔サンプル</h1>
+  <p class="lead">乙女ゲーム風のアニメ調で描いた試作です。目・眉・髪型・肌・ひげ・ほくろを組み合わせて作っています。気に入った番号を教えてもらえれば、その絵柄でゲームの顔を作り直します。</p>
+  <div class="grid" id="grid"></div>
+  <p class="label">表情の差分（No.1の顔）</p>
+  <div class="strip" id="strip"></div>
+</div>
+
+<script>
+(()=>{
+const SKIN={fair:['#f8dec8','#e8bb9c'],light:['#f0c9a3','#d8a17b'],tan:['#dba77e','#bb835c'],dark:['#bd865f','#976243']};
+const LINE='#4a2a1c';
+let uid=0;
+function face(o){
+  const id='f'+(uid++);const [sk,sh]=SKIN[o.skin];const W=o.jaw||1;   // jaw width factor
+  const X=x=>100+(x-100)*W;
+  const hairC=o.hair||'#1c1824',hairH=o.hairH||'#6b6a8c',irisA=o.irisA||'#24140c',irisB=o.irisB||'#b0743e';
+  const ex=o.ex||'normal';
+  let s=`<svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${o.name||'力士'}の顔">
+  <defs>
+    <radialGradient id="${id}bg" cx="50%" cy="40%" r="70%"><stop offset="0" stop-color="#fff7e6"/><stop offset="1" stop-color="${o.bg||'#e6d3ae'}"/></radialGradient>
+    <linearGradient id="${id}ir" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${irisA}"/><stop offset=".55" stop-color="${irisA}"/><stop offset="1" stop-color="${irisB}"/></linearGradient>
+    <linearGradient id="${id}hr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hairH}"/><stop offset=".35" stop-color="${hairC}"/><stop offset="1" stop-color="${hairC}"/></linearGradient>
+  </defs>
+  <rect width="200" height="220" fill="url(#${id}bg)"/>`;
+  // shoulders & chest
+  s+=`<path d="M-5,225 L-5,192 C8,168 40,158 66,154 L134,154 C160,158 192,168 205,192 L205,225 Z" fill="${sk}" stroke="${LINE}" stroke-width="1.6"/>
+  <path d="M30,225 C34,200 52,188 72,184 M170,225 C166,200 148,188 128,184" fill="none" stroke="${sh}" stroke-width="3" stroke-linecap="round"/>
+  <path d="M60,196 Q78,210 98,200 M140,196 Q122,210 102,200" fill="none" stroke="${sh}" stroke-width="2.4" stroke-linecap="round"/>`;
+  if(o.tsuna)s+=`<path d="M-5,214 Q100,190 205,214 L205,225 L-5,225 Z" fill="#fbf8ef" stroke="#cfc4a6" stroke-width="1.2"/>
+    ${[30,62,94,126,158].map(x=>`<path d="M${x},${208-Math.abs(x-100)*.05} l6,8 l-6,6 l6,8" fill="none" stroke="#bdb196" stroke-width="2"/>`).join('')}`;
+  // neck with cel shadow
+  s+=`<path d="M${X(68)},132 L${X(64)},164 Q100,178 ${X(136)},164 L${X(132)},132 Z" fill="${sk}"/>
+  <path d="M${X(70)},140 Q100,182 ${X(130)},140 L${X(130)},156 Q100,176 ${X(70)},156 Z" fill="${sh}"/>
+  <path d="M${X(66)},148 L${X(64)},164 M${X(134)},148 L${X(136)},164" stroke="${LINE}" stroke-width="1.4"/>`;
+  // ears
+  for(const sd of[-1,1]){const ex0=100+sd*42*W;s+=`<ellipse cx="${ex0}" cy="104" rx="6.5" ry="11.5" fill="${sk}" stroke="${LINE}" stroke-width="1.4"/><path d="M${ex0-sd*1},97 q${sd*3},6 0,13" fill="none" stroke="${sh}" stroke-width="2"/>`;}
+  // face
+  const facePath=`M${X(58)},92 C${X(58)},60 ${X(78)},48 100,48 C${X(122)},48 ${X(142)},60 ${X(142)},92 C${X(142)},112 ${X(140)},130 ${X(132)},145 C${X(124)},158 ${X(112)},166 100,168 C${X(88)},166 ${X(76)},158 ${X(68)},145 C${X(60)},130 ${X(58)},112 ${X(58)},92 Z`;
+  s+=`<path d="${facePath}" fill="${sk}"/>
+  <clipPath id="${id}fc"><path d="${facePath}"/></clipPath>
+  <g clip-path="url(#${id}fc)">
+    <path d="M${X(147)},80 C${X(147)},116 ${X(140)},146 ${X(110)},171 L160,172 L160,80 Z" fill="${sh}" opacity=".9"/>
+    <path d="M${X(62)},132 C${X(72)},158 ${X(90)},168 100,169 C${X(84)},162 ${X(72)},150 ${X(62)},132 Z" fill="${sh}" opacity=".5"/>
+    ${o.stubble?`<path d="M${X(70)},130 C${X(78)},162 ${X(122)},162 ${X(130)},130 C${X(118)},146 ${X(82)},146 ${X(70)},130 Z" fill="#5a5a66" opacity=".22"/>`:''}
+  </g>
+  <path d="${facePath}" fill="none" stroke="${LINE}" stroke-width="1.6"/>`;
+  // hair: slicked back with a soft M hairline
+  const hl=o.hairline||0;
+  s+=`<path d="M${X(54)},106 C${X(48)},68 ${X(66)},38 100,36 C${X(134)},38 ${X(152)},68 ${X(146)},106 L${X(141)},102 C${X(140)},86 ${X(134)},74 ${X(124)},${70+hl} C${X(114)},${66+hl} 108,${72+hl} 100,${69+hl} C92,${72+hl} ${X(86)},${66+hl} ${X(76)},${70+hl} C${X(66)},74 ${X(60)},86 ${X(59)},102 Z" fill="url(#${id}hr)" stroke="${LINE}" stroke-width="1.4"/>
+  <path d="M${X(70)},58 Q100,42 ${X(130)},58 Q100,50 ${X(70)},58 Z" fill="#fff" opacity=".35"/>
+  <path d="M${X(78)},64 l6,-9 M${X(120)},63 l-5,-9 M100,60 l0,-10" stroke="#fff" stroke-width="1.3" opacity=".35" stroke-linecap="round"/>`;
+  if(o.sideburn)for(const sd of[-1,1]){const x=100+sd*41*W;s+=`<path d="M${x},96 L${x+sd*-2},120 L${x+sd*-6},118 L${x+sd*-5},98 Z" fill="${hairC}"/>`;}
+  // topknot
+  if(o.oicho)s+=`<path d="M100,40 C80,40 70,25 77,13 C88,19 112,19 123,13 C130,25 120,40 100,40 Z" fill="url(#${id}hr)" stroke="${LINE}" stroke-width="1.4"/>
+    ${[-18,-9,0,9,18].map(dx=>`<path d="M100,38 L${100+dx},${20-Math.abs(dx)*.15}" stroke="#fff" stroke-width="1" opacity=".3"/>`).join('')}
+    <rect x="95" y="36" width="10" height="5" rx="1.5" fill="#f4f1e8" stroke="${LINE}" stroke-width=".8"/>`;
+  else s+=`<path d="M92,40 C88,28 102,22 114,26 C122,29 120,37 110,40 Z" fill="url(#${id}hr)" stroke="${LINE}" stroke-width="1.4"/>
+    <path d="M100,30 Q108,27 114,29" stroke="#fff" stroke-width="1.2" opacity=".35" fill="none"/>
+    <rect x="94" y="36" width="9" height="5" rx="1.5" fill="#f4f1e8" stroke="${LINE}" stroke-width=".8"/>`;
+  // brows
+  const bt=o.browT||3.2,tilt=o.browTilt||0;let inner=0;
+  if(ex==='fired'||ex==='angry')inner=4;if(ex==='cry'||ex==='surprise')inner=-4;if(ex==='happy')inner=-1;
+  for(const sd of[-1,1]){const xi=100+sd*8,xo=100+sd*31*W;
+    s+=`<path d="M${xi},${81+inner} Q${100+sd*20},${74+inner*.4-tilt*.3} ${xo},${79-tilt} L${xo},${79-tilt+bt*.6} Q${100+sd*20},${77+inner*.4+bt*.5-tilt*.3} ${xi},${80+inner+bt} Z" fill="${hairC}" stroke="${hairC}" stroke-width=".6" stroke-linejoin="round"/>`;}
+  // eyes
+  const eh=(o.eyeH||8)*1.18,et=o.eyeTilt||0;
+  for(const sd of[-1,1]){const cx=100+sd*18.5*W,cy=100,w=13;const inX=cx-sd*w,outX=cx+sd*w,inY=cy+1,outY=cy-et;
+    if(ex==='happy'){s+=`<path d="M${inX},${cy+2} Q${cx},${cy-7} ${outX},${cy+1}" fill="none" stroke="${LINE}" stroke-width="2.6" stroke-linecap="round"/>`;continue;}
+    if(ex==='cry'){s+=`<path d="M${inX},${cy-1} Q${cx},${cy+4} ${outX},${cy-2}" fill="none" stroke="${LINE}" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M${cx+sd*4},${cy+5} q${sd*1.5},7 0,12 q${-sd*3},-4 0,-12 Z" fill="#9fd3f2" stroke="#5aa3cf" stroke-width=".8"/>`;continue;}
+    const h=ex==='fired'?eh*.55:ex==='surprise'?eh*1.25:eh;
+    const eyeP=`M${inX},${inY} Q${cx},${cy-h*1.15} ${outX},${outY} Q${cx},${cy+h*.8} ${inX},${inY} Z`;
+    s+=`<clipPath id="${id}e${sd}"><path d="${eyeP}"/></clipPath>
+    <path d="${eyeP}" fill="#fffdf8"/>
+    <g clip-path="url(#${id}e${sd})">
+      <ellipse cx="${cx+sd*.8}" cy="${cy-.5}" rx="${ex==='surprise'?5:6.8}" ry="${ex==='surprise'?6.5:8.8}" fill="url(#${id}ir)" stroke="${irisA}" stroke-width=".9"/>
+      <ellipse cx="${cx+sd*.8}" cy="${cy+1.8}" rx="4.6" ry="3.4" fill="${irisB}" opacity=".35"/>
+      <ellipse cx="${cx+sd*.8}" cy="${cy-1}" rx="2.8" ry="4" fill="#0c0705"/>
+      <path d="M${inX},${cy-h*1.2} Q${cx},${cy-h*1.6} ${outX},${cy-h*1.2} L${outX},${cy-h*.1} Q${cx},${cy-h*.7} ${inX},${cy-h*.1} Z" fill="${LINE}" opacity=".25"/>
+    </g>
+    <circle cx="${cx-sd*2}" cy="${cy-3.6}" r="2.4" fill="#fff"/><circle cx="${cx+sd*2.6}" cy="${cy+3}" r="1.1" fill="#fff" opacity=".85"/>
+    <path d="M${inX-sd*.5},${inY} Q${cx},${cy-h*1.22} ${outX},${outY} l${sd*4.5},${-3.2}" fill="none" stroke="#1c120c" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M${inX+sd*2},${cy-h*.75} Q${cx},${cy-h*1.75} ${outX-sd*1},${outY-h*.55}" fill="none" stroke="${LINE}" stroke-width="1" opacity=".55"/>
+    <path d="M${cx},${cy+h*.62} Q${cx+sd*6},${cy+h*.5} ${outX-sd*1},${outY+1.5}" fill="none" stroke="${LINE}" stroke-width="1" opacity=".6"/>`;}
+  if(ex==='fired')for(const sd of[-1,1])s+=`<path d="M${100+sd*31*W},96 l${sd*5},-2 M${100+sd*31*W},100 l${sd*5},1" stroke="${LINE}" stroke-width="1" opacity=".6"/>`;
+  // nose: anime minimal
+  s+=`<path d="M102,108 L99,121 Q101,123 104,121" fill="none" stroke="${sh}" stroke-width="2" stroke-linecap="round"/>
+  <path d="M97,122 q2,1.5 4,0" fill="none" stroke="${LINE}" stroke-width="1.2" stroke-linecap="round"/>`;
+  // cheeks
+  if(o.blush||ex==='happy'||ex==='cry')for(const sd of[-1,1]){const cx=100+sd*26*W;s+=`<ellipse cx="${cx}" cy="118" rx="9" ry="4.5" fill="#f08a8a" opacity=".28"/>${[ -4,0,4].map(d=>`<path d="M${cx+d-1.5},120 l3,-4" stroke="#e06666" stroke-width="1" opacity=".55"/>`).join('')}`;}
+  if(o.mole)s+=`<circle cx="${100+24*W}" cy="112" r="1.3" fill="${LINE}"/>`;
+  // mouth
+  const my=136;
+  if(ex==='happy')s+=`<path d="M89,${my-2} Q100,${my+12} 111,${my-2} Q100,${my+2} 89,${my-2} Z" fill="#7a2a24" stroke="${LINE}" stroke-width="1.2"/><path d="M92,${my-1} Q100,${my+2} 108,${my-1} L107,${my+1.5} Q100,${my+3.5} 93,${my+1.5} Z" fill="#fff"/>`;
+  else if(ex==='fired')s+=`<rect x="89" y="${my-4}" width="22" height="8" rx="3" fill="#fff" stroke="${LINE}" stroke-width="1.3"/><path d="M89,${my} L111,${my} M94.5,${my-4} v8 M100,${my-4} v8 M105.5,${my-4} v8" stroke="${LINE}" stroke-width=".7"/>`;
+  else if(ex==='cry')s+=`<path d="M91,${my+3} Q100,${my-5} 109,${my+3}" fill="none" stroke="${LINE}" stroke-width="1.8" stroke-linecap="round"/>`;
+  else if(ex==='surprise')s+=`<ellipse cx="100" cy="${my+1}" rx="4.5" ry="5.5" fill="#7a2a24" stroke="${LINE}" stroke-width="1.2"/>`;
+  else{const c=o.smile?4:1;s+=`<path d="M91,${my-c*.4} Q100,${my+c} 109,${my-c*.4}" fill="none" stroke="${LINE}" stroke-width="1.8" stroke-linecap="round"/><path d="M96,${my+4} Q100,${my+5.5} 104,${my+4}" fill="none" stroke="${sh}" stroke-width="1.6" stroke-linecap="round"/>`;}
+  return s+'</svg>';
+}
+const CHARS=[
+  {no:'No.1',name:'王道イケメン',ds:'切れ長の目に凛々しい眉。まず看板にしたい主人公タイプ。',skin:'fair',eyeH:8,eyeTilt:2.5,browT:3.4,browTilt:2,smile:true},
+  {no:'No.2',name:'爽やか系',ds:'ぱっちり二重と明るい笑顔。同期の人気者タイプ。',skin:'light',eyeH:10,eyeTilt:0,browT:2.6,smile:true,blush:true,irisB:'#c9884a'},
+  {no:'No.3',name:'クール系',ds:'細い目と引き締まった口元。大銀杏の関取。無口な実力者。',skin:'light',eyeH:6,eyeTilt:3.5,browT:3,browTilt:4,oicho:true,jaw:.96,irisA:'#140c08',irisB:'#6a4a3a'},
+  {no:'No.4',name:'甘い系',ds:'たれ目と泣きぼくろ。年上に人気の弟分タイプ。',skin:'fair',eyeH:9,eyeTilt:-2.5,browT:2.4,browTilt:-2,mole:true,smile:true,irisB:'#b98a5a'},
+  {no:'No.5',name:'ワイルド系',ds:'日焼けした肌、太眉、もみあげと無精ひげ。頼れる兄弟子。',skin:'tan',eyeH:7,eyeTilt:1.5,browT:4.4,browTilt:1,sideburn:true,stubble:true,jaw:1.06,hairline:2},
+  {no:'No.6',name:'横綱',ds:'大銀杏に綱を締めた最高位。風格のある落ち着いた顔。',skin:'dark',eyeH:7.5,eyeTilt:1.5,browT:3.8,browTilt:2.5,oicho:true,tsuna:true,jaw:1.04,bg:'#e8c98a'},
+];
+const grid=document.getElementById('grid');
+for(const c of CHARS){const d=document.createElement('div');d.className='card';d.innerHTML=face(c)+`<span class="no">${c.no}</span><span class="nm">${c.name}</span><span class="ds">${c.ds}</span>`;grid.append(d);}
+const EXS=[['normal','ふだん'],['fired','気合い'],['happy','勝って笑顔'],['cry','悔し涙'],['surprise','おどろき']];
+const strip=document.getElementById('strip');
+for(const [ex,label] of EXS){const d=document.createElement('div');d.className='card';d.innerHTML=face({...CHARS[0],ex})+`<span class="nm">${label}</span>`;strip.append(d);}
+})();
+</script>
