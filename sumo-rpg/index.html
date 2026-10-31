@@ -1147,7 +1147,7 @@ function drawHero(t){
 const START={oshi:{oshi:14,chikara:10,waza:8,hayasa:10,kg:100},yotsu:{oshi:9,chikara:14,waza:10,hayasa:8,kg:106},waza:{oshi:8,chikara:8,waza:14,hayasa:13,kg:88}};
 let draftFace=randFace(),facePrev=null,facePop=0,faceMode='ai';
 function aiFace(id){const m=AIF[id]&&AIF[id].meta;const f=randFace();f.img=id;if(m)f.skin=m.skin;return f;}
-const entryIds=()=>Object.keys(AIF).filter(id=>!AIF[id].meta.formal);
+const entryIds=()=>Object.keys(AIF).filter(id=>!AIF[id].meta.formal&&AIF[id].meta.side);
 function randAiFace(){const ids=entryIds();return ids.length?aiFace(pick(ids)):randFace();}
 function buildAiPick(){const box=$('aiPick');box.innerHTML='';
   for(const id of entryIds()){const m=AIF[id].meta,b=document.createElement('button');b.type='button';b.className=draftFace.img===id?'on':'';b.title=m.name;b.setAttribute('aria-label',m.name+'の顔');
@@ -1608,18 +1608,12 @@ function endBasho(){
 /* full-body illustrations for the banzuke announcement and the yusho screen */
 const BODY={};for(const b of (window.AI_BODIES||[])){const im=new Image();im.src=b.src;BODY[b.id]={meta:b,img:im};}
 for(const c of (window.AI_CHARS||[])){const im=new Image();im.src=c.body;BODY['b_'+c.id]={meta:{id:'b_'+c.id,build:c.build,skin:c.skin,own:c.id,dark:c.darkBody,waist:c.waist,formal:c.formal},img:im};}
-function pickBody(s){const own=s.face&&s.face.img&&BODY['b_'+s.face.img];const seki=s.pos>=JURYO;
-  // sekitori may show their own coloured silk; below juryo only black cotton is allowed
-  if(own&&(seki||own.meta.dark))return own.meta.id;
-  let all=Object.values(BODY).filter(b=>!b.meta.formal&&b.meta.build!=='yokozuna');
-  if(!seki)all=all.filter(b=>b.meta.dark);else all=all.filter(b=>!b.meta.own);
-  if(s.pos>=YOKO&&!own){const yk=Object.values(BODY).find(b=>!b.meta.own&&b.meta.build==='yokozuna');if(yk)return yk.meta.id;}
-  if(!all.length)return null;const L=lookFor(s.kg,s.pos,s.face,undefined,s.height);
-  const want=L.w>=.95?'heavy':L.w>=.75?'mid':'slim';
-  let c=all.filter(b=>b.meta.build===want);if(!c.length)c=all;const close=c.filter(b=>Math.abs(b.meta.skin-(s.face.skin||1))<=1);if(close.length)c=close;
-  let h=0;for(const ch of (s.id||'x'))h=(h*31+ch.charCodeAt(0))>>>0;return c[h%c.length].meta.id;}
+function pickBody(s){const own=s.face&&s.face.img&&BODY['b_'+s.face.img];
+  // only the rikishi's own body; below juryo it is shown only once art in black cotton exists
+  if(own&&(s.pos>=JURYO||own.meta.dark))return own.meta.id;return null;}
 function drawResult(t,dt){
   const bd=rcData&&rcData.body&&BODY[rcData.body];
+  if(rc&&(!bd||!bd.img.complete||!bd.img.naturalWidth)&&aiReady(st&&st.face))return drawResultFace(t,dt);
   if(!rc||!bd||!bd.img.complete||!bd.img.naturalWidth)return drawResultOld(t,dt);
   const{g,W,H}=rc,e=t-rcData.t0,im=bd.img,y=rcData.yusho,up=y||rcData.promo;
   // paper-toned stage so the illustration's own background blends in
@@ -1645,6 +1639,19 @@ function drawResult(t,dt){
     g.fillStyle='#d9a23a';g.beginPath();g.moveTo(cx-u*.6,cy-u*.7);g.lineTo(cx+u*.6,cy-u*.7);g.quadraticCurveTo(cx+u*.5,cy+u*.2,cx,cy+u*.3);g.quadraticCurveTo(cx-u*.5,cy+u*.2,cx-u*.6,cy-u*.7);g.fill();
     g.fillRect(cx-u*.08,cy+u*.25,u*.16,u*.4);g.fillRect(cx-u*.3,cy+u*.62,u*.6,u*.1);softSpot(g,cx-u*.2,cy-u*.4,u*.5,'255,255,255',.6);
     for(let i=0;i<22;i++){const r=(t*50+i*41)%(H*1.05);g.save();g.translate(W*.04+((i*53)%92)/92*W*.92+Math.sin(t*2+i)*6,r-10);g.rotate(t*3+i);g.fillStyle=['#e2b04a','#b3261e','#3f8fd0'][i%3];g.fillRect(-2,-3,4,6);g.restore();}}
+}
+/* no own art for this rank yet: show the rikishi's own face large instead of anyone else's body */
+function drawResultFace(t,dt){
+  const{g,W,H}=rc,e=t-rcData.t0,y=rcData.yusho,up=y||rcData.promo,k=ease(e/.7);
+  const bgG=g.createLinearGradient(0,0,0,H);bgG.addColorStop(0,y?'#fff3cf':'#f6ecd8');bgG.addColorStop(1,y?'#f1d48a':up?'#e9dcc0':'#ddd5c6');g.fillStyle=bgG;g.fillRect(0,0,W,H);
+  if(up){g.save();g.translate(W/2,H*.4);g.rotate(t*.15);for(let i=0;i<12;i++){g.rotate(Math.PI/6);g.fillStyle=y?'rgba(226,176,74,.28)':'rgba(226,176,74,.14)';g.beginPath();g.moveTo(0,0);g.lineTo(W*.13,-H);g.lineTo(-W*.13,-H);g.closePath();g.fill();}g.restore();}
+  const pf=portrait(st.face,y||rcData.win?'happy':'lose',st.pos>=JURYO,320),S=W*.96,bob=Math.sin(t*1.6)*H*.005;
+  g.save();g.globalAlpha=k;g.globalCompositeOperation='multiply';g.drawImage(pf,(W-S)/2,H*.38-S/2+(1-k)*H*.05+bob,S,S);g.restore();
+  g.fillStyle='rgba(26,22,18,.75)';g.font='700 '+Math.round(W*.075)+'px "Zen Kaku Gothic New",sans-serif';g.textAlign='center';
+  g.fillText(side(st.pos)+' '+rank(st.pos).name,W/2,H*.86);g.font=Math.round(W*.13)+'px "Yuji Boku",serif';g.fillText(st.name,W/2,H*.8);
+  if(!rcData.win&&!y){g.fillStyle='rgba(20,28,60,.18)';g.fillRect(0,0,W,H);}
+  g.strokeStyle='rgba(26,22,18,.45)';g.lineWidth=1.5;g.strokeRect(4,4,W-8,H-8);
+  if(y)for(let i=0;i<22;i++){const r=(t*50+i*41)%(H*1.05);g.save();g.translate(W*.04+((i*53)%92)/92*W*.92+Math.sin(t*2+i)*6,r-10);g.rotate(t*3+i);g.fillStyle=['#e2b04a','#b3261e','#3f8fd0'][i%3];g.fillRect(-2,-3,4,6);g.restore();}
 }
 function drawResultOld(t,dt){
   if(!rc||!rcData)return;const{g,W,H}=rc;g.clearRect(0,0,W,H);
