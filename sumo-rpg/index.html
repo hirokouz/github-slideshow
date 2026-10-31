@@ -197,6 +197,14 @@ details.more summary::after{content:'▾';color:var(--kin)}details.more[open] su
 #toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);transform:translate(-50%,20px);z-index:50;max-width:min(92vw,420px);
   background:var(--washi);color:var(--sumi);border:1.5px solid var(--sumi);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
 #toast.on{opacity:1;transform:translate(-50%,0)}
+.fmode{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.fmode button{border:1.5px solid rgba(26,22,18,.3);background:#fffaf0;color:var(--sumi);border-radius:8px;padding:4px 2px;font-size:11px;font-weight:700}
+.fmode button.on{background:var(--sumi);color:var(--washi);border-color:var(--sumi)}
+.aipick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;max-height:186px;overflow-y:auto;padding:2px}
+.aipick button{padding:0;border:2px solid transparent;border-radius:8px;background:none;aspect-ratio:1;overflow:hidden}
+.aipick img{width:100%;height:100%;object-fit:cover;object-position:50% 25%;display:block}
+.aipick button.on{border-color:var(--shu);box-shadow:0 0 0 1px var(--shu)}
+@media (max-height:740px){.aipick{max-height:150px}}
 .prof{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;padding:12px 14px}
 #bFace{width:64px;height:64px;display:block;border-radius:50%;background:radial-gradient(circle at 50% 40%,#fff6e0,#d9c7a2);box-shadow:inset 0 0 0 1.5px rgba(26,22,18,.5)}
 .prof .top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
@@ -356,7 +364,11 @@ details.more summary::after{content:'▾';color:var(--kin)}details.more[open] su
       <div class="row" style="justify-content:space-between"><p class="label">顔をつくる</p><button class="ghost ink" id="faceRand" style="width:auto;padding:6px 12px;font-size:13px">おまかせ</button></div>
       <div class="faceed">
         <canvas id="facePrev" aria-label="顔のプレビュー"></canvas>
-        <div class="fopts" id="faceOpts"></div>
+        <div style="display:grid;gap:6px;min-width:0">
+          <div class="fmode" role="tablist"><button type="button" id="modeAi" class="on">イラストから選ぶ</button><button type="button" id="modeParts">パーツで作る</button></div>
+          <div class="aipick" id="aiPick"></div>
+          <div class="fopts" id="faceOpts" hidden></div>
+        </div>
       </div>
     </div>
     <div class="washi" style="display:grid;gap:8px">
@@ -499,6 +511,7 @@ details.more summary::after{content:'▾';color:var(--kin)}details.more[open] su
   </section>
 </div>
 
+<script src="faces.js"></script>
 <script>
 (()=>{
 "use strict";
@@ -791,7 +804,16 @@ function softS(g,blur,col,lw,path){g.save();g.shadowColor=col;g.shadowBlur=blur;
 const EL=(x,y,rx,ry,rot)=>g=>{g.moveTo(x+rx*Math.cos(rot||0),y+rx*Math.sin(rot||0));g.ellipse(x,y,rx,ry,rot||0,0,6.283);};
 function seeded(n){let s=n>>>0||1;return()=>{s^=s<<13;s>>>=0;s^=s>>17;s^=s<<5;s>>>=0;return s/4294967296;};}
 const portraitCache=new Map();let grainCache=null;
+const AIF={};
+for(const f of (window.AI_FACES||[])){const o={meta:f,img:new Image(),ex:{}};o.img.src=f.src;if(f.ex)for(const k in f.ex){const im=new Image();im.src=f.ex[k];o.ex[k]=im;}AIF[f.id]=o;}
+const EXMAP={blink:'blink',sleep:'blink',happy:'happy',win:'happy',lose:'lose',strain:'strain',surprise:'surprise',normal:'normal'};
+function aiReady(F){const o=F&&F.img&&AIF[F.img];return o&&o.img.complete&&o.img.naturalWidth>0?o:null;}
 function portrait(F,expr,oicho,N){
+  const o=aiReady(F);
+  if(o){const k=EXMAP[expr]||'normal';let im=o.ex[k]&&o.ex[k].complete&&o.ex[k].naturalWidth?o.ex[k]:o.img;
+    const key='ai,'+F.img+','+(im===o.img?'base':k)+','+N;let c=portraitCache.get(key);if(c)return c;
+    c=document.createElement('canvas');c.width=c.height=N;c.getContext('2d').drawImage(im,0,0,N,N);c.isAi=true;
+    if(portraitCache.size>48)portraitCache.clear();portraitCache.set(key,c);return c;}
   const key=[F.shape,F.brow,F.eye,F.nose,F.mouth,F.extra,F.skin,expr,oicho?1:0,N].join(',');
   let c=portraitCache.get(key);if(c)return c;
   c=document.createElement('canvas');c.width=c.height=N;paintPortrait(c.getContext('2d'),N,F,expr,oicho);
@@ -1065,8 +1087,15 @@ function drawHero(t){
 
 /* ---------- create ---------- */
 const START={oshi:{oshi:14,chikara:10,waza:8,hayasa:10,kg:100},yotsu:{oshi:9,chikara:14,waza:10,hayasa:8,kg:106},waza:{oshi:8,chikara:8,waza:14,hayasa:13,kg:88}};
-let draftFace=randFace(),facePrev=null,facePop=0;
-function openCreate(){const a15=$('a15');if(a15)a15.checked=true;const to=$('tOshi');if(to)to.checked=true;setTimeout(descs,0);$('nameIn').value=pick(NAMES);draftFace=randFace();buildFaceOpts();show('sCreate');facePrev=makeCanvas($('facePrev'),1);}
+let draftFace=randFace(),facePrev=null,facePop=0,faceMode='ai';
+function aiFace(id){const m=AIF[id]&&AIF[id].meta;const f=randFace();f.img=id;if(m)f.skin=m.skin;return f;}
+function randAiFace(){const ids=Object.keys(AIF);return ids.length?aiFace(pick(ids)):randFace();}
+function buildAiPick(){const box=$('aiPick');box.innerHTML='';
+  for(const id in AIF){const m=AIF[id].meta,b=document.createElement('button');b.type='button';b.className=draftFace.img===id?'on':'';b.title=m.name;b.setAttribute('aria-label',m.name+'の顔');
+    const im=document.createElement('img');im.src=m.src;im.alt='';b.append(im);b.addEventListener('click',()=>{draftFace=aiFace(id);facePop=1;buildAiPick();});box.append(b);}}
+function setFaceMode(m){faceMode=m;$('modeAi').classList.toggle('on',m==='ai');$('modeParts').classList.toggle('on',m==='parts');$('aiPick').hidden=m!=='ai';$('faceOpts').hidden=m!=='parts';
+  if(m==='ai'&&!draftFace.img)draftFace=randAiFace();if(m==='parts'&&draftFace.img){delete draftFace.img;}buildAiPick();buildFaceOpts();facePop=1;}
+function openCreate(){const a15=$('a15');if(a15)a15.checked=true;const to=$('tOshi');if(to)to.checked=true;setTimeout(descs,0);$('nameIn').value=pick(NAMES);draftFace=Object.keys(AIF).length?aiFace(Object.keys(AIF)[0]):randFace();faceMode=draftFace.img?'ai':'parts';setFaceMode(faceMode);show('sCreate');facePrev=makeCanvas($('facePrev'),1);}
 function buildFaceOpts(){
   const box=$('faceOpts');box.innerHTML='';
   for(const k in FACE_OPTS){const o=FACE_OPTS[k];const row=document.createElement('div');row.className='fopt';
@@ -1227,9 +1256,10 @@ function renderProfile(){
   $('pYusho').textContent=st.yusho?('通算'+st.yusho+'回'+(st.makuYusho?'（幕内'+st.makuYusho+'）':'')):'なし';
 }
 function drawProfFace(t){if(!faceCv||!st)return;const{g,W,H,d}=faceCv;g.clearRect(0,0,W,H);
-  const a=anim,ex=a&&a.phase==='clash'&&a.t>a.TL.land?(a.win?'happy':'lose'):(t%3.9)<.13?'blink':'normal';
+  const a=anim,ex=a&&a.phase==='clash'&&a.t>a.TL.land?(a.win?'happy':'lose'):a&&(a.phase==='tachi'||a.phase==='clash')?'strain':(t%3.9)<.13?'blink':'normal';
   const img=portrait(st.face,ex,st.pos>=JURYO,Math.min(400,Math.round(W*d*1.6)));
-  g.save();g.beginPath();g.arc(W/2,H/2,W/2,0,6.283);g.clip();g.drawImage(img,-W*.3,-H*.12,W*1.6,H*1.6);g.restore();}
+  g.save();g.beginPath();g.arc(W/2,H/2,W/2,0,6.283);g.clip();
+  if(img.isAi)g.drawImage(img,-W*.18,-H*.1,W*1.36,H*1.36);else g.drawImage(img,-W*.3,-H*.12,W*1.6,H*1.6);g.restore();}
 function dayLabel(){return B.n===15?(B.day===0?'初日':B.day===14?'千秋楽':KAN[B.day]+'日目'):KAN[B.day]+'番相撲';}
 const counterOf=s=>Object.keys(BEATS).find(k=>BEATS[k]===s);
 function nextBout(){
@@ -1804,7 +1834,8 @@ $('hGacha').addEventListener('click',()=>{persist();openGacha('sHome');});
 $('g1').addEventListener('click',()=>pull(1));$('g10').addEventListener('click',()=>pull(10));
 $('gBack').addEventListener('click',()=>{if(gachaFrom==='sHome'&&st)renderHome();else renderTitle();});
 $('randName').addEventListener('click',()=>{$('nameIn').value=pick(NAMES);});
-$('faceRand').addEventListener('click',()=>{draftFace=randFace();buildFaceOpts();facePop=1;});
+$('faceRand').addEventListener('click',()=>{draftFace=faceMode==='ai'?randAiFace():randFace();buildAiPick();buildFaceOpts();facePop=1;});
+$('modeAi').addEventListener('click',()=>setFaceMode('ai'));$('modeParts').addEventListener('click',()=>setFaceMode('parts'));
 $('enterBtn').addEventListener('click',enter);
 $('bashoBtn').addEventListener('click',startBasho);
 $('toTitle').addEventListener('click',()=>{persist();renderTitle();});
