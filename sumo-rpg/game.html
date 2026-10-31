@@ -603,7 +603,8 @@ function lookFor(kg,pos,face,mawashi,height,ctx,b){const h=height||182,bmi=kg/((
   const seki=pos>=JURYO,young=(b!==undefined&&b<4);
   const hair=ctx==='keiko'?(young&&!seki?'zan':'chon'):seki?'oicho':(young?'zan':'chon');
   const maw=mawashi||(!seki?'#26262e':ctx==='keiko'?'#efeadc':(silkOf(face)||mawashiFor(pos)));
-  return{w:clamp(.6+(bmi-34)*.026,.5,1.18),hs:clamp(h/182,.9,1.1),face,skin:SKIN[face.skin],mawashi:maw,tsuna:ctx==='ceremony'&&pos>=YOKO,oicho:hair==='oicho',hair};}
+  const so=face&&face.img&&AIF[face.img];const sprite=so&&so.side?(seki?so.side:so.sideLow):null;
+  return{w:clamp(.6+(bmi-34)*.026,.5,1.18),hs:clamp(h/182,.9,1.1),face,skin:SKIN[face.skin],mawashi:maw,tsuna:ctx==='ceremony'&&pos>=YOKO,oicho:hair==='oicho',hair,sprite,sm:so&&so.meta};}
 
 /* ===== realistic rendering: shaded capsule limbs, sculpted torso, painted head ===== */
 function capsules(g,pts){
@@ -742,7 +743,28 @@ function torsoPath(g,u,w,j){
   g.bezierCurveTo(X(.45),Y(.22),X(.1),Y(.26),X(-.1),Y(.22));
   g.closePath();
 }
+/* cut-out rig for the illustrated side view: legs compress to drop the hips,
+   the upper body pivots forward at the waist, the whole figure rotates for falls */
+function drawSpriteRig(g,x,y,u,dir,P,L){
+  const im=L.sprite,m=L.sm,iw=im.naturalWidth,ih=im.naturalHeight,Hs=u*2.75,Ws=Hs*iw/ih,hipF=.5,lift=P.lift||0;
+  g.save();g.translate(x,y);
+  g.fillStyle='rgba(40,20,5,.3)';g.beginPath();g.ellipse(0,0,Ws*.75*(1-clamp(lift,0,.8)*.5),u*.12,0,0,6.283);g.fill();
+  g.translate(0,-lift*u);g.rotate((P.fall||0)*dir);g.scale(-dir,1);   // art faces left; mirror toward the opponent
+  const c=clamp(P.crouch||0,0,1),sq=1-c*.42,wid=1+c*.3,hx=Ws*(m.hipx||.5);
+  const legH=Hs*(1-hipF),hipY=-legH*sq;
+  g.drawImage(im,0,ih*(hipF-.03),iw,ih*(1-hipF+.03),-hx*wid,hipY-Hs*.03*sq,Ws*wid,(legH+Hs*.03)*sq);
+  g.save();g.translate(0,hipY);g.rotate(-clamp(P.lean,-.6,1.25)*.9);
+  const push=Math.max(0,Math.max(P.armF||0,P.armB||0)-1)*u*.35+(P.headJolt||0)*u*.4,jig=1+(P.jig||0)*.04;
+  g.translate(-push,0);g.scale(jig,1/jig);
+  g.drawImage(im,0,0,iw,ih*hipF,-hx,-Hs*hipF,Ws,Hs*hipF);
+  if(L.hair==='oicho'){const fx=Ws*(m.headx||.5)-hx,fy=-Hs*hipF+Hs*.012,fw=Ws*.32,fh=Hs*.045;
+    g.save();g.translate(fx,fy);const kg=g.createLinearGradient(0,-fh,0,fh);kg.addColorStop(0,'#3a322b');kg.addColorStop(1,'#0d0a08');g.fillStyle=kg;
+    g.beginPath();g.moveTo(0,fh*.6);g.quadraticCurveTo(-fw*1.1,0,-fw,-fh);g.quadraticCurveTo(0,-fh*1.6,fw,-fh);g.quadraticCurveTo(fw*1.1,0,0,fh*.6);g.fill();
+    g.fillStyle='#f2efe6';g.fillRect(-fw*.12,fh*.2,fw*.24,fh*.5);g.restore();}
+  g.restore();g.restore();
+}
 function drawRikishi(g,x,y,u,dir,P,L){
+  if(L.sprite&&L.sprite.complete&&L.sprite.naturalWidth)return drawSpriteRig(g,x,y,u,dir,P,L);
   const w=L.w,sk=L.skin,skB=shade(sk,-.12),lift=P.lift||0,jig=P.jig||0,t=P.t||0;
   const X=v=>v*u*w,Y=v=>v*u;
   g.save();g.translate(x,y);
@@ -823,7 +845,7 @@ const EL=(x,y,rx,ry,rot)=>g=>{g.moveTo(x+rx*Math.cos(rot||0),y+rx*Math.sin(rot||
 function seeded(n){let s=n>>>0||1;return()=>{s^=s<<13;s>>>=0;s^=s>>17;s^=s<<5;s>>>=0;return s/4294967296;};}
 const portraitCache=new Map();let grainCache=null;
 const AIF={};
-for(const f of [...(window.AI_CHARS||[]),...(window.AI_FACES||[])]){const o={meta:f,img:new Image(),ex:{}};o.img.src=f.src;if(f.ring){o.ring=new Image();o.ring.src=f.ring;}if(f.ex)for(const k in f.ex){const im=new Image();im.src=f.ex[k];o.ex[k]=im;}AIF[f.id]=o;}
+for(const f of [...(window.AI_CHARS||[]),...(window.AI_FACES||[])]){const o={meta:f,img:new Image(),ex:{}};o.img.src=f.src;if(f.ring){o.ring=new Image();o.ring.src=f.ring;}if(f.side){o.side=new Image();o.side.src=f.side;o.sideLow=new Image();o.sideLow.src=f.sideLow;}if(f.ex)for(const k in f.ex){const im=new Image();im.src=f.ex[k];o.ex[k]=im;}AIF[f.id]=o;}
 const EXMAP={blink:'blink',sleep:'blink',happy:'happy',win:'happy',lose:'lose',strain:'strain',surprise:'surprise',normal:'normal'};
 function aiReady(F){const o=F&&F.img&&AIF[F.img];return o&&o.img.complete&&o.img.naturalWidth>0?o:null;}
 function portrait(F,expr,oicho,N){
@@ -1281,7 +1303,7 @@ function genOpp(myPos,used){
   const s={oshi:v(),chikara:v(),waza:v(),hayasa:v()};s[{oshi:'oshi',yotsu:'chikara',waza:'waza'}[style]]*=1.12;
   const mw=['#1f4a7a','#7a1f1f','#1f5a3a','#4a3a1a','#3a3a3a','#6a2a5a'];
   const height=Math.round(rnd(170,197)),kg=Math.round(clamp(lerp(98,150,tf)+rnd(-26,34)+(height-182)*.8,85,215));
-  return{name,age:clamp(Math.round(18+tf*10+rnd(-3,4)),16,38),pos:Math.min(p,YOKO),style,stats:s,kg,height,face:randFace(),mawashi:p>=JURYO?pick(mw):'#26262e',zan:p<DSTART[2]&&Math.random()<.15};
+  return{name,age:clamp(Math.round(18+tf*10+rnd(-3,4)),16,38),pos:Math.min(p,YOKO),style,stats:s,kg,height,face:oppFace(),mawashi:p>=JURYO?pick(mw):'#26262e',zan:p<DSTART[2]&&Math.random()<.15};
 }
 function power(s,kg,strat,fat,inj){
   const wf=(kg-90)*.22,sp=s.hayasa-Math.max(0,kg-170)*.3;
@@ -1737,9 +1759,10 @@ function moveBanzuke(old,w,l){
 }
 
 /* ---------- rival: an apprentice from the same intake who keeps pace ---------- */
+function oppFace(){const ids=Object.keys(AIF).filter(id=>AIF[id].meta.side&&!(st&&st.face&&st.face.img===id));return ids.length?aiFace(pick(ids)):randFace();}
 function makeRival(s){let name;do{name=pick(OP_A)+pick(OP_B);}while(name===s.name);
   return{name,face:randFace(),style:pick(['oshi','yotsu','waza']),edge:1.5,kg:Math.round(rnd(95,125)),height:Math.round(rnd(176,194)),w:0,l:0};}
-function rivalOpp(){const R=st.rival,lvl=levelOf(st.pos)+R.edge,v=()=>lvl*rnd(.95,1.08);
+function rivalOpp(){const R=st.rival;if(!R.face||!R.face.img||!AIF[R.face.img])R.face=oppFace();const lvl=levelOf(st.pos)+R.edge,v=()=>lvl*rnd(.95,1.08);
   const s={oshi:v(),chikara:v(),waza:v(),hayasa:v()};s[{oshi:'oshi',yotsu:'chikara',waza:'waza'}[R.style]]*=1.12;
   const p=clamp(st.pos+(Math.random()<.5?-1:1),0,YOKO);
   return{name:R.name,age:ageOf(st)+1,pos:p,style:R.style,stats:s,kg:Math.round(R.kg),height:R.height,face:R.face,mawashi:p>=JURYO?'#7a1f1f':'#26262e',rival:true};}
