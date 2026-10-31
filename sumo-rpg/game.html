@@ -593,8 +593,17 @@ const yearOf=s=>Math.floor(s.b/6)+1;
 function shade(col,amt){let r,g2,b2;if(col[0]==='#'){const n=parseInt(col.slice(1),16);r=n>>16;g2=n>>8&255;b2=n&255;}else{[r,g2,b2]=col.match(/\d+/g).map(Number);}const f=v=>clamp(Math.round(v*(1+amt)),0,255);return'rgb('+f(r)+','+f(g2)+','+f(b2)+')';}
 function limb(g,ax,ay,bx,by,cx,cy,w,col){g.strokeStyle=col;g.lineWidth=w;g.lineCap='round';g.lineJoin='round';g.beginPath();g.moveTo(ax,ay);g.quadraticCurveTo(bx,by,cx,cy);g.stroke();}
 function mawashiFor(pos){return pos>=YOKO?'#2b2440':pos>=KOMU?'#a5761f':pos>=JURYO?'#5d3a92':'#26262e';}
-function lookFor(kg,pos,face,mawashi,height){const h=height||182,bmi=kg/((h/100)*(h/100));
-  return{w:clamp(.6+(bmi-34)*.026,.5,1.18),hs:clamp(h/182,.9,1.1),face,skin:SKIN[face.skin],mawashi:mawashi||mawashiFor(pos),tsuna:pos>=YOKO,oicho:pos>=JURYO};}
+/* What a rikishi may wear, by rank and occasion:
+   - new apprentices: zanbara (hair too short to tie) for their first basho
+   - makushita and below: chonmage, black cotton mawashi in practice and bouts
+   - sekitori (juryo+): ōichō and a coloured silk shimekomi in bouts; chonmage and a white keiko mawashi in practice
+   - yokozuna: the tsuna only for ceremonies (dohyō-iri, promotion), never in a bout */
+function silkOf(face){const m=face&&face.img&&AIF[face.img]&&AIF[face.img].meta;return m&&m.mcol||null;}
+function lookFor(kg,pos,face,mawashi,height,ctx,b){const h=height||182,bmi=kg/((h/100)*(h/100));ctx=ctx||'bout';
+  const seki=pos>=JURYO,young=(b!==undefined&&b<4);
+  const hair=ctx==='keiko'?(young&&!seki?'zan':'chon'):seki?'oicho':(young?'zan':'chon');
+  const maw=mawashi||(!seki?'#26262e':ctx==='keiko'?'#efeadc':(silkOf(face)||mawashiFor(pos)));
+  return{w:clamp(.6+(bmi-34)*.026,.5,1.18),hs:clamp(h/182,.9,1.1),face,skin:SKIN[face.skin],mawashi:maw,tsuna:ctx==='ceremony'&&pos>=YOKO,oicho:hair==='oicho',hair};}
 
 /* ===== realistic rendering: shaded capsule limbs, sculpted torso, painted head ===== */
 function capsules(g,pts){
@@ -654,13 +663,16 @@ function drawHead(g,r,F,yaw,expr,oicho){
   // top-knot
   g.save();g.translate(front?0:-r*.12,-r*.98);
   const kg=g.createLinearGradient(0,-r*.5,0,r*.1);kg.addColorStop(0,'#3a322b');kg.addColorStop(1,'#0d0a08');g.fillStyle=kg;
-  if(oicho){ // ginkgo-leaf fan of the ōichō, spread over the crown
+  const hairSt=oicho===true?'oicho':!oicho?'chon':oicho;
+  if(hairSt==='zan'){ // zanbara: short hair, no topknot yet
+    g.fillStyle='#1d1612';for(let i=-3;i<=3;i++){g.beginPath();g.moveTo(i*r*.2-r*.12,-r*.9);g.lineTo(i*r*.2,-r*1.08-Math.abs(i%2)*r*.06);g.lineTo(i*r*.2+r*.12,-r*.9);g.fill();}}
+  else if(hairSt==='oicho'){ // ginkgo-leaf fan of the ōichō, spread over the crown
     const fw=front?r*.78:r*.62,fh=front?r*.42:r*.5;
     g.beginPath();g.moveTo(0,r*.12);g.quadraticCurveTo(-fw*1.15,-fh*.1,-fw,-fh);g.quadraticCurveTo(0,-fh*1.35,fw,-fh);g.quadraticCurveTo(fw*1.15,-fh*.1,0,r*.12);g.fill();
     g.strokeStyle='rgba(255,255,255,.16)';g.lineWidth=r*.022;for(let i=-4;i<=4;i++){g.beginPath();g.moveTo(0,r*.06);g.lineTo(i*fw*.24,-fh*1.05+Math.abs(i)*fh*.06);g.stroke();}
     softSpot(g,-fw*.25,-fh*.7,fw*.5,'255,255,255',.18);}
   else{g.beginPath();g.ellipse(front?0:r*.12,-r*.08,front?r*.18:r*.36,r*.13,front?0:-.18,0,6.283);g.fill();softSpot(g,front?0:r*.12,-r*.15,r*.18,'255,255,255',.18);}
-  g.fillStyle='#f2efe6';g.fillRect(-r*.06,-r*.04,r*.12,r*.1);   // motoyui tie
+  if(hairSt!=='zan'){g.fillStyle='#f2efe6';g.fillRect(-r*.06,-r*.04,r*.12,r*.1);}   // motoyui tie
   g.restore();
   // ----- features -----
   const sFar=1-.4*yaw,ex=[fx-r*.33*(1-.58*yaw),fx+r*.33*(1-.2*yaw)],es=[sFar,1],ey=-r*.06,by=-r*.27;
@@ -794,7 +806,7 @@ function drawRikishi(g,x,y,u,dir,P,L){
   // thick neck rising into the head
   const ng=g.createLinearGradient(X(-.1),0,X(.4),0);ng.addColorStop(0,shade(sk,-.22));ng.addColorStop(1,shade(sk,-.02));
   g.fillStyle=ng;g.beginPath();g.ellipse(X(.14),Y(-1.38),.3*u*w,.2*u,0,0,6.283);g.fill();
-  g.save();g.translate(X(.2)+.05*u,-1.62*u);g.rotate(-P.lean*.72+(P.headJolt||0));drawHead(g,.3*u,L.face,.62,P.expr||'normal',L.oicho);g.restore();
+  g.save();g.translate(X(.2)+.05*u,-1.62*u);g.rotate(-P.lean*.72+(P.headJolt||0));drawHead(g,.3*u,L.face,.62,P.expr||'normal',L.hair||(L.oicho?'oicho':'chon'));g.restore();
   // front arm
   const H=arm(P.armF,1,sk);
   if(P.bowl){const ax=H[0],ay=H[1];g.fillStyle='#6b3a1e';g.beginPath();g.ellipse(ax+.05*u,ay-.08*u,.24*u,.12*u,0,0,Math.PI);g.fill();g.fillStyle='#f1e2c2';g.beginPath();g.ellipse(ax+.05*u,ay-.08*u,.24*u,.05*u,0,0,6.283);g.fill();
@@ -1095,13 +1107,14 @@ function drawHero(t){
 const START={oshi:{oshi:14,chikara:10,waza:8,hayasa:10,kg:100},yotsu:{oshi:9,chikara:14,waza:10,hayasa:8,kg:106},waza:{oshi:8,chikara:8,waza:14,hayasa:13,kg:88}};
 let draftFace=randFace(),facePrev=null,facePop=0,faceMode='ai';
 function aiFace(id){const m=AIF[id]&&AIF[id].meta;const f=randFace();f.img=id;if(m)f.skin=m.skin;return f;}
-function randAiFace(){const ids=Object.keys(AIF);return ids.length?aiFace(pick(ids)):randFace();}
+const entryIds=()=>Object.keys(AIF).filter(id=>!AIF[id].meta.formal);
+function randAiFace(){const ids=entryIds();return ids.length?aiFace(pick(ids)):randFace();}
 function buildAiPick(){const box=$('aiPick');box.innerHTML='';
-  for(const id in AIF){const m=AIF[id].meta,b=document.createElement('button');b.type='button';b.className=draftFace.img===id?'on':'';b.title=m.name;b.setAttribute('aria-label',m.name+'の顔');
+  for(const id of entryIds()){const m=AIF[id].meta,b=document.createElement('button');b.type='button';b.className=draftFace.img===id?'on':'';b.title=m.name;b.setAttribute('aria-label',m.name+'の顔');
     const im=document.createElement('img');im.src=m.src;im.alt='';b.append(im);b.addEventListener('click',()=>{draftFace=aiFace(id);facePop=1;buildAiPick();});box.append(b);}}
 function setFaceMode(m){faceMode=m;$('modeAi').classList.toggle('on',m==='ai');$('modeParts').classList.toggle('on',m==='parts');$('aiPick').hidden=m!=='ai';$('faceOpts').hidden=m!=='parts';
   if(m==='ai'&&!draftFace.img)draftFace=randAiFace();if(m==='parts'&&draftFace.img){delete draftFace.img;}buildAiPick();buildFaceOpts();facePop=1;}
-function openCreate(){const a15=$('a15');if(a15)a15.checked=true;const to=$('tOshi');if(to)to.checked=true;setTimeout(descs,0);$('nameIn').value=pick(NAMES);draftFace=Object.keys(AIF).length?aiFace(Object.keys(AIF)[0]):randFace();faceMode=draftFace.img?'ai':'parts';setFaceMode(faceMode);show('sCreate');facePrev=makeCanvas($('facePrev'),1);}
+function openCreate(){const a15=$('a15');if(a15)a15.checked=true;const to=$('tOshi');if(to)to.checked=true;setTimeout(descs,0);$('nameIn').value=pick(NAMES);draftFace=entryIds().length?aiFace(entryIds()[0]):randFace();faceMode=draftFace.img?'ai':'parts';setFaceMode(faceMode);show('sCreate');facePrev=makeCanvas($('facePrev'),1);}
 function buildFaceOpts(){
   const box=$('faceOpts');box.innerHTML='';
   for(const k in FACE_OPTS){const o=FACE_OPTS[k];const row=document.createElement('div');row.className='fopt';
@@ -1209,7 +1222,7 @@ function drawAvatar(t,dt){
   }
   if(A&&A.jt){const e=t-A.jt;P.jig=Math.exp(-e*6)*Math.sin(e*32);}
   P.t=t;
-  {const L=lookFor(st.kg,st.pos,st.face,undefined,st.height);drawRikishi(g,x,y0,u*L.hs,1,P,L);}
+  {const L=lookFor(st.kg,st.pos,st.face,undefined,st.height,'keiko',st.b);drawRikishi(g,x,y0,u*L.hs,1,P,L);}
   stepFx(g,dt);
   if(zz){g.fillStyle='#5b5246';g.font='700 '+Math.round(u*.32)+'px "Zen Kaku Gothic New",sans-serif';for(let i=0;i<3;i++){const p=(t*.8+i/3)%1;g.globalAlpha=1-p;g.fillText('Z',x0+u*.6+p*u*.6,y0-u*2.1-p*u*.8);}g.globalAlpha=1;}
 }
@@ -1241,7 +1254,7 @@ function genOpp(myPos,used){
   const s={oshi:v(),chikara:v(),waza:v(),hayasa:v()};s[{oshi:'oshi',yotsu:'chikara',waza:'waza'}[style]]*=1.12;
   const mw=['#1f4a7a','#7a1f1f','#1f5a3a','#4a3a1a','#3a3a3a','#6a2a5a'];
   const height=Math.round(rnd(170,197)),kg=Math.round(clamp(lerp(98,150,tf)+rnd(-26,34)+(height-182)*.8,85,215));
-  return{name,age:clamp(Math.round(18+tf*10+rnd(-3,4)),16,38),pos:Math.min(p,YOKO),style,stats:s,kg,height,face:randFace(),mawashi:p>=JURYO?pick(mw):'#26262e'};
+  return{name,age:clamp(Math.round(18+tf*10+rnd(-3,4)),16,38),pos:Math.min(p,YOKO),style,stats:s,kg,height,face:randFace(),mawashi:p>=JURYO?pick(mw):'#26262e',zan:p<DSTART[2]&&Math.random()<.15};
 }
 function power(s,kg,strat,fat,inj){
   const wf=(kg-90)*.22,sp=s.hayasa-Math.max(0,kg-170)*.3;
@@ -1429,7 +1442,7 @@ function afterBout(){
 }
 function drawBout(t,dt){
   if(!ring||!B||!B.opp)return;const{g,W,H}=ring;const u=H*.17,cx=W/2,fy=H*.76+H*.01;
-  const meL=lookFor(st.kg,st.pos,st.face,undefined,st.height),opL=lookFor(B.opp.kg,B.opp.pos,B.opp.face,B.opp.mawashi,B.opp.height);
+  const meL=lookFor(st.kg,st.pos,st.face,undefined,st.height,'bout',st.b),opL=lookFor(B.opp.kg,B.opp.pos,B.opp.face,B.opp.mawashi,B.opp.height,'bout',B.opp.zan?0:99);
   const a=anim;let mX=cx-W*.23,oX=cx+W*.23;
   const ready={...READY,t};
   let mP={...ready},oP={...ready},gp=0,excite=0;
@@ -1502,7 +1515,7 @@ function endBasho(){
   else if(old===OZEKI){
     if(w<8){if(st.kadoban){p=SEKI;st.kadoban=false;msg='カド番で負け越し、大関から陥落……。';}else{st.kadoban=true;msg='負け越し。次の場所はカド番だ。';}}
     else{st.kadoban=false;const good=yusho||w>=13;const prevGood=prev&&prev.pos===OZEKI&&(prev.yusho||prev.w>=13);
-      if(good&&prevGood&&(yusho||prev.yusho)){p=YOKO;msg='横綱昇進！ 綱を締める日が来た。';}else if(good)msg='来場所は綱取りの場所だ。';}}
+      if(good&&prevGood&&(yusho||prev.yusho)){p=YOKO;msg='横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。';}else if(good)msg='来場所は綱取りの場所だ。';}}
   if(yusho){st.yusho++;if(old>=MAKU)st.makuYusho++;}
   const when=(Math.floor(st.b/6)+1)+'年目 '+BASHO[st.b%6];
   st.hist.push({when,rank:r.name,pos:old,w,l,yusho});
@@ -1523,6 +1536,7 @@ function endBasho(){
   const newAch=checkAch();
   if(st.b%6===0&&ageOf(st)>=31){for(const k in st.stats)st.stats[k]*=.97;addLog(ageOf(st)+'歳になった。体の衰えを感じる……（能力 −3%）');}
   else if(st.b%6===0)addLog(ageOf(st)+'歳になった。');
+  if(st.b===4)addLog('髪が伸び、初めてちょんまげを結った。床山さんに「似合うぞ」と言われた。');
   $('rBasho').textContent=when;
   const big=$('rBig');big.textContent=yusho?(old>=MAKU?'幕内優勝':r.div+'優勝'):w>l?'勝ち越し':'負け越し';
   big.className='result-big '+(yusho||p>old?'gold':w>l?'':'down');
@@ -1537,10 +1551,15 @@ function endBasho(){
 }
 /* full-body illustrations for the banzuke announcement and the yusho screen */
 const BODY={};for(const b of (window.AI_BODIES||[])){const im=new Image();im.src=b.src;BODY[b.id]={meta:b,img:im};}
-for(const c of (window.AI_CHARS||[])){const im=new Image();im.src=c.body;BODY['b_'+c.id]={meta:{id:'b_'+c.id,build:c.build,skin:c.skin,own:c.id},img:im};}
-function pickBody(s){if(s.face&&s.face.img&&BODY['b_'+s.face.img])return 'b_'+s.face.img;
-  const all=Object.values(BODY).filter(b=>!b.meta.own);if(!all.length)return null;const L=lookFor(s.kg,s.pos,s.face,undefined,s.height);
-  const want=s.pos>=YOKO?'yokozuna':L.w>=.95?'heavy':L.w>=.75?'mid':'slim';
+for(const c of (window.AI_CHARS||[])){const im=new Image();im.src=c.body;BODY['b_'+c.id]={meta:{id:'b_'+c.id,build:c.build,skin:c.skin,own:c.id,dark:c.darkBody,waist:c.waist,formal:c.formal},img:im};}
+function pickBody(s){const own=s.face&&s.face.img&&BODY['b_'+s.face.img];const seki=s.pos>=JURYO;
+  // sekitori may show their own coloured silk; below juryo only black cotton is allowed
+  if(own&&(seki||own.meta.dark))return own.meta.id;
+  let all=Object.values(BODY).filter(b=>!b.meta.formal&&b.meta.build!=='yokozuna');
+  if(!seki)all=all.filter(b=>b.meta.dark);else all=all.filter(b=>!b.meta.own);
+  if(s.pos>=YOKO&&!own){const yk=Object.values(BODY).find(b=>!b.meta.own&&b.meta.build==='yokozuna');if(yk)return yk.meta.id;}
+  if(!all.length)return null;const L=lookFor(s.kg,s.pos,s.face,undefined,s.height);
+  const want=L.w>=.95?'heavy':L.w>=.75?'mid':'slim';
   let c=all.filter(b=>b.meta.build===want);if(!c.length)c=all;const close=c.filter(b=>Math.abs(b.meta.skin-(s.face.skin||1))<=1);if(close.length)c=close;
   let h=0;for(const ch of (s.id||'x'))h=(h*31+ch.charCodeAt(0))>>>0;return c[h%c.length].meta.id;}
 function drawResult(t,dt){
@@ -1555,6 +1574,12 @@ function drawResult(t,dt){
   const k=ease(e/.7),sc=Math.min(W*.94/im.naturalWidth,H*.95/im.naturalHeight),iw=im.naturalWidth*sc,ih=im.naturalHeight*sc;
   const bob=Math.sin(t*1.6)*H*.004;g.save();g.globalAlpha=k;g.globalCompositeOperation='multiply';
   g.drawImage(im,(W-iw)/2,H*.97-ih+(1-k)*H*.08+bob,iw,ih);g.restore();
+  if(st&&st.pos>=YOKO&&bd.meta.build!=='yokozuna'){const top=H*.97-ih+(1-k)*H*.08+bob,wy=top+ih*(bd.meta.waist||.42),rw=iw*.62,cx=W/2;
+    g.save();g.globalAlpha=k;const rg=g.createLinearGradient(0,wy-ih*.03,0,wy+ih*.03);rg.addColorStop(0,'#ffffff');rg.addColorStop(1,'#cfc6ab');
+    g.fillStyle=rg;g.beginPath();g.ellipse(cx,wy,rw/2,ih*.032,0,0,6.283);g.fill();g.strokeStyle='#a99f84';g.lineWidth=1;g.stroke();
+    g.strokeStyle='rgba(150,140,110,.8)';for(let x=cx-rw/2+4;x<cx+rw/2-4;x+=6){g.beginPath();g.moveTo(x,wy-ih*.026);g.lineTo(x+4,wy+ih*.026);g.stroke();}
+    g.fillStyle='#fff';g.strokeStyle='#bdb39a';for(const sx of[-.22,0,.22]){const x=cx+sx*rw,y0=wy+ih*.02,s2=ih*.018;g.beginPath();g.moveTo(x,y0);g.lineTo(x+s2,y0+s2);g.lineTo(x,y0+2*s2);g.lineTo(x+s2,y0+3*s2);g.lineTo(x+s2*.5,y0+3.4*s2);g.lineTo(x-s2*.4,y0+2.2*s2);g.lineTo(x+s2*.5,y0+1.2*s2);g.lineTo(x-s2*.4,y0+.3*s2);g.closePath();g.fill();g.stroke();}
+    g.restore();}
   if(!rcData.win&&!y){g.fillStyle='rgba(20,28,60,.18)';g.fillRect(0,0,W,H);}
   g.strokeStyle='rgba(26,22,18,.45)';g.lineWidth=1.5;g.strokeRect(4,4,W-8,H-8);
   if(y){const cx=W*.8,cy=H*.2+Math.sin(t*2)*3,u=W*.11;
@@ -1566,7 +1591,7 @@ function drawResultOld(t,dt){
   if(!rc||!rcData)return;const{g,W,H}=rc;g.clearRect(0,0,W,H);
   const gl=g.createRadialGradient(W/2,H*.55,10,W/2,H*.55,W*.5);gl.addColorStop(0,rcData.yusho?'rgba(226,176,74,.45)':'rgba(255,255,255,.08)');gl.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gl;g.fillRect(0,0,W,H);
   g.fillStyle='rgba(199,150,90,.45)';g.beginPath();g.ellipse(W/2,H*.88,W*.4,H*.06,0,0,6.283);g.fill();
-  const e=t-rcData.t0,k=ease(e/.8),L=lookFor(st.kg,st.pos,st.face,undefined,st.height),u=H*.24*L.hs;
+  const e=t-rcData.t0,k=ease(e/.8),L=lookFor(st.kg,st.pos,st.face,undefined,st.height,'ceremony',st.b),u=H*.24*L.hs;
   if(rcData.yusho){
     const lift=ease(e/1.0);
     drawRikishi(g,W*.44,H*.88,u,1,{lean:.02,crouch:.05,armF:lerp(.4,1.25,lift),armB:lerp(.3,1.15,lift),expr:'happy',t},L);
