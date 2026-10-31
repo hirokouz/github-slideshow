@@ -471,6 +471,8 @@ function drawRikishi(g,x,y,u,dir,P,L){
   g.save();g.scale(1,.14);g.fillStyle=sh;g.beginPath();g.arc(0,0,u*1.2*w*(1-clamp(lift,0,.8)*.5),0,6.283);g.fill();g.restore();
   g.translate(0,-lift*u);g.rotate((P.fall||0)*dir);g.scale(dir,1);
   const c=P.crouch,hx=-.05*u,hy=-(1.0-.36*c)*u,sd=(P.stride||0)*.16*u,lu=P.legUp||0;
+  const toLocal=(gx,gy)=>{const px=gx*dir,py=gy+lift*u,f=-(P.fall||0)*dir,cf=Math.cos(f),sf=Math.sin(f);
+    let qx=(px*cf-py*sf)*dir,qy=px*sf+py*cf;qx-=hx;qy-=hy;const l=-P.lean,cl=Math.cos(l),sl=Math.sin(l);return[qx*cl-qy*sl,qx*sl+qy*cl];};
   const foot=(fx2,fy2,col,rot)=>{const fg=g.createLinearGradient(0,fy2-.1*u,0,fy2+.05*u);fg.addColorStop(0,shade(col,.06));fg.addColorStop(1,shade(col,-.25));
     g.fillStyle=fg;g.beginPath();g.ellipse(fx2+.06*u,fy2,.22*u,.08*u,rot||0,0,6.283);g.fill();};
   // back leg
@@ -485,7 +487,10 @@ function drawRikishi(g,x,y,u,dir,P,L){
   // ---- torso frame ----
   g.save();g.translate(hx,hy);g.rotate(P.lean);
   const sx=X(.08),sy=Y(-1.15);
-  const arm=(a,k,col)=>{const H=[lerp(.3*u,1.1*u,a)+k*.05*u,lerp(-.2*u,-1.05*u,a)+k*.04*u],E=[lerp(.02*u,.6*u,a)+.08*u+k*.03*u,lerp(-.62*u,-1.22*u,a)+.06*u];
+  const hd=P.hd||0;
+  const arm=(a,k,col)=>{let H=[lerp(.3*u,1.1*u,a)+k*.05*u,lerp(-.2*u,-1.05*u,a)+k*.04*u],E=[lerp(.02*u,.6*u,a)+.08*u+k*.03*u,lerp(-.62*u,-1.22*u,a)+.06*u];
+    if(hd>0){const G=toLocal((P.handX||.78)*u+k*.06*u,-.1*u);H=[lerp(H[0],G[0],hd),lerp(H[1],G[1],hd)];
+      const mx=(sx+H[0])/2,my=(sy+H[1])/2,dx=H[0]-sx,dy=H[1]-sy,dl=Math.hypot(dx,dy)||1;E=[lerp(E[0],mx-dy/dl*.12*u,hd),lerp(E[1],my+dx/dl*.12*u,hd)];}
     limbR(g,[[sx+k*.06*u,sy,.26*u*w],[E[0],E[1],.18*u*w],[lerp(E[0],H[0],.5),lerp(E[1],H[1],.5),.14*u*w],[H[0],H[1],.1*u]],col);
     const hg=g.createRadialGradient(H[0]-.03*u,H[1]-.04*u,.01*u,H[0],H[1],.17*u);hg.addColorStop(0,shade(col,.1));hg.addColorStop(1,shade(col,-.22));
     g.fillStyle=hg;g.beginPath();g.ellipse(H[0]+.05*u,H[1],.15*u,.12*u,Math.atan2(H[1]-E[1],H[0]-E[0]),0,6.283);g.fill();return H;};
@@ -623,8 +628,8 @@ function drawHero(t){
   if(!hero)return;const{g,W,H}=hero;const sc=drawScene(g,W,H,0);const u=H*.15;
   drawGyoji(g,sc.cx,sc.floorY-H*.075,u*.55,0,t);
   const br=Math.sin(t*2)*.03;
-  drawRikishi(g,sc.cx-W*.22,sc.floorY+H*.02,u,1,{lean:.9+br,crouch:.8,armF:.15,armB:.15,expr:'strain',t},lookFor(150,KOMU,HERO_FACES[0],'#5d3a92'));
-  drawRikishi(g,sc.cx+W*.22,sc.floorY+H*.02,u,-1,{lean:.9-br,crouch:.8,armF:.15,armB:.15,expr:'strain',t},lookFor(165,KOMU,HERO_FACES[1],'#1f4a7a'));
+  drawRikishi(g,sc.cx-W*.22,sc.floorY+H*.02,u,1,{...READY,lean:READY.lean+br,t},lookFor(150,KOMU,HERO_FACES[0],'#5d3a92'));
+  drawRikishi(g,sc.cx+W*.22,sc.floorY+H*.02,u,-1,{...READY,lean:READY.lean-br,t},lookFor(165,KOMU,HERO_FACES[1],'#1f4a7a'));
 }
 
 /* ---------- create ---------- */
@@ -801,7 +806,7 @@ function tachi(){
   const q=Math.abs(d)<=.045?'sharp':Math.abs(d)<=.12?'normal':'late';
   $('bTachi').hidden=true;resolve(q);
 }
-const TL={force:{imp:.16,drive:1.0,edge:1.5,land:1.85,end:2.7},throw:{imp:.16,drive:1.0,edge:1.3,land:1.62,end:2.45},slap:{imp:.16,drive:.72,edge:1.02,land:1.28,end:2.1}};
+const TL={out:{imp:.16,drive:1.0,edge:1.45,land:1.8,end:2.5},down:{imp:.16,drive:1.0,edge:1.4,land:1.75,end:2.6},throw:{imp:.16,drive:1.0,edge:1.3,land:1.62,end:2.45},slap:{imp:.16,drive:.72,edge:1.02,land:1.28,end:2.1}};
 function resolve(q){
   const o=B.opp,s=B.strat;
   const ostrat=Math.random()<.65?o.style:pick(['oshi','yotsu','waza']);
@@ -810,7 +815,7 @@ function resolve(q){
   if(BEATS[s]===ostrat)me+=7;else if(BEATS[ostrat]===s)me-=7;
   const win=Math.random()<1/(1+Math.exp(-(me-op)/5));
   const ws=win?s:ostrat,km=pick(KIMARITE[ws]);
-  const kind=ws==='waza'&&km!=='送り出し'?'slap':km.includes('投げ')?'throw':'force';
+  const kind=ws==='waza'&&km!=='送り出し'?'slap':km.includes('投げ')?'throw':km.includes('倒し')?'down':'out';
   st.fat=Math.min(100,st.fat+2.5);
   const k=win?{oshi:'oshi',yotsu:'chikara',waza:'waza'}[s]:null;if(k)st.stats[k]+=.25*(1-st.stats[k]/120);
   if(win){B.w++;B.marks+='○';}else{B.l++;B.marks+='●';}B.day++;
@@ -818,65 +823,92 @@ function resolve(q){
   anim={phase:'clash',t:0,win,km,ws,kind,tq:q,TL:TL[kind],dw:win?1:-1,c0:(q==='sharp'?.03:q==='late'?-.03:0),hit:{},freeze:0,upset,thrust:ws==='oshi'};
   persist();
 }
-/* choreography: returns positions + poses for winner (w) and loser (l) */
+/* Choreography modelled on how bouts actually unfold:
+   shikiri with both fists down -> low charge and frontal collision ->
+   oshi: thrusts to the chest / yotsu: chest to chest with hands on the belt ->
+   finish by kimarite: step-out (oshidashi/yorikiri/okuridashi), fall (taoshi),
+   throw (nage), or slap-down where the loser's hands hit the clay.
+   After the bout the winner walks back to his line and bows. */
+const READY={lean:.95,crouch:1,armF:.2,armB:.2,hd:1,handX:.78,fall:0,lift:0,stride:0,expr:'strain',headJolt:0};
 function choreo(a,T,W,cx,edge){
-  const L=a.TL,dw=a.dw,c0=cx+a.c0*W,gap=W*.17,start=W*.23;
-  const base={lean:.9,crouch:.8,armF:.15,armB:.15,fall:0,lift:0,stride:0,expr:'strain',headJolt:0};
-  let wP={...base},lP={...base},wX,lX;
+  const L=a.TL,dw=a.dw,c0=cx+a.c0*W,grip=a.ws==='yotsu',gap=W*(grip?.15:.17),start=W*.23;
+  let wP={...READY},lP={...READY},wX,lX;
   const wS=cx-dw*start,lS=cx+dw*start;
-  if(T<L.imp){const k=easeIn(T/L.imp),p={lean:lerp(.9,.72,k),crouch:lerp(.8,.5,k),armF:lerp(.15,1,k),armB:lerp(.15,.9,k)};
+  const hitArmF=grip?.5:1.08,hitArmB=grip?.46:.98;
+  // 1) tachiai: rise out of the crouch and collide
+  if(T<L.imp){const k=easeIn(T/L.imp),m=(p,q)=>lerp(p,q,k);
+    const p={lean:m(.95,.7),crouch:m(1,.5),hd:m(1,0),armF:m(.2,hitArmF),armB:m(.2,hitArmB)};
     return{wX:lerp(wS,c0-dw*gap/2,k),lX:lerp(lS,c0+dw*gap/2,k),wP:{...wP,...p},lP:{...lP,...p}};}
-  // struggle
-  const sEnd=a.kind==='slap'?-dw*W*.04:dw*W*.035;
-  const s=clamp((T-L.imp)/(L.drive-L.imp),0,1),tt=T-L.imp;
-  const sway=Math.sin(tt*8)*W*.012*(1-s);
-  const wSt=c0-dw*gap/2+sEnd,lSt=c0+dw*gap/2+sEnd;
+  // 2) the exchange in the middle
+  const back=a.kind==='slap'?-dw*W*.04:dw*W*.035;
+  const s=clamp((T-L.imp)/(L.drive-L.imp),0,1),tt=T-L.imp,sway=Math.sin(tt*8)*W*.012*(1-s);
+  const wSt=c0-dw*gap/2+back,lSt=c0+dw*gap/2+back;
+  const base={...READY,hd:0};
   if(T<L.drive){
-    wX=c0-dw*gap/2+sEnd*s+sway;lX=c0+dw*gap/2+sEnd*s+sway;
-    const shuffle=Math.sin(tt*10)*.5;
+    wX=c0-dw*gap/2+back*s+sway;lX=c0+dw*gap/2+back*s+sway;const shuf=Math.sin(tt*10)*.5;
     if(a.ws==='oshi'){const ph=tt*16,hit=Math.abs(Math.sin(ph));
-      wP={...wP,lean:.62,crouch:.48,armF:1+.38*Math.max(0,Math.sin(ph)),armB:1+.38*Math.max(0,-Math.sin(ph)),stride:shuffle};
-      lP={...lP,lean:.55-.14*hit,crouch:.5,armF:.85,armB:.7,headJolt:-.18*hit,stride:-shuffle};}
-    else if(a.kind==='slap'){wP={...wP,lean:.5,crouch:.5,armF:.9,armB:.85,stride:shuffle};lP={...lP,lean:.78,crouch:.48,armF:1.05,armB:1,stride:-shuffle};}
-    else{const tug=Math.sin(tt*5)*.06;wP={...wP,lean:.62+tug,crouch:.5,armF:.78,armB:.7,stride:shuffle};lP={...lP,lean:.62-tug,crouch:.5,armF:.74,armB:.68,stride:-shuffle};}
+      wP={...base,lean:.62,crouch:.48,armF:1+.38*Math.max(0,Math.sin(ph)),armB:1+.38*Math.max(0,-Math.sin(ph)),stride:shuf};
+      lP={...base,lean:.55-.14*hit,crouch:.5,armF:.85,armB:.7,headJolt:-.18*hit,stride:-shuf};}
+    else if(a.kind==='slap'){wP={...base,lean:.5,crouch:.5,armF:.95,armB:.85,stride:shuf};lP={...base,lean:.8,crouch:.48,armF:1.05,armB:1,stride:-shuf};}
+    else{const tug=Math.sin(tt*5)*.06;   // chest to chest, both hands on the belt
+      wP={...base,lean:.6+tug,crouch:.52,armF:.48,armB:.44,stride:shuf};lP={...base,lean:.58-tug,crouch:.48,armF:.46,armB:.42,stride:-shuf};}
     return{wX,lX,wP,lP};
   }
-  const lEnd=cx+dw*(edge-W*.06);
-  if(a.kind==='force'){
-    if(T<L.edge){const k=easeIn((T-L.drive)/(L.edge-L.drive));lX=lerp(lSt,lEnd,k);wX=lX-dw*gap*lerp(1,.9,k);
-      wP={...wP,lean:.78,crouch:.42,armF:a.thrust?1.25:1.05,armB:a.thrust?1.15:.95,stride:Math.sin(T*14)*.8};
-      lP={...lP,lean:lerp(.5,-.05,k),crouch:lerp(.5,.3,k),armF:lerp(.8,.5,k),armB:.5,stride:Math.sin(T*14+2)*.8,headJolt:-.15*k};return{wX,lX,wP,lP};}
-    const wEnd=lEnd-dw*gap*.9;
-    if(T<L.land){const k=clamp((T-L.edge)/(L.land-L.edge),0,1);lX=lEnd+dw*W*.035*k;wX=wEnd;
-      wP={...wP,lean:lerp(.78,.45,k),crouch:lerp(.42,.3,k),armF:lerp(1.1,.6,k),armB:lerp(1,.5,k)};
-      lP={...lP,lean:lerp(-.05,.25,k),crouch:lerp(.3,.95,k),armF:lerp(.5,1.2,k),armB:lerp(.5,1.1,k),fall:-.55*easeIn(k),lift:-.42*easeIn(k),expr:'lose'};return{wX,lX,wP,lP};}
-    const r=clamp((T-L.land)/.5,0,1),bounce=Math.sin(r*Math.PI)*.06*(1-r);
-    return{wX:wEnd,lX:lEnd+dw*W*.035,wP:{...wP,lean:lerp(.45,.12,ease(r)),crouch:lerp(.3,.12,ease(r)),armF:lerp(.6,.05,ease(r)),armB:lerp(.5,.05,ease(r)),expr:r>.4?'win':'strain'},
-      lP:{...lP,lean:.3,crouch:.95,armF:1.2,armB:1.1,fall:-.55+bounce,lift:-.42,expr:'lose'}};
+  const pushArms=a.ws==='oshi'?{armF:1.3,armB:1.2}:{armF:.5,armB:.45};
+  // 3a) driven out: loser's heels reach the straw, then he steps back over it and off the raised ring
+  if(a.kind==='out'||a.kind==='down'){
+    const stopX=cx+dw*(a.kind==='out'?edge-W*.02:edge-W*.25);
+    if(T<L.edge){const k=easeIO((T-L.drive)/(L.edge-L.drive));lX=lerp(lSt,stopX,k);wX=lX-dw*gap*lerp(1,.9,k);
+      wP={...base,lean:.8,crouch:.4,...pushArms,stride:Math.sin(T*14)*.7};
+      lP={...base,lean:lerp(.55,-.22,k),crouch:lerp(.5,.32,k),armF:lerp(.6,.35,k),armB:.4,stride:Math.sin(T*14+2)*.7,headJolt:-.12*k};return{wX,lX,wP,lP};}
+    const wEnd=stopX-dw*gap*.9;
+    if(a.kind==='out'){
+      if(T<L.land){const k=clamp((T-L.edge)/(L.land-L.edge),0,1);lX=lerp(stopX,stopX+dw*W*.085,ease(k));wX=lerp(wEnd,wEnd+dw*W*.015,k);
+        wP={...base,lean:lerp(.8,.55,k),crouch:lerp(.4,.32,k),armF:lerp(pushArms.armF,.9,k),armB:lerp(pushArms.armB,.8,k)};
+        lP={...base,lean:lerp(-.22,.05,k),crouch:lerp(.32,.25,k),armF:lerp(.35,1.15,Math.sin(k*Math.PI)),armB:lerp(.4,.9,Math.sin(k*Math.PI)),stride:-Math.sin(k*Math.PI)*1.2,lift:-.34*easeIn(k),expr:'lose'};return{wX,lX,wP,lP};}
+      const r=clamp((T-L.land)/.5,0,1);
+      return{wX:wEnd+dw*W*.015,lX:stopX+dw*W*.085,wP:{...base,lean:lerp(.55,.12,ease(r)),crouch:lerp(.32,.12,ease(r)),armF:lerp(.9,.05,ease(r)),armB:lerp(.8,.05,ease(r)),expr:r>.4?'win':'strain'},
+        lP:{...base,lean:lerp(.05,.2,r),crouch:.2,armF:.05,armB:.05,lift:-.34,expr:'lose',headJolt:.1*r}};
+    }
+    // taoshi: loser goes down on his back, winner follows him down onto one knee
+    if(T<L.land){const k=clamp((T-L.edge)/(L.land-L.edge),0,1);lX=stopX+dw*W*.03*k;wX=lerp(wEnd,wEnd+dw*W*.05,k);
+      wP={...base,lean:lerp(.8,1.0,k),crouch:lerp(.4,.85,k),...pushArms,hd:.5*k,handX:1.3};
+      lP={...base,lean:-.15,crouch:.3,armF:lerp(.4,1.2,k),armB:lerp(.4,1.1,k),fall:-1.35*easeIn(k),lift:.34*easeIn(k),expr:'lose'};return{wX,lX,wP,lP};}
+    const r=clamp((T-L.land)/.6,0,1),bounce=Math.sin(clamp((T-L.land)/.4,0,1)*Math.PI)*.06;
+    return{wX:wEnd+dw*W*.05,lX:stopX+dw*W*.03,wP:{...base,lean:lerp(1,.12,ease(r)),crouch:lerp(.85,.12,ease(r)),armF:lerp(.5,.05,r),armB:lerp(.45,.05,r),hd:.5*(1-r),handX:1.3,expr:r>.5?'win':'strain'},
+      lP:{...base,lean:-.15,crouch:.3,armF:1.2,armB:1.1,fall:-1.35+bounce,lift:.34,expr:'lose'}};
   }
+  // 3b) overarm / underarm throw: winner pivots and swings the loser down beside him
   if(a.kind==='throw'){
     const wEnd=wSt-dw*W*.035,lFin=wEnd+dw*W*.07;
     if(T<L.edge){const k=ease((T-L.drive)/(L.edge-L.drive));wX=lerp(wSt,wEnd,k);lX=lerp(lSt,lerp(lSt,lFin,.45),k);
-      wP={...wP,lean:lerp(.62,.95,k),crouch:.5,armF:lerp(.8,.3,k),armB:.9};
-      lP={...lP,lean:lerp(.62,1.0,k),crouch:lerp(.5,.3,k),armF:.8,armB:.7,lift:.28*Math.sin(k*Math.PI/2),fall:.5*k};return{wX,lX,wP,lP};}
+      wP={...base,lean:lerp(.6,.95,k),crouch:.5,armF:lerp(.48,.25,k),armB:.5};
+      lP={...base,lean:lerp(.58,1.0,k),crouch:lerp(.48,.3,k),armF:.5,armB:.45,lift:.28*Math.sin(k*Math.PI/2),fall:.5*k};return{wX,lX,wP,lP};}
     if(T<L.land){const k=clamp((T-L.edge)/(L.land-L.edge),0,1);wX=wEnd;lX=lerp(lerp(lSt,lFin,.45),lFin,ease(k));
-      wP={...wP,lean:lerp(.95,.6,k),crouch:.45,armF:lerp(.3,-.2,k),armB:lerp(.9,.4,k)};
-      lP={...lP,lean:lerp(1,.15,k),crouch:.3,armF:.9,armB:1.1,lift:lerp(.28,.36,k),fall:lerp(.5,1.45,easeIn(k)),expr:'lose'};return{wX,lX,wP,lP};}
+      wP={...base,lean:lerp(.95,.6,k),crouch:.45,armF:lerp(.25,-.2,k),armB:lerp(.5,.3,k)};
+      lP={...base,lean:lerp(1,.15,k),crouch:.3,armF:.9,armB:1.1,lift:lerp(.28,.36,k),fall:lerp(.5,1.45,easeIn(k)),expr:'lose'};return{wX,lX,wP,lP};}
     const r=clamp((T-L.land)/.5,0,1),bounce=Math.sin(r*Math.PI)*.07*(1-r);
-    return{wX:wEnd,lX:lFin,wP:{...wP,lean:lerp(.6,.12,ease(r)),crouch:lerp(.45,.12,ease(r)),armF:lerp(-.2,.05,ease(r)),armB:lerp(.4,.05,ease(r)),expr:r>.4?'win':'strain'},
-      lP:{...lP,lean:.15,crouch:.3,armF:.9,armB:1.1,fall:1.45-bounce,lift:.36,expr:'lose'}};
+    return{wX:wEnd,lX:lFin,wP:{...base,lean:lerp(.6,.12,ease(r)),crouch:lerp(.45,.12,ease(r)),armF:lerp(-.2,.05,ease(r)),armB:lerp(.3,.05,ease(r)),expr:r>.4?'win':'strain'},
+      lP:{...base,lean:.15,crouch:.3,armF:.9,armB:1.1,fall:1.45-bounce,lift:.36,expr:'lose'}};
   }
-  // slap: winner side-steps and slaps down; loser lurches forward
-  const wEnd=wSt-dw*W*.085,lFin=lSt-dw*W*.15;
+  // 3c) slap-down: winner gives way and slaps; loser lurches forward until his hands hit the clay
+  const wEnd=wSt-dw*W*.17,lFin=lSt-dw*W*.1;
   if(T<L.edge){const k=clamp((T-L.drive)/(L.edge-L.drive),0,1);wX=lerp(wSt,wEnd,ease(k));lX=lerp(lSt,lerp(lSt,lFin,.55),easeIn(k));
-    wP={...wP,lean:lerp(.5,.3,k),crouch:.45,armF:k<.6?lerp(.9,1.45,k/.6):lerp(1.45,-.3,(k-.6)/.4),armB:.6};
-    lP={...lP,lean:lerp(.78,1.2,k),crouch:lerp(.48,.35,k),armF:1.1,armB:1.05,fall:.35*k};return{wX,lX,wP,lP};}
+    wP={...base,lean:lerp(.5,.3,k),crouch:.45,armF:k<.6?lerp(.95,1.45,k/.6):lerp(1.45,-.3,(k-.6)/.4),armB:.6};
+    lP={...base,lean:lerp(.8,1.15,k),crouch:lerp(.48,.4,k),armF:1.1,armB:1.05,fall:.25*k};return{wX,lX,wP,lP};}
   if(T<L.land){const k=clamp((T-L.edge)/(L.land-L.edge),0,1);wX=wEnd;lX=lerp(lerp(lSt,lFin,.55),lFin,ease(k));
-    wP={...wP,lean:.55,crouch:.45,armF:-.3,armB:.6};
-    lP={...lP,lean:lerp(1.2,.2,k),crouch:.3,armF:lerp(1.1,1.4,k),armB:1.3,fall:lerp(.35,1.45,easeIn(k)),lift:.36*k,expr:'lose'};return{wX,lX,wP,lP};}
-  const r=clamp((T-L.land)/.5,0,1),bounce=Math.sin(r*Math.PI)*.06*(1-r);
-  return{wX:wEnd,lX:lFin,wP:{...wP,lean:lerp(.55,.12,ease(r)),crouch:lerp(.45,.12,ease(r)),armF:lerp(-.3,.05,ease(r)),armB:lerp(.6,.05,ease(r)),expr:r>.4?'win':'strain'},
-    lP:{...lP,lean:.2,crouch:.3,armF:1.4,armB:1.3,fall:1.45-bounce,lift:.36,expr:'lose'}};
+    wP={...base,lean:.5,crouch:.45,armF:-.3,armB:.6};
+    lP={...base,lean:lerp(1.15,.95,k),crouch:lerp(.4,1,k),armF:1.2,armB:1.1,fall:lerp(.25,.22,k),hd:easeIn(k),handX:1.05,expr:'lose'};return{wX,lX,wP,lP};}
+  const r=clamp((T-L.land)/.5,0,1);
+  return{wX:wEnd,lX:lFin,wP:{...base,lean:lerp(.5,.12,ease(r)),crouch:lerp(.45,.12,ease(r)),armF:lerp(-.3,.05,ease(r)),armB:lerp(.6,.05,ease(r)),expr:r>.4?'win':'strain'},
+    lP:{...base,lean:.95,crouch:1,armF:1.2,armB:1.1,fall:.22,hd:1,handX:1.05,expr:'lose'}};
+}
+/* after the result: the winner walks back to his line and bows */
+function afterChoreo(a,T,W,cx,c){
+  const e=T-a.TL.end;if(e<=0)return c;
+  const walk=a.kind==='out'||a.kind==='down',home=walk?cx-a.dw*W*.2:c.wX,k=ease(e/.8),wX=lerp(c.wX,home,k);
+  const bow=e>.9&&e<1.9?Math.sin((e-.9)/1*Math.PI):0;
+  return{...c,wX,wP:{...c.wP,stride:walk&&k<1?Math.sin(e*12)*.6:0,lean:.12+bow*.55,crouch:.12+bow*.1,armF:.05,armB:.05,expr:bow>.2?'normal':'win'}};
 }
 function updateBout(dt){
   if(!anim)return;const a=anim;
@@ -891,8 +923,8 @@ function updateBout(dt){
     const {W,H}=ring,cx=W/2,fy=H*.76;
     if(prev<L.imp&&a.t>=L.imp){const c=choreo(a,L.imp,W,cx,W*.37);a.freeze=autoMode?0:.075;cam.shake=REDUCED?0:7;
       flash((c.wX+c.lX)/2,fy-H*.17*1.1,W*.05);dust(c.wX,fy,7,70);dust(c.lX,fy,7,70);a.jtW=a.t;a.jtL=a.t;}
-    if(prev<L.land&&a.t>=L.land){const c=choreo(a,L.land,W,cx,W*.37);a.freeze=autoMode?0:.06;cam.shake=REDUCED?0:9;
-      dust(c.lX,fy+H*.02,16,120);a.jtL=a.t;if(a.upset&&!REDUCED)cushions(W,H);}
+    if(prev<L.land&&a.t>=L.land){const c=choreo(a,L.land,W,cx,W*.37),soft=a.kind==='out';a.freeze=autoMode||soft?0:.06;cam.shake=REDUCED?0:soft?3:9;
+      dust(c.lX,fy+(soft?H*.06:H*.02),soft?8:16,soft?70:120);a.jtL=a.t;if(a.upset&&!REDUCED)cushions(W,H);}
     if(a.t>=L.end&&!a.reported){a.reported=true;a.phase='done';afterBout();}
   }
   else if(a.phase==='done'){a.t+=dt;}
@@ -906,17 +938,17 @@ function drawBout(t,dt){
   if(!ring||!B||!B.opp)return;const{g,W,H}=ring;const u=H*.17,cx=W/2,fy=H*.76+H*.01;
   const meL=lookFor(st.kg,st.pos,st.face),opL=lookFor(B.opp.kg,B.opp.pos,B.opp.face,B.opp.mawashi);
   const a=anim;let mX=cx-W*.23,oX=cx+W*.23;
-  const ready={lean:.9,crouch:.8,armF:.15,armB:.15,expr:'strain',t};
+  const ready={...READY,t};
   let mP={...ready},oP={...ready},gp=0,excite=0;
   if(a&&a.phase==='intro'){ // stand -> salt toss -> squat into shikiri
     const k=a.t/1.3,s1=ease(clamp((k-.35)/.65,0,1));
     const stand={lean:.06,crouch:.08,armF:.05,armB:k<.3?Math.sin(k/.3*Math.PI)*1.5:.05,expr:'normal',t};
-    mP={...stand,lean:lerp(.06,.9,s1),crouch:lerp(.08,.8,s1),armF:lerp(.05,.15,s1),armB:k<.3?stand.armB:lerp(.05,.15,s1)};oP={...mP};
+    mP={...READY,...stand,lean:lerp(.06,READY.lean,s1),crouch:lerp(.08,READY.crouch,s1),armF:lerp(.05,READY.armF,s1),armB:k<.3?stand.armB:lerp(.05,READY.armB,s1),hd:clamp((s1-.55)/.45,0,1),expr:s1>.5?'strain':'normal'};oP={...mP};
     if(!a.salted&&k>.12){a.salted=true;for(const[x,d]of[[mX,1],[oX,-1]])for(let i=0;i<22;i++)fx.push({k:'s',x:x+d*u*.3,y:fy-u*2.2,vx:d*rnd(25,95),vy:-rnd(40,130),life:rnd(.7,1.1),max:1.1});}
   }
   if(a&&(a.phase==='ready'||a.phase==='tachi')){const br=Math.sin(t*2.2)*.03,ant=a.phase==='tachi'?clamp(a.t*a.speed,0,1)*.08:0;mP.lean+=br+ant;oP.lean-=br-ant;}
   if(a&&(a.phase==='clash'||a.phase==='done')){
-    const c=choreo(a,a.t,W,cx,W*.37);
+    const c=afterChoreo(a,a.t,W,cx,choreo(a,a.t,W,cx,W*.37));
     if(a.win){mX=c.wX;oX=c.lX;mP={...c.wP,t};oP={...c.lP,t};}else{mX=c.lX;oX=c.wX;mP={...c.lP,t};oP={...c.wP,t};}
     const jg=tt0=>tt0===undefined?0:(e=>Math.exp(-e*7)*Math.sin(e*34))(a.t-tt0);
     const jw=jg(a.jtW),jl=jg(a.jtL);if(a.win){mP.jig=jw;oP.jig=jl;}else{mP.jig=jl;oP.jig=jw;}
