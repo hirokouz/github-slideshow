@@ -222,6 +222,101 @@ details.more summary::after{content:'▾';color:var(--kin)}details.more[open] su
 .vplate.old{opacity:.5}
 .change .arrow{font-family:var(--f-brush);font-size:28px;color:var(--shu)}
 #rCv{width:100%;max-width:300px;aspect-ratio:1;margin:0 auto;display:block}
+/* ---- compact one-screen layout ---- */
+.wrap{gap:10px;padding-block:calc(env(safe-area-inset-top,0px) + 10px) calc(env(safe-area-inset-bottom,0px) + 14px)}
+.scr{gap:10px}
+.home .hhead{padding:10px 12px}
+.home #avatar{width:84px;height:102px}
+.home .plate{font-size:26px}
+.home .rinfo .rank{font-size:21px}
+.home .hst{padding:9px 12px;gap:6px}
+.home .stats{grid-template-columns:1fr 1fr;gap:5px 14px}
+.home .stat{grid-template-columns:2.4em 1fr 2.9em;gap:6px;font-size:11.5px}
+.home .stat b{font-size:12.5px}
+.home .bar{height:7px}
+.home .acts{grid-template-columns:repeat(3,1fr);gap:6px}
+.home .acts button{grid-template-columns:1fr;justify-items:center;text-align:center;padding:7px 4px;gap:1px}
+.home .acts .k{grid-row:auto;width:28px;height:28px;font-size:16px}
+.home .acts b{font-size:13px}.home .acts span.d{font-size:9.5px;line-height:1.35}
+.hlog{margin:0;font-size:12px;line-height:1.5;color:var(--shiro);border-left:2px solid var(--kin);padding-left:8px;min-height:3em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.home #bashoBtn{padding:12px 16px;font-size:16px}
+.deckbar{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center}
+.deck.mini{gap:6px}
+.deck.mini .slot{min-height:44px;padding:4px 6px;grid-template-columns:auto minmax(0,1fr);justify-items:start;text-align:left;align-items:center;gap:0 6px}
+.deck.mini .slot .kk{width:24px;height:24px;font-size:14px;grid-row:1 / span 2}
+.deck.mini .slot .sn{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.deck.mini .slot .ss{font-size:9.5px}
+.deck.mini .slot .empty{grid-column:1 / -1;justify-self:center;font-size:11px}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.tabs button{display:grid;justify-items:center;gap:1px;background:var(--ai2);border:1px solid var(--line);border-radius:10px;padding:6px 2px;font-size:10.5px;font-weight:700}
+.tabs .ti{font-family:var(--f-brush);font-size:17px;color:var(--kin);line-height:1.1}
+.tabs small{font-size:9px;color:var(--nezumi);font-weight:500}
+.sheet{position:fixed;inset:0;z-index:40;background:rgba(4,7,18,.62);display:flex;align-items:flex-end;justify-content:center}
+.sheet-in{width:100%;max-width:440px;max-height:80dvh;overflow:auto;box-sizing:border-box;background:var(--ai);border-top:2px solid var(--kin);border-radius:16px 16px 0 0;display:grid;gap:12px;align-content:start;
+  padding-top:14px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 18px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+/* create */
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.chips label{position:relative;display:grid;justify-items:center;gap:1px;padding:7px 4px;border-radius:10px;background:#fffaf0;border:1.5px solid rgba(26,22,18,.25);cursor:pointer;text-align:center;color:var(--sumi)}
+.chips input{position:absolute;opacity:0;pointer-events:none}
+.chips .k{font-family:var(--f-brush);font-size:19px}
+.chips b{font-size:11.5px}
+.chips label:has(input:checked){border-color:var(--shu);background:#fbe9d6;box-shadow:0 0 0 1px var(--shu) inset}
+.cdesc{margin:0;font-size:11.5px;color:#5b5246;min-height:1.5em;line-height:1.5}
+#sCreate .faceed{grid-template-columns:132px minmax(0,1fr);gap:10px}
+#sCreate .fopt{grid-template-columns:2.6em 26px 1fr 26px;gap:3px;font-size:11.5px}
+#sCreate .fopt button{width:26px;height:26px}
+#sCreate input[type=text]{font-size:22px;padding:7px 12px}
+/* bout */
+.prof{padding:7px 10px;gap:10px}
+#bFace{width:46px;height:46px}
+.prof .pn{font-size:19px}
+.prof dl{margin-top:1px;font-size:10.5px;gap:0 8px}
+.prof dt{font-size:9px}
+.bouthead .day{font-size:23px}
+.vs .card{padding:4px 6px;gap:0}
+.vs .nm{font-size:19px}
+.vs .st{font-size:10.5px}
+#ring{width:min(100%,calc((100dvh - 395px) * 1.212));min-width:220px;margin:0 auto}
+.strats button{padding:6px 4px;gap:0}.strats .k{font-size:22px}
+#bPick .hint{margin-bottom:5px!important;font-size:11px}
+#bTachi .hint{margin-top:5px!important;font-size:11px}
+/* title + result */
+#heroCv{width:min(100%,calc(30dvh * 1.333))}
+#rCv{max-width:min(240px,26dvh)}
+.result-big{font-size:clamp(40px,12vw,58px)}
+/* homecoming */
+#kCv{width:100%;aspect-ratio:400/220;display:block;border-radius:10px;box-shadow:0 10px 26px rgba(0,0,0,.4)}
+.kchoices{display:grid;gap:8px}
+.kchoices .ghost{background:var(--ai2);font-size:15px;padding:13px 14px}
+@media (max-height:740px){
+  .wrap{gap:8px;padding-block:calc(env(safe-area-inset-top,0px) + 6px) calc(env(safe-area-inset-bottom,0px) + 8px)}
+  .scr{gap:8px}
+  .home #avatar{width:68px;height:83px}
+  .home .hhead{padding:7px 10px}
+  .home .plate{font-size:22px}
+  .home .rinfo .rank{font-size:18px}.home .rinfo .when{font-size:11px}
+  .home .hst{padding:7px 10px;gap:4px}
+  .home .acts button{padding:5px 3px}
+  .home .acts .k{width:24px;height:24px;font-size:14px}
+  .home .acts span.d{font-size:9px}
+  .hlog{min-height:1.5em;-webkit-line-clamp:1}
+  .home #bashoBtn{padding:10px 14px;font-size:15px}
+  .deck.mini .slot{min-height:38px}
+  .tabs button{padding:4px 2px}
+  .tabs .ti{font-size:15px}
+  #rCv{max-width:min(200px,20dvh)}
+  .result-big{font-size:clamp(34px,10vw,48px)}
+  #sResult .washi{padding:10px 12px}
+  .vplate{min-height:6em;font-size:20px}
+  #sCreate .faceed{grid-template-columns:112px minmax(0,1fr)}
+  #sCreate .fopt button{width:24px;height:24px}
+  #sCreate .fopt{grid-template-columns:2.6em 24px 1fr 24px;font-size:11px}
+  .chips label{padding:5px 3px}.chips .k{font-size:16px}
+  #sCreate .washi{padding:8px 12px;gap:5px!important}
+  #sCreate .fopts{gap:2px}
+  .cdesc{min-height:0;font-size:10.5px}
+  #sCreate .faceed{grid-template-columns:100px minmax(0,1fr)}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -246,36 +341,39 @@ details.more summary::after{content:'▾';color:var(--kin)}details.more[open] su
 
   <!-- CREATE -->
   <section id="sCreate" class="scr" hidden>
-    <div class="washi" style="display:grid;gap:12px">
-      <p class="label">入門届</p>
-      <h2 class="brush" style="font-size:30px">しこ名を決める</h2>
+    <div class="washi" style="display:grid;gap:8px">
+      <p class="label">入門届　しこ名</p>
       <div class="row"><input type="text" id="nameIn" maxlength="6" aria-label="しこ名" class="grow"><button class="ghost ink" id="randName" style="width:auto">おまかせ</button></div>
     </div>
-    <div class="washi" style="display:grid;gap:12px">
+    <div class="washi" style="display:grid;gap:8px">
       <div class="row" style="justify-content:space-between"><p class="label">顔をつくる</p><button class="ghost ink" id="faceRand" style="width:auto;padding:6px 12px;font-size:13px">おまかせ</button></div>
       <div class="faceed">
         <canvas id="facePrev" aria-label="顔のプレビュー"></canvas>
         <div class="fopts" id="faceOpts"></div>
       </div>
     </div>
-    <p class="label">入門の年齢</p>
-    <div class="types">
-      <label><input type="radio" name="age" value="15" id="a15" checked><span class="k">15</span><b>15歳・中学卒業</b><span class="d">はじめの能力は低いが、伸びしろは最大。長く強くなれる</span></label>
-      <label><input type="radio" name="age" value="18" id="a18"><span class="k">18</span><b>18歳・高校卒業</b><span class="d">体ができていて能力やや高め。伸びもまずまず</span></label>
-      <label><input type="radio" name="age" value="22" id="a22"><span class="k">22</span><b>22歳・大学卒業</b><span class="d">即戦力で三段目付出デビュー。ただし伸びは早く止まる</span></label>
-    </div>
-    <p class="label">体つき</p>
-    <div class="types">
-      <label><input type="radio" name="type" value="oshi" id="tOshi" checked><span class="k">押</span><b>押し相撲型</b><span class="d">押しが強い。前に出て一気に勝負</span></label>
-      <label><input type="radio" name="type" value="yotsu" id="tYotsu"><span class="k">四</span><b>四つ相撲型</b><span class="d">力が強く体も大きい。まわしを取って寄る</span></label>
-      <label><input type="radio" name="type" value="waza" id="tWaza"><span class="k">技</span><b>技能派</b><span class="d">小柄で素早い。技とスピードでかわす</span></label>
+    <div class="washi" style="display:grid;gap:8px">
+      <p class="label">入門の年齢</p>
+      <div class="chips">
+        <label><input type="radio" name="age" value="15" id="a15" checked><span class="k">15歳</span><b>中学卒業</b></label>
+        <label><input type="radio" name="age" value="18" id="a18"><span class="k">18歳</span><b>高校卒業</b></label>
+        <label><input type="radio" name="age" value="22" id="a22"><span class="k">22歳</span><b>大学卒業</b></label>
+      </div>
+      <p class="cdesc" id="ageDesc"></p>
+      <p class="label">体つき</p>
+      <div class="chips">
+        <label><input type="radio" name="type" value="oshi" id="tOshi" checked><span class="k">押</span><b>押し相撲</b></label>
+        <label><input type="radio" name="type" value="yotsu" id="tYotsu"><span class="k">四</span><b>四つ相撲</b></label>
+        <label><input type="radio" name="type" value="waza" id="tWaza"><span class="k">技</span><b>技能派</b></label>
+      </div>
+      <p class="cdesc" id="typeDesc"></p>
     </div>
     <button class="primary" id="enterBtn">入門する</button>
   </section>
 
   <!-- HOME -->
-  <section id="sHome" class="scr" hidden>
-    <div class="washi">
+  <section id="sHome" class="scr home" hidden>
+    <div class="washi hhead">
       <div class="head">
         <canvas id="avatar" aria-label="あなたの力士"></canvas>
         <div class="rinfo">
@@ -287,31 +385,32 @@ details.more summary::after{content:'▾';color:var(--kin)}details.more[open] su
         <div class="plate" id="hTate"></div>
       </div>
     </div>
-    <div class="panel">
-      <div class="row" style="justify-content:space-between"><p class="label">体と技</p><span class="muted" style="font-size:11px" id="hPower"></span></div>
+    <div class="panel hst">
+      <div class="row" style="justify-content:space-between"><p class="label">体と技</p><span class="muted" style="font-size:10.5px" id="hPower"></span></div>
       <div class="stats" id="hStats"></div>
     </div>
-    <div class="panel">
-      <div class="row" style="justify-content:space-between"><p class="label">サポートカード（3枚まで）</p><button class="ghost" id="hGacha" style="width:auto;padding:6px 12px;font-size:13px">ガチャ</button></div>
-      <div class="deck" id="hDeck"></div>
-      <div id="hPick" hidden></div>
-    </div>
-    <div>
-      <p class="label" style="margin-bottom:8px">今日の稽古</p>
-      <div class="acts" id="hActs"></div>
-    </div>
-    <button class="primary" id="bashoBtn" hidden>本場所へ</button>
-    <div class="panel">
-      <p class="label">親方と部屋のようす</p>
-      <div class="log" id="hLog"></div>
-    </div>
-    <div class="washi">
-      <p class="label" style="margin-bottom:6px">星取表</p>
-      <div class="histbox"><table class="hist" id="hHist"></table></div>
-    </div>
-    <div class="panel"><details class="more"><summary><span class="label">実績</span><span class="muted" style="font-size:12px" id="hAchN"></span></summary><div class="achs" id="hAch" style="margin-top:10px"></div></details></div>
-    <button class="ghost" id="toTitle">ほかの力士に切り替える・新しく入門させる</button>
+    <div class="acts" id="hActs"></div>
+    <p class="hlog" id="hLog1"></p>
+    <button class="primary" id="bashoBtn">本場所へ</button>
+    <div class="deckbar"><span class="label">サポート</span><div class="deck mini" id="hDeck"></div></div>
+    <nav class="tabs" aria-label="そのほか">
+      <button type="button" data-sheet="hist"><span class="ti">星</span>星取表</button>
+      <button type="button" data-sheet="log"><span class="ti">話</span>部屋の話</button>
+      <button type="button" data-sheet="ach"><span class="ti">績</span>実績<small id="hAchN"></small></button>
+      <button type="button" id="hGacha"><span class="ti">祝</span>ガチャ</button>
+      <button type="button" id="toTitle"><span class="ti">替</span>力士切替</button>
+    </nav>
   </section>
+
+  <div id="sheet" class="sheet" hidden>
+    <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="sheetT">
+      <div class="row" style="justify-content:space-between"><b class="brush" id="sheetT" style="font-size:22px"></b><button class="ghost" id="sheetX" style="width:auto;padding:6px 14px">閉じる</button></div>
+      <div data-p="hist" class="washi"><div class="histbox"><table class="hist" id="hHist"></table></div></div>
+      <div data-p="log"><div class="log" id="hLog"></div><p class="label" style="margin-top:12px">いま効いている出来事</p><div class="log" id="hBuffs"></div></div>
+      <div data-p="ach"><div class="achs" id="hAch"></div></div>
+      <div data-p="deck"><p class="muted" style="font-size:12px;margin-bottom:8px" id="pickHint"></p><div id="hPick"></div></div>
+    </div>
+  </div>
 
   <!-- GACHA -->
   <section id="sGacha" class="scr" hidden>
@@ -362,6 +461,16 @@ details.more summary::after{content:'▾';color:var(--kin)}details.more[open] su
     </div>
     <div id="bNext" hidden><button class="primary" id="nextBtn">次の一番へ</button></div>
     <label class="auto"><input type="checkbox" id="autoChk">残りの取組をおまかせで取る</label>
+  </section>
+
+  <!-- HOMECOMING -->
+  <section id="sKikyo" class="scr" hidden>
+    <div class="row" style="justify-content:space-between;align-items:baseline"><h2 class="brush" id="kTitle" style="font-size:28px">帰省</h2><span class="label" id="kWhen"></span></div>
+    <canvas id="kCv" aria-label="実家の窓あかり"></canvas>
+    <div class="washi" style="display:grid;gap:6px"><p class="label" id="kEvName"></p><p id="kText" style="font-size:14px"></p></div>
+    <div class="kchoices" id="kChoices"></div>
+    <div id="kResult" class="panel" hidden><p id="kResText" style="font-size:14px"></p><p id="kFx" style="font-size:12px;color:var(--kin)"></p></div>
+    <button class="primary" id="kDone" hidden>新年、部屋に戻る</button>
   </section>
 
   <!-- BASHO RESULT -->
@@ -448,7 +557,7 @@ function loadRoster(){
 }
 function saveRoster(){try{localStorage.setItem(ROSTER_KEY,JSON.stringify(roster));}catch(e){}}
 function persist(){if(!st)return;st.touched=Date.now();roster.list[st.id]=st;roster.active=st.id;saveRoster();}
-function play(id){st=roster.list[id];if(!st)return;roster.active=id;saveRoster();if(st.basho)startBasho();else renderHome();}
+function play(id){st=roster.list[id];if(!st)return;roster.active=id;saveRoster();if(st.pendingKikyo)openKikyo();else if(st.basho)startBasho();else renderHome();}
 const PREFS=['北海道','青森','秋田','岩手','山形','宮城','福島','茨城','栃木','群馬','埼玉','千葉','東京','神奈川','新潟','富山','石川','福井','山梨','長野','岐阜','静岡','愛知','三重','滋賀','京都','大阪','兵庫','奈良','和歌山','鳥取','島根','岡山','広島','山口','徳島','香川','愛媛','高知','福岡','佐賀','長崎','熊本','大分','宮崎','鹿児島','沖縄'];
 function profileSeed(type){return{age0:15+Math.floor(Math.random()*8),height:Math.round(({oshi:180,yotsu:184,waza:175}[type]||180)+rnd(-4,5)),home:pick(PREFS)};}
 const ageOf=s=>s.age0+Math.floor(s.b/6);
@@ -904,8 +1013,10 @@ function stepCushions(g,dt){
 }
 
 /* ---------- screens ---------- */
-const SCR=['sTitle','sCreate','sHome','sBout','sResult','sGacha'];let cur='sTitle';
-function show(id){for(const s of SCR)$(s).hidden=s!==id;cur=id;window.scrollTo(0,0);}
+const SCR=['sTitle','sCreate','sHome','sBout','sResult','sGacha','sKikyo'];let cur='sTitle';
+function show(id){for(const s of SCR)$(s).hidden=s!==id;cur=id;closeSheet();window.scrollTo(0,0);}
+function openSheet(k,title){const sh=$('sheet');sh.hidden=false;$('sheetT').textContent=title||'';for(const el of sh.querySelectorAll('[data-p]'))el.hidden=el.dataset.p!==k;}
+function closeSheet(){const sh=$('sheet');if(sh)sh.hidden=true;}
 
 /* ---------- title ---------- */
 let hero=null;const HERO_FACES=[randFace(),randFace()];
@@ -948,7 +1059,7 @@ function drawHero(t){
 /* ---------- create ---------- */
 const START={oshi:{oshi:14,chikara:10,waza:8,hayasa:10,kg:100},yotsu:{oshi:9,chikara:14,waza:10,hayasa:8,kg:106},waza:{oshi:8,chikara:8,waza:14,hayasa:13,kg:88}};
 let draftFace=randFace(),facePrev=null,facePop=0;
-function openCreate(){const a15=$('a15');if(a15)a15.checked=true;$('nameIn').value=pick(NAMES);draftFace=randFace();buildFaceOpts();show('sCreate');facePrev=makeCanvas($('facePrev'),1);}
+function openCreate(){const a15=$('a15');if(a15)a15.checked=true;const to=$('tOshi');if(to)to.checked=true;setTimeout(descs,0);$('nameIn').value=pick(NAMES);draftFace=randFace();buildFaceOpts();show('sCreate');facePrev=makeCanvas($('facePrev'),1);}
 function buildFaceOpts(){
   const box=$('faceOpts');box.innerHTML='';
   for(const k in FACE_OPTS){const o=FACE_OPTS[k];const row=document.createElement('div');row.className='fopt';
@@ -973,6 +1084,7 @@ function enter(){
   st={id:'r'+Date.now().toString(36)+Math.floor(Math.random()*1e4),name,type,stats:{oshi:s0.oshi+AB.b,chikara:s0.chikara+AB.b,waza:s0.waza+AB.b,hayasa:s0.hayasa+AB.b},kg:s0.kg+AB.kg,fat:10,inj:0,pos:AB.pos,b:0,used:0,
       hist:[],yusho:0,makuYusho:0,kadoban:false,log:[],basho:null,deck:[],face:Object.assign({},draftFace),...profileSeed(type),age0:age,v2:1,pBonus:prestigeBonus()};
   st.best=st.pos;st.rival=makeRival(st);
+  if(roster.siblingOf){for(const k in st.stats)st.stats[k]+=3;st.home=roster.siblingHome||st.home;addBuff(st,'growth',.1,999,'兄の背中');addLog('兄・'+roster.siblingOf+'の背中を追って入門した。');roster.siblingOf=null;}
   addLog('同期入門の '+st.rival.name+' が宿敵になりそうだ。');
   if(st.pBonus>0)addLog('部屋の格のおかげで稽古がはかどる（成長 +'+Math.round(st.pBonus*100)+'%）');
   addLog(age===22?'親方「大学で鍛えた体だ。三段目付出から一気に駆け上がれ」':age===18?'親方「高校相撲の経験を生かせ。まずは序ノ口で勝ち越しだ」':'親方「今日からお前は'+name+'だ。若さが武器だ、とことん鍛えるぞ」');
@@ -1011,23 +1123,27 @@ function renderHome(){
   row('体重',st.kg-60,140,Math.round(st.kg)+'kg','kg',lastGain.kg);
   row('疲れ',st.fat,100,Math.round(st.fat),'fat');
   lastGain={};
-  if(st.inj>0){const d=document.createElement('p');d.style.cssText='font-size:12.5px;color:#ff8a80';d.textContent='けがをしている。休めば治る（このままだと本場所で力が出ない）';sb.append(d);}
+  if(st.inj>0){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ff8a80;margin:0';d.textContent='けが中：休めば治る';sb.append(d);}
   $('hPower').textContent=growthLabel(ageOf(st))+'（成長×'+ageGrowth(ageOf(st)).toFixed(2)+'）　総合力 '+Math.round((st.stats.oshi+st.stats.chikara+st.stats.waza+st.stats.hayasa)/4+(st.kg-90)*.1);
   const ab=$('hActs');ab.innerHTML='';const done=st.used>=TURNS;
   for(const a of ACTS){const b=document.createElement('button');b.type='button';b.disabled=done;
     b.innerHTML='<span class="k"></span><b></b><span class="d"></span>';b.children[0].textContent=a.k;b.children[1].textContent=a.name;b.children[2].textContent=a.desc;
     b.addEventListener('click',()=>train(a));ab.append(b);}
-  $('bashoBtn').hidden=!done;$('bashoBtn').textContent=BASHO[st.b%6]+'へ（'+r.bouts+'番）';
+  const bb=$('bashoBtn');bb.disabled=!done;bb.textContent=done?BASHO[st.b%6]+'へ（'+r.bouts+'番）':'稽古あと'+(TURNS-st.used)+'回で'+BASHO[st.b%6];
   renderDeck();
-  $('hAchN').textContent=Object.keys(roster.ach).length+' / '+ACH.length;renderAch($('hAch'));
+  $('hAchN').textContent=Object.keys(roster.ach).length+'/'+ACH.length;renderAch($('hAch'));
   const lg=$('hLog');lg.innerHTML='';for(const t of st.log){const p=document.createElement('p');p.textContent=t;lg.append(p);}
+  $('hLog1').textContent=st.log[0]||'';
+  const bf=$('hBuffs');bf.innerHTML='';const ab2=activeBuffs();if(!ab2.length){const q=document.createElement('p');q.textContent='なし';bf.append(q);}
+  for(const b of ab2){const q=document.createElement('p');const lab={power:'取組の力',growth:'稽古の伸び',inj:'けがのしやすさ',money:'ご祝儀'}[b.k];
+    q.textContent=b.note+'：'+lab+' '+(b.v>0?'+':'')+(b.k==='power'?b.v:Math.round(b.v*100)+'%')+(b.until-st.b>50?'（ずっと）':'（あと'+(b.until-st.b)+'場所）');bf.append(q);}
   const ht=$('hHist');ht.innerHTML='';
   if(!st.hist.length){const tr=ht.insertRow();const td=tr.insertCell();td.textContent='まだ本場所に出ていない';td.style.color='#5b5246';}
-  for(const h of st.hist.slice(-10).reverse()){const tr=ht.insertRow();
+  for(const h of st.hist.slice().reverse()){const tr=ht.insertRow();
     tr.insertCell().textContent=h.when;tr.insertCell().textContent=h.rank;const c=tr.insertCell();c.textContent=h.w+'勝'+h.l+'敗'+(h.yusho?' 優勝':'');if(h.yusho)c.className='yusho';}
   const keepAct=avatar&&avatar.act;
   if(cur!=='sHome')show('sHome');
-  avatar=makeCanvas($('avatar'),160/132);avatar.act=keepAct||null;avatar.fx=[];
+  avatar=makeCanvas($('avatar'),102/84);avatar.act=keepAct||null;avatar.fx=[];
 }
 /* home avatar: idle breathing + a short animation for each kind of training */
 function drawAvatar(t,dt){
@@ -1060,9 +1176,9 @@ function train(a){
   if(a.rest){st.fat=Math.max(0,st.fat+a.fat*(1+D.rest));if(st.inj>0){st.inj=0;msg='ゆっくり休んで、けがが治った。';}else msg=pick(['よく眠った。体が軽い。','部屋の掃除をして英気を養った。','近所のお寺で静かに過ごした。']);}
   else if(a.kg){const g=(a.kg+rnd(-.5,1))*(1+D.kg);st.kg=Math.min(200,st.kg+g);lastGain.kg=g;st.fat=Math.max(0,st.fat+a.fat*(1+D.rest));msg=pick(['ちゃんこを五杯おかわりした。','タニマチから牛肉の差し入れ。','兄弟子と鍋を囲んだ。']);}
   else{const tired=st.fat>75;
-    if(tired&&Math.random()<.3*(1+D.inj)){st.inj=1;st.fat=Math.min(100,st.fat+a.fat*(1+D.fat));msg='無理がたたってけがをした……。休んで治そう。';}
+    if(tired&&Math.random()<.3*Math.max(0,1+D.inj+buff('inj'))){st.inj=1;st.fat=Math.min(100,st.fat+a.fat*(1+D.fat));msg='無理がたたってけがをした……。休んで治そう。';}
     else{const crit=Math.random()<.12+D.crit;const mul=(crit?2:1)*(st.inj?.5:1)*(tired?.6:1);const parts=[];
-      for(const k in a.gain){const g=a.gain[k]*rnd(.96,1.56)*(1-st.stats[k]/120)*mul*AG*(1+D.all+(D[a.id]||0)+(st.pBonus||0));st.stats[k]+=g;lastGain[k]=g;parts.push(STAT_LABEL[k]+' +'+g.toFixed(1));}
+      for(const k in a.gain){const g=a.gain[k]*rnd(.96,1.56)*(1-st.stats[k]/120)*mul*AG*(1+D.all+(D[a.id]||0)+(st.pBonus||0)+buff('growth')+(a.id==='shiko'&&flag('fatherShiko')?.1:0));st.stats[k]+=g;lastGain[k]=g;parts.push(STAT_LABEL[k]+' +'+g.toFixed(1));}
       if(a.id==='moushi'||a.id==='shiko')st.kg=Math.min(200,st.kg+.4);
       st.fat=Math.min(100,st.fat+a.fat*(1+D.fat));
       msg=(crit?'親方「今日の'+a.name+'はいいぞ！」　':a.name+'をこなした。　')+parts.join('　')+(tired?'（疲れで身が入らない）':'');}}
@@ -1138,7 +1254,7 @@ const TL={out:{imp:.16,drive:1.0,edge:1.45,land:1.8,end:2.5},down:{imp:.16,drive
 function resolve(q){
   const o=B.opp,s=B.strat;
   const ostrat=Math.random()<.65?o.style:pick(['oshi','yotsu','waza']);
-  const D=deckFx();let me=power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q])+D.power+(q!=='late'?D.tachi:0);
+  const D=deckFx();let me=power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q])+D.power+(q!=='late'?D.tachi+(flag('senseiTachi')?1:0):0)+buff('power');
   const op=power(o.stats,o.kg,ostrat,0,0);
   if(BEATS[s]===ostrat)me+=7;else if(BEATS[ostrat]===s)me-=7;
   const win=Math.random()<1/(1+Math.exp(-(me-op)/5));
@@ -1332,7 +1448,7 @@ function drawBout(t,dt){
 /* ---------- basho end / banzuke ---------- */
 let rc=null,rcData=null;
 function endBasho(){
-  const w=B.w,l=B.l,old=st.pos,r=rank(old);let p=old,msg='';
+  const w=B.w,l=B.l,old=st.pos,r=rank(old),endedIdx=st.b;let p=old,msg='';const ex=[];
   const top=old>=JURYO;let yusho=!top?w===7:(w>=14||(w===13&&Math.random()<.4)||(w===12&&Math.random()<.1));
   const prev=st.hist[st.hist.length-1];
   if(old<KOMU){const mv=moveBanzuke(old,w,l);p=mv.p;if(mv.msg)msg=mv.msg;}
@@ -1351,6 +1467,14 @@ function endBasho(){
   // sansho for maegashira, komusubi and sekiwake
   const sansho=[];if(old>=MAKU&&old<OZEKI&&w>l){if(B.beatTop&&w>=8)sansho.push('殊勲賞');if(w>=11)sansho.push('敢闘賞');if((B.wazaWins||0)>=6&&w>=10)sansho.push('技能賞');}
   if(sansho.length){st.sanshoN=(st.sanshoN||0)+sansho.length;B.earn+=earn(100*sansho.length);}
+  // payoffs planted by homecoming events
+  if(st.promiseB===endedIdx){if(w>l){B.earn=(B.earn||0)+earn(300);ex.push('祖母との約束を果たした（ご祝儀 +300）');}else{addBuff(st,'power',-1,2,'約束を守れなかった');ex.push('祖母との約束を守れなかった…');}st.promiseB=null;}
+  if(st.flags&&st.flags.grandmaCare===1&&w>l){st.flags.grandmaCare=2;B.earn=(B.earn||0)+earn(200);ex.push('元気になった祖母から手紙が届いた（ご祝儀 +200）');}
+  if(flag('fatherKesho')&&old<JURYO&&p>=JURYO){B.earn=(B.earn||0)+earn(300);ex.push('父の化粧まわしが届いた（ご祝儀 +300）');}
+  if(flag('koenkai')&&yusho&&old>=MAKU){B.earn=(B.earn||0)+earn(500);ex.push('地元で優勝パレード！（ご祝儀 +500）');}
+  if(st.vowUntil){if(p>=MAKU){B.earn=(B.earn||0)+earn(1000);ex.push('「幕内に上がる」約束を果たした！（ご祝儀 +1000）');st.vowUntil=null;}
+    else if(endedIdx+1>=st.vowUntil){addBuff(st,'money',-.2,6,'地元の落胆');ex.push('テレビで語った目標に届かなかった…（1年間ご祝儀 −20%）');st.vowUntil=null;}}
+  if(endedIdx%6===5){st.pendingKikyo=true;ex.push('年の瀬だ。地元に帰ろう。');}
   st.pos=p;st.best=Math.max(st.best||0,p);st.b++;st.used=0;st.basho=null;st.fat=Math.max(0,st.fat-25);
   if(st.rival){st.rival.edge=(st.rival.edge||0)+.35;st.rival.kg=Math.min(185,st.rival.kg+rnd(0,3));}
   const newAch=checkAch();
@@ -1362,7 +1486,7 @@ function endBasho(){
   $('rHoshi').textContent=B.marks+'　'+w+'勝'+l+'敗';
   if(!msg){if(old<JURYO&&p>=JURYO)msg='十両昇進！ 関取の仲間入り。大銀杏を結い、絹のまわしを締められる。';else if(old<MAKU&&p>=MAKU)msg='新入幕！ 幕内の土俵に上がる。';
     else if(old<KOMU&&p>=KOMU)msg='新三役！ 小結に昇進した。';else msg=w>l?pick(['この調子で上を目指そう。','親方「まずまずだな」']):pick(['悔しさを稽古にぶつけよう。','親方「下を向くな、四股を踏め」']);}
-  $('rMsg').textContent=msg+(sansho.length?'　'+sansho.join('・')+'受賞！':'')+(B.earn?'　ご祝儀 +'+B.earn:'')+(newAch.length?'　実績「'+newAch.join('」「')+'」達成':'');
+  $('rMsg').textContent=msg+(sansho.length?'　'+sansho.join('・')+'受賞！':'')+(B.earn?'　ご祝儀 +'+B.earn:'')+(newAch.length?'　実績「'+newAch.join('」「')+'」達成':'')+(ex.length?'　'+ex.join('　'):'');
   const vp=(el,pos)=>{el.innerHTML='';const s=document.createElement('small');s.textContent=side(pos);const n=document.createElement('span');n.textContent=rank(pos).name;el.append(s,n);};
   vp($('rOld'),old);vp($('rNew'),p);
   addLog(when+'は'+w+'勝'+l+'敗。'+msg);
@@ -1418,7 +1542,7 @@ function deckFx(){const D={all:0,crit:0,inj:0,kg:0,money:0,fat:0,rest:0,power:0,
   if(!st||!st.deck)return D;
   for(const id of st.deck){const c=CARD[id];if(!c||!cardLv(id))continue;const m=1+.2*(cardLv(id)-1);for(const k in c.fx)D[k]+=c.fx[k]*m;}
   return D;}
-function earn(base){const D=deckFx();const v=Math.round(base*(1+D.money));roster.money=(roster.money||0)+v;return v;}
+function earn(base){const D=deckFx();const v=Math.round(base*Math.max(.2,1+D.money+buff('money')+(flag('koenkai')?.1:0)));roster.money=(roster.money||0)+v;return v;}
 function drawOne(guarantee){let r=Math.random(),rar='N';for(const[k,p]of RATES){if(r<p){rar=k;break;}r-=p;}
   if(guarantee&&(rar==='R'||rar==='N'))rar='SR';
   const c=pick(CARDS.filter(x=>x.r===rar));const isNew=!roster.cards[c.id];roster.cards[c.id]=(roster.cards[c.id]||0)+1;return{c,isNew};}
@@ -1454,14 +1578,14 @@ function renderDeck(){
     if(id&&CARD[id]){const c=CARD[id];b.classList.add('r-'+c.r);b.innerHTML='<span class="kk"></span><span class="sn"></span><span class="ss"></span>';
       b.querySelector('.kk').textContent=c.k;b.querySelector('.sn').textContent=c.name;b.querySelector('.ss').textContent=c.r+' ★'+cardLv(id);}
     else b.innerHTML='<span class="empty">＋ 空き</span>';
-    b.addEventListener('click',()=>{pickSlot=pickSlot===i?null:i;renderDeck();});box.append(b);}
-  const pk=$('hPick');pk.innerHTML='';pk.hidden=pickSlot===null;
+    b.addEventListener('click',()=>{pickSlot=i;renderDeck();openSheet('deck','サポートカード（'+(i+1)+'枠目）');});box.append(b);}
+  const pk=$('hPick');pk.innerHTML='';$('pickHint').textContent='付けたいカードを選ぶ。カードは部屋で共有。ガチャで増やせる。';
   if(pickSlot!==null){
     const owned=CARDS.filter(c=>cardLv(c.id)&&!st.deck.includes(c.id)).sort((a,b)=>'SSR SR R N'.indexOf(a.r)-'SSR SR R N'.indexOf(b.r));
     if(st.deck[pickSlot]){const rm=document.createElement('button');rm.type='button';rm.className='ghost';rm.textContent='このカードを外す';
-      rm.addEventListener('click',()=>{st.deck.splice(pickSlot,1);pickSlot=null;persist();renderDeck();});pk.append(rm);}
+      rm.addEventListener('click',()=>{st.deck.splice(pickSlot,1);pickSlot=null;persist();renderDeck();closeSheet();});pk.append(rm);}
     if(!owned.length){const p=document.createElement('p');p.className='muted';p.style.fontSize='12.5px';p.textContent='付けられるカードがない。ご祝儀ガチャで手に入れよう。';pk.append(p);}
-    for(const c of owned){const el=cardEl(c);el.classList.add('pickable');el.addEventListener('click',()=>{st.deck[pickSlot]=c.id;st.deck=st.deck.filter(Boolean);pickSlot=null;persist();renderDeck();});pk.append(el);}
+    for(const c of owned){const el=cardEl(c);el.classList.add('pickable');el.addEventListener('click',()=>{st.deck[pickSlot]=c.id;st.deck=st.deck.filter(Boolean);pickSlot=null;persist();renderDeck();closeSheet();});pk.append(el);}
   }
 }
 
@@ -1534,7 +1658,7 @@ function prestigeOf(s){const b=Math.max(s.best||0,s.pos);return (b>=YOKO?20:b>=O
 const prestigeBonus=()=>Math.min(.3,(roster.prestige||0)*.01);
 function retire(id){const s=roster.list[id];if(!s)return;const pts=prestigeOf(s);
   roster.hall.push({name:s.name,face:s.face,best:bestRankName(s),bestPos:Math.max(s.best||0,s.pos),makuYusho:s.makuYusho,yusho:s.yusho,w:totalWins(s),l:s.hist.reduce((a,h)=>a+h.l,0),age:ageOf(s),years:yearOf(s),oicho:Math.max(s.best||0,s.pos)>=JURYO});
-  roster.prestige=(roster.prestige||0)+pts;delete roster.list[id];if(roster.active===id)roster.active=null;if(st&&st.id===id)st=null;
+  const bonusP=s.flags&&s.flags.oyakoko?3:0;roster.prestige=(roster.prestige||0)+pts+bonusP;delete roster.list[id];if(roster.active===id)roster.active=null;if(st&&st.id===id)st=null;
   checkAchStable();saveRoster();toast(s.name+' が引退し親方に。部屋の格 +'+pts+'（新弟子の成長 +'+Math.round(prestigeBonus()*100)+'%）');renderTitle();}
 function checkAchStable(){for(const a of ACH){if(roster.ach[a.id])continue;if((a.id==='oyakata'||a.id==='hall3')&&a.c()){roster.ach[a.id]=Date.now();roster.money+=a.r;}}}
 
@@ -1547,6 +1671,109 @@ function loginBonus(){const d=new Date(),k=d.getFullYear()+'-'+(d.getMonth()+1)+
 let toastT=null;
 function toast(t){const el=$('toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),2600);}
 
+/* ---------- timed buffs and lasting flags ---------- */
+function addBuff(s,k,v,n,note){if(!s.buffs)s.buffs=[];s.buffs.push({k,v,until:s.b+n,note});}
+function buff(k){if(!st||!st.buffs)return 0;return st.buffs.filter(b=>b.k===k&&st.b<b.until).reduce((a,b)=>a+b.v,0);}
+const flag=k=>!!(st&&st.flags&&st.flags[k]);
+function setFlag(s,k,v){if(!s.flags)s.flags={};s.flags[k]=v===undefined?true:v;}
+function activeBuffs(){if(!st||!st.buffs)return[];return st.buffs.filter(b=>st.b<b.until);}
+
+/* ---------- year-end homecoming events ----------
+   Each choice changes something now and usually plants a flag that pays off later. */
+const EVENTS=[
+  {id:'mom',t:'母の手料理',rep:true,
+    text:s=>flag('oyakoko')?'仕送りで建て替えた実家の台所で、母が好物を山ほど作って待っていた。「立派になって…」':
+      flag('momFood')?'「またひと回り大きくなったね」母が笑いながら、今年も好物を並べてくれた。':'実家に着くと、母が好物を山ほど作って待っていた。「ちゃんと食べてるの？」',
+    ch:[{l:'腹いっぱい食べる',f:s=>{s.kg=Math.min(200,s.kg+4);s.fat=Math.max(0,s.fat-(flag('oyakoko')?45:30));setFlag(s,'momFood');return['母の味で、心も体も満たされた。','体重 +4kg・疲れ回復'];}},
+        {l:'食べすぎず体を気づかう',f:s=>{addBuff(s,'inj',-.5,6,'母の言いつけ');return['「けがだけはしないでね」母の言葉を胸に刻んだ。','この1年、けがをしにくい'];}}]},
+  {id:'father',t:'父の古傷',
+    text:()=>'学生相撲で鳴らした父は、膝の古傷で今は四股も踏めない。「おまえの四股を見せてくれ」',
+    ch:[{l:'父の前で四股を踏む',f:s=>{s.stats.chikara+=2;setFlag(s,'fatherShiko');return['父が一つひとつ、足の上げ方を直してくれた。','力 +2・四股の伸びがずっと +10%'];}},
+        {l:'肩をもんで休ませる',f:s=>{setFlag(s,'fatherKesho');return['父は押し入れから古い化粧まわしを出してきた。「十両に上がったら締めてくれ」','十両昇進のとき、父の化粧まわしが届く'];}}]},
+  {id:'osana',t:'幼なじみとの再会',
+    text:()=>'商店街で、小学校の同級生とばったり会った。「テレビ見てるよ。今度、場所に応援に行っていい？」',
+    ch:[{l:'連絡先を交換する',f:s=>{setFlag(s,'osana');addBuff(s,'power',1,1,'幼なじみの応援');return['次の場所、客席に見慣れた顔があるはずだ。','次の場所で取組の力 +1・来年の帰省に続きがある'];}},
+        {l:'照れくさくて帰る',f:s=>{setFlag(s,'osanaShy');return['言いたいことは、また来年に。','（なにも起きない）'];}}]},
+  {id:'osana2',t:'幼なじみからの手紙',need:s=>s.flags&&s.flags.osana,
+    text:()=>'一年間、毎場所応援に来てくれた幼なじみから手紙を渡された。「ずっと支えさせてほしい」',
+    ch:[{l:'気持ちを受けとめる',f:s=>{setFlag(s,'partner');addBuff(s,'power',1,999,'支えてくれる人');s.fat=0;return['二人で初詣に行った。帰る場所ができた。','取組の力がずっと +1'];}},
+        {l:'今は相撲に集中したい',f:s=>{addBuff(s,'growth',.1,6,'決意');return['「待ってるから」の一言を背に、部屋へ戻った。','この1年、稽古の伸び +10%'];}}]},
+  {id:'koenkai',t:'地元後援会の結成',
+    text:()=>'町長が訪ねてきた。「町を挙げて後援会を作りたい。年始のあいさつ回りをお願いできますか」',
+    ch:[{l:'あいさつ回りをする',f:s=>{s.fat=Math.min(100,s.fat+15);setFlag(s,'koenkai');const v=earn(300);return['町じゅうの人に握手を求められた。','ご祝儀 +'+v+'・これからのご祝儀がずっと +10%・幕内優勝で地元パレード'];}},
+        {l:'稽古を優先して断る',f:s=>{s.stats.waza+=1.5;return['町の体育館を借りて、ひとりで汗を流した。','技 +1.5'];}}]},
+  {id:'sibling',t:'弟の入門志願',
+    text:()=>'弟が真剣な顔で言った。「おれも兄ちゃんみたいに相撲取りになりたい」',
+    ch:[{l:'背中を押す',f:s=>{roster.siblingOf=s.name;roster.siblingHome=s.home;return['「同じ部屋に来い。鍛えてやる」','次に入門させる力士が「弟」になり、能力と成長にボーナス'];}},
+        {l:'大学に行けと諭す',f:s=>{addBuff(s,'growth',.05,6,'兄の自覚');return['「まずは勉強だ。そのぶんおれが勝つ」','この1年、稽古の伸び +5%'];}}]},
+  {id:'grandma',t:'祖母の入院',
+    text:()=>'祖母が入院していると聞いた。病室で手を握ると「おまえの相撲が楽しみでね」と笑った。',
+    ch:[{l:'年明けまで付き添う',f:s=>{s.fat=0;setFlag(s,'grandmaCare',1);s.lateReturn=true;return['毎日病室に通った。祖母はみるみる元気になった。','疲れが全快・次の稽古は1回少ない・次に勝ち越すと祖母から手紙'];}},
+        {l:'勝って見せると約束する',f:s=>{addBuff(s,'power',2,1,'祖母との約束');s.promiseB=s.b;return['「次の場所、必ず勝ち越すから」','次の場所で取組の力 +2・勝ち越せば…負け越すと…'];}}]},
+  {id:'tv',t:'地元テレビの取材',
+    text:()=>'地元テレビ局のカメラが待っていた。「将来の目標を聞かせてください」',
+    ch:[{l:'「必ず幕内に上がります」',f:s=>{s.vowUntil=s.b+18;return['夜のニュースで大きく流れた。町じゅうが見ている。','3年以内に入幕すればご祝儀 +1000、できなければ…'];}},
+        {l:'「一番一番がんばります」',f:s=>{const v=earn(100);return['謙虚な受け答えが好評だった。','ご祝儀 +'+v];}}]},
+  {id:'sensei',t:'恩師の稽古',
+    text:()=>'中学の相撲部の先生が、まわしを締めて待っていた。「立ち合いだけは、ごまかすなよ」',
+    ch:[{l:'胸を借りる',f:s=>{s.stats.waza+=2;setFlag(s,'senseiTachi');return['何度も何度も、当たり直した。','技 +2・立ち合いがずっと少し鋭くなる'];}},
+        {l:'話をじっくり聞く',f:s=>{addBuff(s,'growth',.1,6,'恩師の教え');return['「弱い自分を認めたやつが強くなる」','この1年、稽古の伸び +10%'];}}]},
+  {id:'omikuji',t:'初詣のおみくじ',rep:true,
+    text:()=>'地元の神社に初詣。境内には子どもの頃から変わらない、おみくじの箱がある。',
+    ch:[{l:'おみくじを引く',f:s=>{const r=Math.random();
+          if(r<.25){addBuff(s,'growth',.15,6,'大吉');return['大吉！「勝負事、思うままなり」','この1年、稽古の伸び +15%'];}
+          if(r<.8){addBuff(s,'growth',.05,6,'吉');return['吉。「焦らず進めば道ひらく」','この1年、稽古の伸び +5%'];}
+          addBuff(s,'inj',.5,3,'凶');return['凶……「けがに用心」とある。木の枝に結んで帰った。','半年間、けがをしやすい'];}},
+        {l:'引かずに手を合わせる',f:s=>{addBuff(s,'power',1,1,'必勝祈願');return['静かに、次の場所の必勝を祈った。','次の場所で取組の力 +1'];}}]},
+  {id:'shiokuri',t:'両親への仕送り',
+    text:()=>'実家の屋根が雨漏りしているのに気づいた。両親は「気にするな」と言うけれど…',
+    ch:[{l:'ご祝儀から500仕送りする',f:s=>{const v=Math.min(500,roster.money||0);roster.money-=v;setFlag(s,'oyakoko');return['春までに屋根を直すと、母から電話があった。','ご祝儀 −'+v+'・母の手料理がもっと効く・引退時の部屋の格 +3'];}},
+        {l:'自分の稽古道具に使う',f:s=>{const c=pick(CARDS.filter(x=>x.r==='R'));roster.cards[c.id]=(roster.cards[c.id]||0)+1;return['新しい稽古まわしを買った。部屋で「'+c.name+'」と仲良くなった。','サポートカード「'+c.name+'」を入手'];}}]},
+];
+function pickEvent(s){if(!s.seenEv)s.seenEv=[];
+  const ok=EVENTS.filter(e=>!e.need||e.need(s));
+  const fresh=ok.filter(e=>!s.seenEv.includes(e.id)&&!e.rep);
+  if(fresh.length){const priority=fresh.find(e=>e.id==='osana2');return priority||pick(fresh);}
+  const again=ok.filter(e=>e.rep||(e.id==='osana'&&s.flags&&s.flags.osanaShy&&!s.flags.osana));return pick(again.length?again:ok);}
+
+/* screen */
+let kCv=null,kSnow=[],kEv=null;
+function openKikyo(){
+  const s=st;kEv=pickEvent(s);s.seenEv.push(kEv.id);persist();
+  $('kWhen').textContent=Math.max(1,yearOf(s)-1)+'年目の年の瀬　'+ageOf(s)+'歳';
+  $('kTitle').textContent=s.home+'へ帰省';
+  $('kEvName').textContent=kEv.t;$('kText').textContent=kEv.text(s);
+  const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;$('kDone').hidden=true;
+  for(const c of kEv.ch){const b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=c.l;
+    b.addEventListener('click',()=>{const [story,fx]=c.f(s);box.innerHTML='';$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;
+      s.pendingKikyo=false;if(s.lateReturn){s.used=1;s.lateReturn=false;}addLog(kEv.t+'：'+story);persist();});
+    box.append(b);}
+  show('sKikyo');kCv=makeCanvas($('kCv'),220/400);kSnow=[];
+}
+function drawKikyo(t,dt){
+  if(!kCv||!st)return;const{g,W,H}=kCv;
+  const sky=g.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#0b1430');sky.addColorStop(1,'#3a3350');g.fillStyle=sky;g.fillRect(0,0,W,H);
+  softSpot(g,W*.82,H*.2,W*.12,'255,245,215',.5);g.fillStyle='#f6efd8';g.beginPath();g.arc(W*.82,H*.2,W*.035,0,6.283);g.fill();
+  g.fillStyle='#1c2240';g.beginPath();g.moveTo(0,H*.62);for(let x=0;x<=W;x+=W/8)g.lineTo(x,H*(.5+.08*Math.sin(x*.02+1)));g.lineTo(W,H);g.lineTo(0,H);g.fill();
+  // houses with warm windows
+  const house=(x,w,h,lit)=>{g.fillStyle='#141a33';g.fillRect(x,H*.78-h,w,h);g.beginPath();g.moveTo(x-w*.1,H*.78-h);g.lineTo(x+w/2,H*.78-h-w*.35);g.lineTo(x+w*1.1,H*.78-h);g.fill();
+    g.fillStyle='#e9e4f2';g.beginPath();g.moveTo(x-w*.1,H*.78-h);g.lineTo(x+w/2,H*.78-h-w*.35);g.lineTo(x+w*1.1,H*.78-h);g.lineTo(x+w,H*.78-h+3);g.lineTo(x+w/2,H*.78-h-w*.3);g.lineTo(x,H*.78-h+3);g.fill();
+    if(lit){softSpot(g,x+w*.5,H*.78-h*.55,w*.6,'255,190,110',.35);g.fillStyle='#ffcf7a';g.fillRect(x+w*.3,H*.78-h*.7,w*.4,h*.3);}};
+  house(W*.05,W*.12,H*.14,true);house(W*.2,W*.1,H*.1,false);house(W*.62,W*.11,H*.12,true);
+  g.fillStyle='#e7e3ef';g.fillRect(0,H*.78,W,H*.22);
+  // the family home: a lit room with the rikishi and his parents
+  const rx=W*.33,ry=H*.3,rw=W*.3,rh=H*.48;
+  g.fillStyle='#1a1426';g.fillRect(rx-6,ry-6,rw+12,rh+12);
+  const rg=g.createLinearGradient(0,ry,0,ry+rh);rg.addColorStop(0,'#ffcf86');rg.addColorStop(1,'#e59a4c');g.fillStyle=rg;g.fillRect(rx,ry,rw,rh);
+  const fam=(x,h,c)=>{g.fillStyle=c;g.beginPath();g.arc(x,ry+rh-h,rh*.09,0,6.283);g.fill();g.beginPath();g.moveTo(x-rh*.13,ry+rh);g.quadraticCurveTo(x,ry+rh-h*1.05,x+rh*.13,ry+rh);g.fill();};
+  fam(rx+rw*.18,rh*.5,'rgba(90,50,30,.75)');fam(rx+rw*.82,rh*.55,'rgba(90,50,30,.75)');
+  const img=portrait(st.face,(t%4)<.15?'blink':'happy',st.pos>=JURYO,256);g.save();g.beginPath();g.rect(rx,ry,rw,rh);g.clip();g.drawImage(img,rx+rw*.15,ry+rh*.08,rw*.7,rw*.7);g.restore();
+  g.strokeStyle='#1a1426';g.lineWidth=3;g.beginPath();g.moveTo(rx+rw/2,ry);g.lineTo(rx+rw/2,ry+rh*.12);g.moveTo(rx,ry+rh*.12);g.lineTo(rx+rw,ry+rh*.12);g.stroke();
+  // snow
+  if(kSnow.length<70&&!REDUCED)kSnow.push({x:Math.random()*W,y:-5,v:rnd(12,30),r:rnd(.8,2.2),p:Math.random()*6});
+  g.fillStyle='rgba(255,255,255,.85)';kSnow=kSnow.filter(f=>{f.y+=f.v*dt;f.x+=Math.sin(t+f.p)*8*dt;g.beginPath();g.arc(f.x,f.y,f.r,0,6.283);g.fill();return f.y<H+5;});
+}
+
 /* ---------- loop ---------- */
 let last=performance.now();
 function loop(now){
@@ -1557,10 +1784,11 @@ function loop(now){
   else if(cur==='sHome')drawAvatar(t,dt);
   else if(cur==='sBout'){updateBout(dt);drawBout(t,dt);drawProfFace(t);}
   else if(cur==='sResult')drawResult(t,dt);
+  else if(cur==='sKikyo')drawKikyo(t,dt);
   requestAnimationFrame(loop);
 }
 addEventListener('resize',()=>{crowdCache=null;if(cur==='sTitle')hero=makeCanvas($('heroCv'),.75);if(cur==='sCreate')facePrev=makeCanvas($('facePrev'),1);
-  if(cur==='sHome'&&avatar){const a=avatar.act;avatar=makeCanvas($('avatar'),160/132);avatar.act=a;}if(cur==='sBout'){ring=makeCanvas($('ring'),330/400);faceCv=makeCanvas($('bFace'),1);}if(cur==='sResult'&&rc)rc=makeCanvas($('rCv'),1);});
+  if(cur==='sHome'&&avatar){const a=avatar.act;avatar=makeCanvas($('avatar'),102/84);avatar.act=a;}if(cur==='sKikyo')kCv=makeCanvas($('kCv'),220/400);if(cur==='sBout'){ring=makeCanvas($('ring'),330/400);faceCv=makeCanvas($('bFace'),1);}if(cur==='sResult'&&rc)rc=makeCanvas($('rCv'),1);});
 
 /* ---------- wire ---------- */
 $('newBtn').addEventListener('click',openCreate);
@@ -1577,7 +1805,15 @@ document.querySelectorAll('.strats button').forEach(b=>b.addEventListener('click
 $('tachiBtn').addEventListener('click',tachi);
 $('ring').addEventListener('pointerdown',()=>{if(anim&&anim.phase==='tachi')tachi();});
 $('nextBtn').addEventListener('click',nextBout);
-$('backHome').addEventListener('click',()=>{rcData=null;renderHome();});
+$('backHome').addEventListener('click',()=>{rcData=null;if(st&&st.pendingKikyo)openKikyo();else renderHome();});
+$('kDone').addEventListener('click',()=>renderHome());
+$('sheetX').addEventListener('click',closeSheet);$('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet();});
+addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet();});
+document.querySelectorAll('.tabs [data-sheet]').forEach(b=>b.addEventListener('click',()=>openSheet(b.dataset.sheet,{hist:'星取表',log:'部屋の話',ach:'実績'}[b.dataset.sheet])));
+const AGE_DESC={15:'はじめの能力は低いが、伸びしろは最大。長く強くなれる。',18:'体ができていて能力やや高め。伸びもまずまず。',22:'即戦力で三段目付出デビュー。ただし伸びは早く止まる。'};
+const TYPE_DESC={oshi:'押しが強い。前に出て一気に勝負。',yotsu:'力が強く体も大きい。まわしを取って寄る。',waza:'小柄で素早い。技とスピードでかわす。'};
+function descs(){$('ageDesc').textContent=AGE_DESC[document.querySelector('input[name=age]:checked').value];$('typeDesc').textContent=TYPE_DESC[document.querySelector('input[name=type]:checked').value];}
+document.querySelectorAll('input[name=age],input[name=type]').forEach(i=>i.addEventListener('change',descs));descs();
 $('autoChk').addEventListener('change',e=>{autoMode=e.target.checked;
   if(autoMode&&anim){if(anim.phase==='ready'||anim.phase==='intro')choose(counterOf(B.opp.style));else if(anim.phase==='tachi'){$('bTachi').hidden=true;resolve('normal');}else if(anim.phase==='done')nextBout();}});
 addEventListener('keydown',e=>{if(e.code==='Space'&&anim&&anim.phase==='tachi'){e.preventDefault();tachi();}});
