@@ -626,7 +626,7 @@ function lookFor(kg,pos,face,mawashi,height,ctx,b){const h=height||182,bmi=kg/((
   const hair=ctx==='keiko'?(young&&!seki?'zan':'chon'):seki?'oicho':(young?'zan':'chon');
   const maw=mawashi||(!seki?'#26262e':ctx==='keiko'?'#efeadc':(silkOf(face)||mawashiFor(pos)));
   const so=face&&face.img&&AIF[face.img];const sprite=so&&so.side?(seki?so.side:so.sideLow):null;
-  const pk=seki&&ctx!=='keiko'?'seki':'low',poses=so&&so.poses?so.poses[pk]:null,poseH=poses?so.meta.poses[pk].map(p=>p.h):null;
+  const kg2=so&&so.meta.kgs,pk=seki&&ctx!=='keiko'?'seki':!so||!so.poses?'low':so.poses.slim?(kg2&&kg<(kg2[0]+kg2[1])/2?'slim':'mid'):'low',poses=so&&so.poses?so.poses[pk]:null,poseH=poses?so.meta.poses[pk].map(p=>p.h):null;
   return{w:clamp(.6+(bmi-34)*.026,.5,1.18),hs:clamp(h/182,.9,1.1),face,skin:SKIN[face.skin],mawashi:maw,tsuna:ctx==='ceremony'&&pos>=YOKO,oicho:hair==='oicho',hair,sprite,sm:so&&so.meta,poses,poseH};}
 
 /* ===== realistic rendering: shaded capsule limbs, sculpted torso, painted head ===== */
@@ -793,13 +793,13 @@ function drawSpriteRig(g,x,y,u,dir,P,L){
 /* frame-by-frame: pick the drawn pose that matches the choreography */
 function poseIndex(P){const f=P.fall||0,lean=P.lean||0,c=P.crouch||0,arm=Math.max(P.armF||0,P.armB||0);
   if(f>.6)return 6;if(f<-.15||(P.expr==='lose'&&lean<.3))return 5;if(P.hd>.5&&c>.75)return 1;if(lean<.3)return 0;
-  if(P.charge)return 2;if(arm>1.08)return 3;return 4;}
+  if(P.charge)return 2;if(P.throw)return 8;if(P.grip)return P.brace?9:7;if(arm>1.08)return 3;return 4;}
 function drawPoseSprite(g,x,y,u,dir,P,L){
-  const i=poseIndex(P),im=L.poses[i];if(!im||!im.complete||!im.naturalWidth)return false;
+  let i=poseIndex(P);if(i>=L.poses.length)i=i===9?5:4;const im=L.poses[i];if(!im||!im.complete||!im.naturalWidth)return false;
   const Hs=u*2.75*(L.poseH[i]||1),Ws=Hs*im.naturalWidth/im.naturalHeight,f=P.fall||0,lift=(f>.6&&f<1.2)?(P.lift||0):Math.max(0,P.lift||0)*(f>.6?0:1);
   g.save();g.translate(x,y);g.fillStyle='rgba(40,20,5,.28)';g.beginPath();g.ellipse(0,0,Ws*.42,u*.12,0,0,6.283);g.fill();
   g.translate(0,-lift*u);if(i===5&&f<0)g.rotate(f*.8*dir);g.scale(dir,1);
-  const jig=1+(P.jig||0)*.03;g.scale(jig,1/jig);const front=i===2?u*.55:i===3?u*.85:i===4?u*1.05:null;g.drawImage(im,front===null?-Ws/2:front-Ws,-Hs,Ws,Hs);g.restore();return true;}
+  const jig=1+(P.jig||0)*.03;g.scale(jig,1/jig);const front=i===2?u*.55:i===3?u*.85:i===4?u*1.05:i===7?u*1.25:i===8?u*.7:i===9?u*1.1:null;g.drawImage(im,front===null?-Ws/2:front-Ws,-Hs,Ws,Hs);g.restore();return true;}
 function drawRikishi(g,x,y,u,dir,P,L){
   if(L.poses&&drawPoseSprite(g,x,y,u,dir,P,L))return;
   if(L.sprite&&L.sprite.complete&&L.sprite.naturalWidth)return drawSpriteRig(g,x,y,u,dir,P,L);
@@ -885,7 +885,7 @@ const portraitCache=new Map();let grainCache=null;
 const AIF={};
 const IMG=u=>{const im=new Image();im.src=u;return im;};
 for(const f of [...(window.AI_CAST||[]),...(window.AI_CHARS||[]),...(window.AI_FACES||[])]){const o={meta:f,img:new Image(),ex:{}};o.img.src=f.src;
-  if(f.faces){o.faces={};for(const k in f.faces)o.faces[k]=IMG(f.faces[k]);o.poses={low:f.poses.low.map(p=>IMG(p.src)),seki:f.poses.seki.map(p=>IMG(p.src))};}
+  if(f.faces){o.faces={};for(const k in f.faces)o.faces[k]=IMG(f.faces[k]);o.poses={};for(const k in f.poses)o.poses[k]=f.poses[k].map(p=>IMG(p.src));}
   if(f.exprs){o.exprs={};for(const h in f.exprs){o.exprs[h]={};for(const e in f.exprs[h])o.exprs[h][e]=IMG(f.exprs[h][e]);}}if(f.ring){o.ring=new Image();o.ring.src=f.ring;}if(f.side){o.side=new Image();o.side.src=f.side;o.sideLow=new Image();o.sideLow.src=f.sideLow;}if(f.ex)for(const k in f.ex){const im=new Image();im.src=f.ex[k];o.ex[k]=im;}AIF[f.id]=o;}
 const EXMAP={blink:'blink',sleep:'blink',happy:'happy',win:'happy',lose:'lose',strain:'strain',surprise:'surprise',normal:'normal'};
 function aiReady(F){const o=F&&F.img&&AIF[F.img];return o&&o.img.complete&&o.img.naturalWidth>0?o:null;}
@@ -1448,7 +1448,7 @@ function choreo(a,T,W,cx,edge){
       lP={...base,lean:.55-.14*hit,crouch:.5,armF:.85,armB:.7,headJolt:-.18*hit,stride:-shuf};}
     else if(a.kind==='slap'){wP={...base,lean:.5,crouch:.5,armF:.95,armB:.85,stride:shuf};lP={...base,lean:.8,crouch:.48,armF:1.05,armB:1,stride:-shuf};}
     else{const tug=Math.sin(tt*5)*.06;   // chest to chest, both hands on the belt
-      wP={...base,lean:.6+tug,crouch:.52,armF:.48,armB:.44,stride:shuf};lP={...base,lean:.58-tug,crouch:.48,armF:.46,armB:.42,stride:-shuf};}
+      wP={...base,lean:.6+tug,crouch:.52,armF:.48,armB:.44,stride:shuf,grip:true};lP={...base,lean:.58-tug,crouch:.48,armF:.46,armB:.42,stride:-shuf,grip:true,brace:s>.6};}
     return{wX,lX,wP,lP};
   }
   const pushArms=a.ws==='oshi'?{armF:1.3,armB:1.2}:{armF:.5,armB:.45};
@@ -1456,8 +1456,8 @@ function choreo(a,T,W,cx,edge){
   if(a.kind==='out'||a.kind==='down'){
     const stopX=cx+dw*(a.kind==='out'?edge-W*.02:edge-W*.25);
     if(T<L.edge){const k=easeIO((T-L.drive)/(L.edge-L.drive));lX=lerp(lSt,stopX,k);wX=lX-dw*gap*lerp(1,.9,k);
-      wP={...base,lean:.8,crouch:.4,...pushArms,stride:Math.sin(T*14)*.7};
-      lP={...base,lean:lerp(.55,-.22,k),crouch:lerp(.5,.32,k),armF:lerp(.6,.35,k),armB:.4,stride:Math.sin(T*14+2)*.7,headJolt:-.12*k};return{wX,lX,wP,lP};}
+      wP={...base,lean:.8,crouch:.4,...pushArms,stride:Math.sin(T*14)*.7,grip:a.ws==='yotsu'};
+      lP={...base,lean:lerp(.55,-.22,k),crouch:lerp(.5,.32,k),armF:lerp(.6,.35,k),armB:.4,stride:Math.sin(T*14+2)*.7,headJolt:-.12*k,grip:a.ws==='yotsu'&&k<.6,brace:true};return{wX,lX,wP,lP};}
     const wEnd=stopX-dw*gap*.9;
     if(a.kind==='out'){
       if(T<L.land){const k=clamp((T-L.edge)/(L.land-L.edge),0,1);lX=lerp(stopX,stopX+dw*W*.085,ease(k));wX=lerp(wEnd,wEnd+dw*W*.015,k);
@@ -1479,7 +1479,7 @@ function choreo(a,T,W,cx,edge){
   if(a.kind==='throw'){
     const wEnd=wSt-dw*W*.035,lFin=wEnd+dw*W*.07;
     if(T<L.edge){const k=ease((T-L.drive)/(L.edge-L.drive));wX=lerp(wSt,wEnd,k);lX=lerp(lSt,lerp(lSt,lFin,.45),k);
-      wP={...base,lean:lerp(.6,.95,k),crouch:.5,armF:lerp(.48,.25,k),armB:.5};
+      wP={...base,lean:lerp(.6,.95,k),crouch:.5,armF:lerp(.48,.25,k),armB:.5,throw:true};
       lP={...base,lean:lerp(.58,1.0,k),crouch:lerp(.48,.3,k),armF:.5,armB:.45,lift:.28*Math.sin(k*Math.PI/2),fall:.5*k};return{wX,lX,wP,lP};}
     if(T<L.land){const k=clamp((T-L.edge)/(L.land-L.edge),0,1);wX=wEnd;lX=lerp(lerp(lSt,lFin,.45),lFin,ease(k));
       wP={...base,lean:lerp(.95,.6,k),crouch:.45,armF:lerp(.25,-.2,k),armB:lerp(.5,.3,k)};
