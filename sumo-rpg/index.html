@@ -260,6 +260,11 @@ details.more summary::after{content:'▾';color:var(--kin)}details.more[open] su
 .home .bar{height:7px}
 .home .acts{grid-template-columns:repeat(3,1fr);gap:6px}
 .home .acts.four{grid-template-columns:repeat(4,1fr);gap:5px}
+.ties{display:inline-flex;gap:4px;margin-left:8px;vertical-align:1px;flex-wrap:wrap}
+.tie{display:inline-flex;align-items:center;gap:2px;font-family:var(--f-body);font-size:10px;letter-spacing:0;font-weight:700;padding:1px 6px;border-radius:999px;border:1px solid}
+.tie.love{color:#b0344f;border-color:#e59aaa;background:#fbe6ea}.tie.fam{color:#7a4a12;border-color:#e2b04a;background:#fbf0d4}.tie.tani{color:#1f4a7a;border-color:#7fa8d6;background:#e4eef9}
+.tie.warn{box-shadow:0 0 0 1.5px #ff6b6b}
+.acts button.tani .k{background:#dbe7f6;color:#1f4a7a}
 .home .acts.four span.d{font-size:8.5px}.home .acts.four b{font-size:12px}
 .acts button.fam .k{background:#f6d6dc;color:#8a2a3c}
 .home .acts button{grid-template-columns:1fr;justify-items:center;text-align:center;padding:7px 4px;gap:1px}
@@ -1249,6 +1254,7 @@ function enter(){
 
 /* ---------- home ---------- */
 const TURNS=5;
+const TANI_ACT={id:'tani',k:'谷',name:'タニマチ会食',desc:'ご祝儀↑・体重↑・疲れ+5',fat:5,tani:true};
 const DATE_ACT={id:'date',k:'恋',name:'デート',desc:'疲れ−12・親密度↑',fat:-12,date:true};
 const FAMILY_ACT={id:'family',k:'家',name:'家族サービス',desc:'疲れ−20・家族の絆',fat:-20,family:true};
 const ACTS=[
@@ -1266,7 +1272,12 @@ function renderHome(){
   const r=st.maezumo?{div:'前相撲',name:'前相撲',bouts:3}:rank(st.pos);
   const plate=$('hTate');plate.innerHTML='';const n=document.createElement('span');n.textContent=st.name;plate.append(n);
   if(st.pos===YOKO){const sm=document.createElement('small');sm.textContent='横綱';plate.append(sm);}
-  $('hSide').textContent=side(st.pos)+(st.kadoban&&st.pos===OZEKI?'　カド番':'');
+  {const hs=$('hSide');hs.textContent=side(st.pos)+(st.kadoban&&st.pos===OZEKI?'　カド番':'');const ties=document.createElement('span');ties.className='ties';
+    const add=(cls,txt,warn,title)=>{const t=document.createElement('span');t.className='tie '+cls+(warn?' warn':'');t.textContent=txt;t.title=title;ties.append(t);};
+    const Rm=st.rom;if(Rm&&(Rm.stage==='dating'||Rm.stage==='engaged'))add('love','♥'+PARTNERS[Rm.pid].name.replace(/^.*[・の]/,'')+' '+Rm.aff,(Rm.dateMiss||0)>=2,Rm.stage==='engaged'?'婚約中':'交際中');
+    if(spouse())add('fam','家 '+PARTNERS[Rm.pid].name.replace(/^.*[・の]/,'')+(Rm.kid?'・長男':''),(Rm.famMiss||0)>=2,'家族');
+    if(st.tani)add('tani','谷 '+st.tani.short,(st.tani.miss||0)>=2,'タニマチ：'+st.tani.name);
+    if(ties.childNodes.length)hs.append(ties);}
   const hr=$('hRank');hr.innerHTML='';const r1=document.createElement('span');r1.textContent=r.div;hr.append(r1);
   if(r.name.length>r.div.length){const r2=document.createElement('span');r2.style.cssText='display:block;font-size:.8em';r2.textContent=r.name.slice(r.div.length);hr.append(r2);}
   $('hWhen').textContent=ageOf(st)+'歳・入門'+yearOf(st)+'年目'+(st.b<3&&st.school?'・教習所通い':'')+'　'+BASHO[st.b%6]+'（'+MONTH[st.b%6]+'月）まで';
@@ -1287,8 +1298,8 @@ function renderHome(){
   $('hPower').textContent=growthLabel(ageOf(st))+'（成長×'+ageGrowth(ageOf(st)).toFixed(2)+'）　総合力 '+Math.round((st.stats.oshi+st.stats.chikara+st.stats.waza+st.stats.hayasa)/4+(st.kg-90)*.1);
   const ab=$('hActs');ab.innerHTML='';const done=st.used>=TURNS;
   const dating=st.rom&&(st.rom.stage==='dating'||st.rom.stage==='engaged');
-  const list=spouse()?[...ACTS,FAMILY_ACT]:dating?[...ACTS,DATE_ACT]:ACTS;ab.classList.toggle('four',list.length>6);
-  for(const a of list){const b=document.createElement('button');b.type='button';b.disabled=done;if(a.family||a.date)b.className='fam';
+  const list=[...ACTS,...(spouse()?[FAMILY_ACT]:dating?[DATE_ACT]:[]),...(st.tani?[TANI_ACT]:[])];ab.classList.toggle('four',list.length>6);
+  for(const a of list){const b=document.createElement('button');b.type='button';b.disabled=done;if(a.family||a.date)b.className='fam';if(a.tani)b.className='tani';
     b.innerHTML='<span class="k"></span><b></b><span class="d"></span>';b.children[0].textContent=a.k;b.children[1].textContent=a.name;b.children[2].textContent=a.desc;
     b.addEventListener('click',()=>train(a));ab.append(b);}
   const bb=$('bashoBtn');bb.disabled=!done;bb.textContent=done?BASHO[st.b%6]+'へ（'+r.bouts+'番）':'稽古あと'+(TURNS-st.used)+'回で'+BASHO[st.b%6];
@@ -1342,7 +1353,7 @@ function drawAvatarPortrait(t,dt){
   const{g,W,H,d}=avatar;g.clearRect(0,0,W,H);const A=avatar.act;let ex=(t%4.1)<.13?'blink':'normal',dy=0,zz=false,shake=0;
   if(A){A.t+=dt;const k=A.t/A.dur;
     if(A.id==='rest'){ex='blink';zz=true;}
-    else if(A.id==='chanko'||A.id==='family'||A.id==='date'){ex='happy';dy=-Math.abs(Math.sin(A.t*6))*H*.03;}
+    else if(A.id==='chanko'||A.id==='family'||A.id==='date'||A.id==='tani'){ex='happy';dy=-Math.abs(Math.sin(A.t*6))*H*.03;}
     else{ex='strain';shake=Math.sin(A.t*30)*W*.012*(1-k);dy=-Math.abs(Math.sin(A.t*(A.id==='shiko'?4:9)))*H*.035;}
     if(A.t>=A.dur)avatar.act=null;}
   const img=portrait(st.face,ex,st.pos>=JURYO,Math.min(400,Math.round(H*d*1.1)));
@@ -1353,7 +1364,11 @@ function drawAvatarPortrait(t,dt){
 }
 function train(a){
   if(st.used>=TURNS)return;st.used++;st.trainN=(st.trainN||0)+1;if(a.id==='chanko')st.chankoN=(st.chankoN||0)+1;let msg='';const D=deckFx(),AG=ageGrowth(ageOf(st));
-  if(a.date){const R=st.rom,her=PARTNERS[R.pid].name.replace(/^.*[・の]/,'');R.dateThis=true;R.dateMiss=0;
+  if(a.tani){const T=st.tani;T.this=true;T.miss=0;T.bond=(T.bond||0)+1;st.fat=Math.min(100,st.fat+5);const kg=kgGain(1.5);st.kg+=kg;
+    const v=earn(st.pos>=MAKU?120:st.pos>=JURYO?80:40);
+    const ev=pick([T.name+'の行きつけの料亭でふぐをごちそうになった。',T.name+'の会社の宴会に呼ばれ、社員の前で四股を踏んだ。',T.name+'とゴルフに行った。「次の場所も応援しとるで」',T.name+'の誕生会で鏡開きをした。']);
+    msg='タニマチ会食：'+ev+'（ご祝儀 +'+v+'・体重 +'+kg.toFixed(1)+'kg・疲れ +5）';}
+  else if(a.date){const R=st.rom,her=PARTNERS[R.pid].name.replace(/^.*[・の]/,'');R.dateThis=true;R.dateMiss=0;
     const up=Math.round(rnd(6,11));R.aff=clamp(R.aff+up,0,100);st.fat=Math.max(0,st.fat-12);
     const ev=pick([
       ()=>her+'と映画を見に行った。帰り道、手が触れた。',
@@ -1684,6 +1699,10 @@ function endBasho(){
   if(endedIdx%6===5){st.pendingKikyo=true;ex.push('年の瀬だ。地元に帰ろう。');}
   if(st.rom&&st.rom.waitYoko&&p>=YOKO&&st.rom.stage==='dating'){st.rom.waitYoko=false;queueLife('propose',st.rom.pid);}
   else checkLife(w,l,yusho,endedIdx);
+  if(st.tani){const T=st.tani;T.miss=T.this?0:(T.miss||0)+1;T.this=false;
+    if(T.miss>=3){queueLife('tani_leave');}
+    else{const v=earn((st.pos>=MAKU?200:st.pos>=JURYO?120:50)*(w>l?1:.5));ex.push('タニマチ（'+T.short+'）から祝儀 +'+v);if(T.miss===2)addLog(T.name+'から「最近、顔を見せんな」と電話があった……');}}
+  else if(w>l&&old>=DSTART[2]&&Math.random()<.4&&!(st.taniCool>st.b))queueLife('tani_invite');
   if(spouse()){const R=st.rom;R.famMiss=R.famThis?0:(R.famMiss||0)+1;R.famThis=false;
     if(R.famMiss>=3){R.famMiss=0;addBuff(st,'power',-1,1,'家庭がぎくしゃく');addLog('相撲ばかりで家に帰れていない。妻が寂しそうだ……（次の場所で取組の力 −1。家族サービスで防げる）');}}
   if(st.school){if(endedIdx<2)queueLife('class');else{queueLife('graduate');st.school=false;}}
@@ -2055,7 +2074,13 @@ function applySpouse(pid){
   if(pid==='eiyo')addBuff(st,'inj',-.3,999,'妻・美咲の献立');
   if(pid==='deshi')addBuff(st,'growth',.1,999,'妻・紗季の励まし');
 }
+const TANIS=[{name:'ちゃんこ屋「大関」の大将',short:'大将'},{name:'地元建設会社の社長',short:'社長'},{name:'老舗旅館の女将',short:'女将'},{name:'IT企業の若社長',short:'若社長'},{name:'酒蔵の当主',short:'当主'},{name:'商店街の会長',short:'会長'}];
 const LIFE={
+  tani_invite:()=>{const T=pick(TANIS);return{t:'タニマチのお誘い',scene:'tani',text:'場所後の打ち上げで、'+T.name+'が声をかけてきた。「あんたの相撲が気に入った。これからワシが面倒みたる。今度メシ行こう」',
+    ch:[{l:'誘いにのる',f:()=>{st.tani={...T,b:st.b,miss:0,bond:0};const v=earn(100);return[T.name+'が後援者（タニマチ）になった。','タニマチがついた・ご祝儀 +'+v+'・毎場所ご祝儀が入る。会食に顔を出さないと離れていく'];}},
+        {l:'丁重に断る',f:()=>{st.taniCool=st.b+3;st.stats.waza+=.8;return['「そうか、また気が向いたら」と笑って帰っていった。','技 +0.8'];}}]};},
+  tani_leave:()=>{const T=st.tani;return{t:'タニマチが離れた',scene:'tani',text:T.name+'から連絡があった。「ずいぶん顔を見せんな。ワシはもう、ほかの力士を応援するわ」',
+    ch:[{l:'受け入れる',f:()=>{st.tani=null;st.taniCool=st.b+4;addBuff(st,'power',1,1,'見返したい');return['大事な人を失ってしまった。土俵で見返すしかない。','タニマチが離れた・次の場所で取組の力 +1'];}}]};},
   school:()=>{const R=st.rival;return{t:'相撲教習所',scene:'school',text:'新弟子は両国国技館の相撲教習所に半年間通う。朝は四股・てっぽう・すり足の実技、そのあと相撲史や書道の授業。隣の席の同期、'+R.name+'（'+R.home+'出身）が話しかけてきた。「おれは絶対、お前より先に関取になる」',
     ch:[{l:'「受けて立つ」',f:()=>{R.edge=(R.edge||0)+.5;addBuff(st,'growth',.05,3,'あいつには負けない');return[R.name+'がにやりと笑った。これから長い付き合いになりそうだ。',R.name+'が宿敵になった・教習所の間、稽古の伸び +5%'];}},
         {l:'「一緒に強くなろう」',f:()=>{R.friend=true;for(const k in st.stats)st.stats[k]+=1;return['毎朝、二人で四股を踏んだ。','宿敵 '+R.name+'・全能力 +1'];}}]};},
@@ -2097,7 +2122,7 @@ function wed(pid,gift){const R=rom();R.stage='married';R.weddingB=st.b;earn(gift
 let kScene='home';
 function openLife(item){
   const s=st,ev=LIFE[item.kind](item.pid);kScene=ev.scene||'date';kEv=null;
-  $('kWhen').textContent=yearOf(s)+'年目　'+ageOf(s)+'歳';$('kTitle').textContent=ev.scene==='school'?'相撲教習所':ev.scene==='wedding'?'結婚披露宴':ev.scene==='baby'?'家族':'恋と土俵';
+  $('kWhen').textContent=yearOf(s)+'年目　'+ageOf(s)+'歳';$('kTitle').textContent=ev.scene==='tani'?'後援者':ev.scene==='school'?'相撲教習所':ev.scene==='wedding'?'結婚披露宴':ev.scene==='baby'?'家族':'恋と土俵';
   $('kEvName').textContent=ev.t;$('kText').textContent=ev.text;
   const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;$('kDone').hidden=true;$('kDone').textContent='部屋に戻る';
   for(const c of ev.ch){const b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=c.l;
@@ -2115,12 +2140,12 @@ function drawLifeScene(g,W,H,t,dt){
       g.strokeStyle='#e2b04a';g.lineWidth=2.5;g.beginPath();g.arc(x,H*.6,S*.4,0,6.283);g.stroke();g.fillStyle='#fff6e0';g.font='700 '+Math.round(H*.07)+'px "Zen Kaku Gothic New",sans-serif';g.fillText(lab,x,H*.97);}
     g.fillStyle='#e2b04a';g.font=Math.round(H*.12)+'px "Yuji Boku",serif';g.fillText('対',W/2,H*.64);return;}
   const wed=kScene==='wedding',baby=kScene==='baby';
-  const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,wed?'#6a1018':baby?'#26406a':'#3a2346');bg.addColorStop(1,wed?'#b8862a':baby?'#8fb6d8':'#c97a8c');g.fillStyle=bg;g.fillRect(0,0,W,H);
+  const bg=g.createLinearGradient(0,0,0,H);const tn=kScene==='tani';bg.addColorStop(0,wed?'#6a1018':baby?'#26406a':tn?'#14223f':'#3a2346');bg.addColorStop(1,wed?'#b8862a':baby?'#8fb6d8':tn?'#8a6a2a':'#c97a8c');g.fillStyle=bg;g.fillRect(0,0,W,H);
   if(wed){g.save();g.translate(W/2,H*.5);g.rotate(t*.1);for(let i=0;i<16;i++){g.rotate(Math.PI/8);g.fillStyle='rgba(255,220,140,.12)';g.beginPath();g.moveTo(0,0);g.lineTo(W*.08,-W);g.lineTo(-W*.08,-W);g.fill();}g.restore();
     g.fillStyle='#fff3d6';g.font=Math.round(H*.2)+'px "Yuji Boku",serif';g.textAlign='center';g.fillText('寿',W/2,H*.2);}
   const pf=portrait(st.face,'happy',st.pos>=JURYO,256),S=H*.78;
   g.save();g.beginPath();g.arc(wed?W*.3:W*.36,H*.52,S*.42,0,6.283);g.fillStyle='#f3eadb';g.fill();g.clip();g.drawImage(pf,(wed?W*.3:W*.36)-S*.5,H*.52-S*.45,S,S);g.restore();
-  const pid=st.rom&&st.rom.pid,P=PARTNERS[pid];const cx=wed?W*.7:W*.64,cy=H*.52,r=S*.42;
+  const pid=st.rom&&st.rom.pid,P=kScene==='tani'?{k:'谷'}:PARTNERS[pid];const cx=wed?W*.7:W*.64,cy=H*.52,r=S*.42;
   g.fillStyle=wed?'#fffaf0':'#f7e6ea';g.beginPath();g.arc(cx,cy,r,0,6.283);g.fill();g.strokeStyle=wed?'#d6b25a':'#c9707f';g.lineWidth=3;g.stroke();
   g.fillStyle=wed?'#8a1d22':'#8a3a4c';g.font=Math.round(r*1.05)+'px "Yuji Boku",serif';g.textAlign='center';g.fillText(P?P.k:'？',cx,cy+r*.36);
   if(baby){g.fillStyle='#fff6e8';g.font=Math.round(H*.2)+'px "Yuji Boku",serif';g.fillText('祝・誕生',W/2,H*.22);}
@@ -2209,6 +2234,7 @@ document.querySelectorAll('input[name=age],input[name=type]').forEach(i=>i.addEv
 let autoGrow=false,autoTimer=null,autoBusy=false;
 const autoSpd=()=>autoGrow?+($('autoSpeed').value||1):1;
 function pickAct(){const S=st.stats,id=k=>ACTS.find(a=>a.id===k);
+  if(st.tani&&!st.tani.this&&(st.tani.miss||0)>=1&&st.fat<70&&Math.random()<.6)return TANI_ACT;
   if(st.rom&&(st.rom.stage==='dating'||st.rom.stage==='engaged')&&!st.rom.dateThis&&(st.rom.dateMiss||0)>=1&&Math.random()<.6)return DATE_ACT;
   if(spouse()&&st.fat>35&&((st.rom.famMiss||0)>=1&&!st.rom.famThis)&&Math.random()<.5)return FAMILY_ACT;
   if(st.inj>0||st.fat>68||((st.tiredB||0)>=1&&st.fat>45))return id('rest');
