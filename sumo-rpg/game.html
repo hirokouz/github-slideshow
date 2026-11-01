@@ -1220,21 +1220,49 @@ function renderTitle(){
   show('sTitle');hero=makeCanvas($('heroCv'),.75);
 }
 /* title: a commemorative group photo of the cast in their kesho-mawashi */
+/* title key visual: night Kokugikan, spotlight on the dohyo; one featured rikishi
+   at a time (cross-fading through the cast), the others as backlit silhouettes */
+const SIL=new Map();
+function silhouette(im){if(SIL.has(im))return SIL.get(im);const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');
+  x.drawImage(im,0,0);x.globalCompositeOperation='source-atop';x.fillStyle='rgba(10,8,22,.86)';x.fillRect(0,0,c.width,c.height);SIL.set(im,c);return c;}
+let heroDust=[];
 function drawGroupPhoto(t){
   const cast=(window.AI_CAST||[]).map(c=>BODY['b_'+c.id+'_4']).filter(b=>b&&b.img.complete&&b.img.naturalWidth);
-  if(cast.length<2)return false;const{g,W,H}=hero;
-  const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#2b1a3e');bg.addColorStop(.55,'#5a2f3c');bg.addColorStop(1,'#c99a5b');g.fillStyle=bg;g.fillRect(0,0,W,H);
-  // purple curtain with gold tassels, like the tsuriyane
-  g.fillStyle='#4a2a6a';g.fillRect(0,0,W,H*.12);g.fillStyle='rgba(255,255,255,.14)';for(let x=0;x<W;x+=W/8){g.beginPath();g.ellipse(x+W/16,H*.12,W/16,H*.035,0,0,Math.PI);g.fill();}
-  g.fillStyle='#c8322b';g.fillRect(W*.04,H*.12,6,H*.14);g.fillStyle='#f1ece0';g.fillRect(W*.96-6,H*.12,6,H*.14);
-  softSpot(g,W/2,H*.55,W*.6,'255,225,170',.35);
-  g.fillStyle='#b88650';g.beginPath();g.ellipse(W/2,H*.98,W*.62,H*.13,0,0,6.283);g.fill();
-  g.strokeStyle='#e9dcae';g.lineWidth=H*.012;g.beginPath();g.ellipse(W/2,H*.98,W*.5,H*.09,0,0,6.283);g.stroke();
-  // centre character in front, the rest fanned out behind
-  const n=cast.length,order=[...cast.keys()].sort((a,b)=>Math.abs(a-(n-1)/2)-Math.abs(b-(n-1)/2)).reverse();
-  for(const i of order){const im=cast[i].img,off=i-(n-1)/2,front=1-Math.abs(off)/(n);const h=H*(.62+.2*front),w=h*im.naturalWidth/im.naturalHeight;
-    const x=W/2+off*W*.19,y=H*.97-Math.abs(off)*H*.04+Math.sin(t*1.4+i)*1.2;
-    g.fillStyle='rgba(40,20,5,.3)';g.beginPath();g.ellipse(x,y,w*.38,H*.025,0,0,6.283);g.fill();g.drawImage(im,x-w/2,y-h,w,h);}
+  if(cast.length<2)return false;const{g,W,H}=hero;const n=cast.length;
+  // arena darkness with tiers of spectators
+  const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#05060f');bg.addColorStop(.6,'#120f24');bg.addColorStop(1,'#1d1426');g.fillStyle=bg;g.fillRect(0,0,W,H);
+  for(let row=0;row<4;row++){const y=H*(.5+row*.09),r=W*.018*(1+row*.25);g.fillStyle='rgba(0,0,0,'+(.35+row*.12)+')';
+    for(let x=-r;x<W+r;x+=r*1.9){g.beginPath();g.arc(x+(row%2)*r,y+Math.sin(x*.7+row)*r*.2,r,Math.PI,0);g.fill();}}
+  // camera flashes in the stands
+  for(let i=0;i<7;i++){const ph=(t*.7+i*.37)%1;if(ph<.06){const fx=(Math.sin(i*91.7)*.5+.5)*W,fy=H*(.48+.3*((i*.618)%1));softSpot(g,fx,fy,W*.05,'255,255,255',.9*(1-ph/.06));}}
+  // spotlight cone
+  g.save();g.globalCompositeOperation='lighter';const cone=g.createLinearGradient(0,0,0,H);cone.addColorStop(0,'rgba(255,236,190,.28)');cone.addColorStop(1,'rgba(255,214,150,.04)');
+  g.fillStyle=cone;g.beginPath();g.moveTo(W*.4,0);g.lineTo(W*.6,0);g.lineTo(W*.92,H);g.lineTo(W*.08,H);g.fill();g.restore();
+  // hanging roof (tsuriyane) with purple curtain and the four coloured tassels
+  g.fillStyle='#0b0a16';g.beginPath();g.moveTo(W*.1,H*.05);g.lineTo(W*.5,-H*.04);g.lineTo(W*.9,H*.05);g.fill();
+  const cu=g.createLinearGradient(0,H*.05,0,H*.1);cu.addColorStop(0,'#5d3692');cu.addColorStop(1,'#35205a');g.fillStyle=cu;g.fillRect(W*.1,H*.05,W*.8,H*.045);g.fillStyle='rgba(255,255,255,.12)';for(let i=0;i<7;i++){g.beginPath();g.ellipse(W*(.155+i*.115),H*.095,W*.055,H*.018,0,0,Math.PI);g.fill();}
+  for(const [x,c] of [[.12,'#2f6fd0'],[.88,'#d03a2f']]){g.fillStyle=c;g.fillRect(W*x-2.5,H*.095,5,H*.1);g.beginPath();g.ellipse(W*x,H*.2,4.5,7,0,0,6.283);g.fill();}
+  // raised clay dohyo in perspective with the straw ring
+  const dy=H*.86;g.fillStyle='#6e4a2a';g.beginPath();g.moveTo(W*.02,H);g.lineTo(W*.12,dy);g.lineTo(W*.88,dy);g.lineTo(W*.98,H);g.fill();
+  g.fillStyle='#c79b62';g.beginPath();g.ellipse(W/2,dy,W*.38,H*.05,0,0,6.283);g.fill();
+  g.strokeStyle='#efe0b0';g.lineWidth=H*.012;g.beginPath();g.ellipse(W/2,dy,W*.3,H*.035,0,0,6.283);g.stroke();
+  softSpot(g,W/2,dy,W*.36,'255,230,170',.45);
+  // featured rikishi rotates every 4 seconds
+  const per=4,k=Math.floor(t/per)%n,f=(t%per)/per,fade=f<.12?f/.12:f>.88?(1-f)/.12:1;
+  // backlit silhouettes of the others behind
+  const others=[...cast.keys()].filter(i=>i!==k);
+  others.forEach((i,j)=>{const im=cast[i].img,side=j%2?1:-1,rank=Math.floor(j/2),h=H*(.7-rank*.08),w=h*im.naturalWidth/im.naturalHeight;
+    const x=W/2+side*W*(.25+rank*.17),y=dy+H*.01-rank*H*.02;g.drawImage(silhouette(im),x-w/2,y-h,w,h);
+    g.save();g.globalCompositeOperation='lighter';softSpot(g,x,y-h*.75,w*.45,'120,140,255',.08);g.restore();});
+  // the featured one: lit, slightly larger, rim glow
+  const im=cast[k].img,h=H*.8,w=h*im.naturalWidth/im.naturalHeight,x=W/2,y=dy+H*.03+Math.sin(t*1.4)*1.2;
+  g.save();g.globalAlpha=fade;softSpot(g,x,y-h*.55,w*.7,'255,215,140',.35);
+  g.fillStyle='rgba(30,15,5,.4)';g.beginPath();g.ellipse(x,y,w*.36,H*.022,0,0,6.283);g.fill();g.drawImage(im,x-w/2,y-h,w,h);g.restore();
+  // floating dust in the light
+  if(heroDust.length<40&&!REDUCED)heroDust.push({x:W*(.25+Math.random()*.5),y:H*(.2+Math.random()*.7),v:rnd(3,9),p:Math.random()*6,r:rnd(.6,1.6)});
+  g.fillStyle='rgba(255,240,210,.55)';heroDust=heroDust.filter(d=>{d.y-=d.v*.016;d.x+=Math.sin(t+d.p)*.15;g.beginPath();g.arc(d.x,d.y,d.r,0,6.283);g.fill();return d.y>H*.05;});
+  // vignette
+  const vg=g.createRadialGradient(W/2,H*.55,H*.3,W/2,H*.55,W*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');g.fillStyle=vg;g.fillRect(0,0,W,H);
   return true;}
 function drawHero(t){
   if(!hero)return;if(drawGroupPhoto(t))return;const{g,W,H}=hero;const sc=drawScene(g,W,H,0);const u=H*.15;
