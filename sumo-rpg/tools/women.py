@@ -3,7 +3,7 @@ import sys, json, numpy as np
 from PIL import Image, ImageFilter
 from collections import deque
 sys.path.insert(0,'.');from cast import components, uri
-SRC=sys.argv[1];OUT=sys.argv[2]
+SRC=sys.argv[1] if __name__=="__main__" else None;OUT=sys.argv[2] if __name__=="__main__" else None
 IDS=['osana','reijo','eiyo','imouto','deshi']
 EX=['normal','smile','shy','joycry','worry','sulk','angry','sad','closed','surprise','wink','serious']
 SC=['casual','date','yukata','shiromuku','dress','baby']
@@ -31,23 +31,24 @@ def cut(img,fg,cid,lab,s,box):
     fine=np.asarray(Image.fromarray((m*255).astype('uint8')).filter(ImageFilter.MaxFilter(9)))>0
     al=Image.fromarray(((fine&fg)*255).astype('uint8')).filter(ImageFilter.GaussianBlur(.6))
     r=img.convert('RGBA');r.putalpha(al);c=r.crop(box);return c.crop(c.getbbox())
-out={}
-for i,pid in enumerate(IDS):
-    n=f'{SRC}/0{i+1}'
-    P1=Image.open(n+'-P1.png').convert('RGB');W,H=P1.size;ex={}
-    for k,name in enumerate(EX):
-        cx,cy=k%4,k//4;cell=P1.crop((cx*W//4,cy*H//3,(cx+1)*W//4,(cy+1)*H//3))
-        fg=wmask(cell);comps,lab,s=components(fg,3000);c=max(comps,key=lambda t:t[5])
-        im=cut(cell,fg,c[0],lab,s,(0,0)+cell.size);im=im.resize((200,round(200*im.size[1]/im.size[0])),Image.LANCZOS)
-        ex[name]=uri(im,82)
-    P2=Image.open(n+'-P2.png').convert('RGB');fg=wmask(P2);comps,lab,s=components(fg,8000)
-    comps=sorted(sorted(comps,key=lambda t:-t[5])[:6],key=lambda t:t[2])
-    assert len(comps)==6,(pid,len(comps))
-    sc={}
-    for name,c in zip(SC,comps):
-        im=cut(P2,fg,c[0],lab,s,(max(0,c[2]-4),max(0,c[1]-4),c[4]+4,c[3]+4))
-        im=im.resize((round(380*im.size[0]/im.size[1]),380),Image.LANCZOS);sc[name]=uri(im,82)
-        im.save(f'{SRC}/../cut_{pid}_{name}.png')
-    out[pid]={'exprs':ex,'looks':sc}
-    print(pid,'ok')
-open(OUT,'w').write('window.AI_WOMEN='+json.dumps(out,separators=(',',':'))+';\n')
+if __name__=="__main__":
+    out={}
+    for i,pid in enumerate(IDS):
+        n=f'{SRC}/0{i+1}'
+        P1=Image.open(n+'-P1.png').convert('RGB');W,H=P1.size;ex={}
+        for k,name in enumerate(EX):
+            cx,cy=k%4,k//4;cell=P1.crop((cx*W//4,cy*H//3,(cx+1)*W//4,(cy+1)*H//3))
+            fg=wmask(cell);comps,lab,s=components(fg,3000);c=max(comps,key=lambda t:t[5])
+            im=cut(cell,fg,c[0],lab,s,(0,0)+cell.size);im=im.resize((200,round(200*im.size[1]/im.size[0])),Image.LANCZOS)
+            ex[name]=uri(im,82)
+        P2=Image.open(n+'-P2.png').convert('RGB');fg=wmask(P2);comps,lab,s=components(fg,8000)
+        comps=sorted(sorted(comps,key=lambda t:-t[5])[:6],key=lambda t:t[2])
+        assert len(comps)==6,(pid,len(comps))
+        sc={}
+        for name,c in zip(SC,comps):
+            im=cut(P2,fg,c[0],lab,s,(max(0,c[2]-4),max(0,c[1]-4),c[4]+4,c[3]+4))
+            im=im.resize((round(380*im.size[0]/im.size[1]),380),Image.LANCZOS);sc[name]=uri(im,82)
+            im.save(f'{SRC}/../cut_{pid}_{name}.png')
+        out[pid]={'exprs':ex,'looks':sc}
+        print(pid,'ok')
+    open(OUT,'w').write('window.AI_WOMEN='+json.dumps(out,separators=(',',':'))+';\n')

@@ -568,6 +568,7 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
 <script src="faces.js"></script>
 <script src="cast.js"></script>
 <script src="women.js"></script>
+<script src="tani.js"></script>
 <script>
 (()=>{
 "use strict";
@@ -1432,6 +1433,7 @@ function drawAvatarPortrait(t,dt){
   if(st.inj>0){g.save();g.translate(W*.72,H*.82);g.rotate(-.18);g.fillStyle='#fff';g.strokeStyle='#c0392b';g.lineWidth=2;g.beginPath();g.roundRect(-W*.24,-H*.08,W*.48,H*.16,4);g.fill();g.stroke();
     g.fillStyle='#c0392b';g.font='700 '+Math.round(H*.1)+'px "Zen Kaku Gothic New",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('負傷中',0,1);g.restore();
     g.strokeStyle='rgba(255,255,255,.95)';g.lineWidth=H*.05;g.beginPath();g.moveTo(W*.18,H*.18);g.lineTo(W*.42,H*.12);g.stroke();g.strokeStyle='rgba(200,190,170,.8)';g.lineWidth=1;g.stroke();}
+  if(A&&A.id==='tani'&&st.tani){const im=tImg(taniId(st.tani),'faces','kanpai');if(im){const r=H*.27,x=W-r-3,y=H-r-3;g.save();g.beginPath();g.arc(x,y,r,0,6.283);g.fillStyle='#efe2c4';g.fill();g.clip();const bw=r*2.25,bh=bw*im.naturalHeight/im.naturalWidth;g.drawImage(im,x-bw/2,y+r*1.02-bh,bw,bh);g.restore();g.strokeStyle='#e2b04a';g.lineWidth=2;g.beginPath();g.arc(x,y,r,0,6.283);g.stroke();}}
   if(A&&(A.id==='date'||A.id==='family')&&st.rom&&st.rom.pid){const im=wImg(st.rom.pid,'exprs',A.id==='date'?'shy':'smile');if(im){const r=H*.27,x=W-r-3,y=H-r-3;g.save();g.beginPath();g.arc(x,y,r,0,6.283);g.fillStyle='#f7e6ea';g.fill();g.clip();const bw=r*2.25,bh=bw*im.naturalHeight/im.naturalWidth;g.drawImage(im,x-bw/2,y+r*1.02-bh,bw,bh);g.restore();g.strokeStyle='#c9707f';g.lineWidth=2;g.beginPath();g.arc(x,y,r,0,6.283);g.stroke();}}
   if(zz){g.fillStyle='#5b5246';g.font='700 '+Math.round(H*.14)+'px "Zen Kaku Gothic New",sans-serif';for(let i=0;i<3;i++){const p=(t*.8+i/3)%1;g.globalAlpha=1-p;g.fillText('Z',W*.68+p*W*.18,H*.32-p*H*.2);}g.globalAlpha=1;}
 }
@@ -2183,7 +2185,15 @@ function applySpouse(pid){
   if(pid==='eiyo')addBuff(st,'inj',-.3,999,'妻・美咲の献立');
   if(pid==='deshi')addBuff(st,'growth',.1,999,'妻・紗季の励まし');
 }
-const TANIS=[{name:'ちゃんこ屋「大関」の大将',short:'大将'},{name:'地元建設会社の社長',short:'社長'},{name:'老舗旅館の女将',short:'女将'},{name:'IT企業の若社長',short:'若社長'},{name:'酒蔵の当主',short:'当主'},{name:'商店街の会長',short:'会長'}];
+const TANIS=[
+  {id:'taisho',name:'ちゃんこ屋「大関」の大将',short:'大将',say:'「あんたの相撲が気に入った。腹いっぱい食わせたる。今度うちの店に来な」',bye:'「最近ちっとも店に顔を出さんな。わしはもう、ほかの若いのを応援するわ」'},
+  {id:'shacho',name:'地元建設会社の社長',short:'社長',say:'「いい相撲とるな。これからワシが面倒みたる。今度メシ行こう」',bye:'「ずいぶん顔を見せんな。ワシはもう、ほかの力士を応援するわ」'},
+  {id:'okami',name:'老舗旅館の女将',short:'女将',say:'「あなたのお相撲、うちのお客さまにも評判なのよ。今度ゆっくりお食事にいらして」',bye:'「最近お見えになりませんね。残念ですけれど、ほかのお相撲さんを応援させていただきます」'},
+  {id:'wakashacho',name:'IT企業の若社長',short:'若社長',say:'「君の相撲、伸びしろしかないね。応援させてよ。今度食事でもどう？」',bye:'「最近会えてないね。悪いけど、別の力士を応援することにしたよ」'},
+];
+const taniId=T=>T&&(T.id||(TANIS.find(x=>x.name===T.name)||{}).id);
+const TIMG={};for(const id in (window.AI_TANI||{})){const a=window.AI_TANI[id],o={faces:{},looks:{}};for(const k in a.faces)o.faces[k]=IMG(a.faces[k]);for(const k in a.looks)o.looks[k]=IMG(a.looks[k]);o.scene=IMG(a.scene);o.gift=IMG(a.gift);TIMG[id]=o;}
+function tImg(id,kind,key){const o=TIMG[id];if(!o)return null;return okImg(key?o[kind][key]:o[kind]);}
 const LIFE={
   juryo:()=>{const T=st.tani,R=st.rom,pd=R&&['crush','dating','engaged','married'].includes(R.stage)?PARTNERS[R.pid]:null;
     return{t:'十両昇進',scene:'juryo',text:'番付編成会議で、十両昇進が正式に決まった。部屋には記者とカメラが集まり、師匠の隣で会見に臨む。床山が生まれて初めての大銀杏を結い上げ、'+(T?T.name+'から':'後援会から')+'化粧まわしが贈られることになった。'+(pd?pd.name.replace(/^.*[・の]/,'')+'から「おめでとう！」とメッセージが届いている。':'')+'今日から「関取」だ。',
@@ -2208,10 +2218,10 @@ const LIFE={
         {l:'ごまかす',f:()=>{if(Math.random()<.5){st.cheatHeat=(st.cheatHeat||0)+.2;R.aff=clamp(R.aff-10,0,100);return['「ただの同級生だよ」。'+her+'はそれ以上聞かなかった……今は。','親密度 −10・次にばれたらもっとまずい'];}
           if(married){R.famMiss=3;R.bond=0;addBuff(st,'power',-3,2,'信頼の崩壊');st.flags.secretOsana=false;return['うそはすぐにばれた。'+her+'は実家に帰ってしまった。','取組の力 −3（2場所）・家族サービスで迎えに行こう'];}
           R.declined.push(R.pid);R.stage=null;R.pid=null;st.flags.secretOsana=false;return['うそを重ねたことで、決定的に嫌われた。','別れた'];}}]};},
-  tani_invite:()=>{const T=pick(TANIS);return{t:'タニマチのお誘い',scene:'tani',text:'場所後の打ち上げで、'+T.name+'が声をかけてきた。「あんたの相撲が気に入った。これからワシが面倒みたる。今度メシ行こう」',
+  tani_invite:()=>{const T=pick(TANIS);return{t:'タニマチのお誘い',scene:'tani',tw:{id:T.id,show:'scene',after:()=>st.tani?'gift':'normal'},text:'場所後、'+T.name+'から料亭に招かれた。'+T.say,
     ch:[{l:'誘いにのる',f:()=>{st.tani={...T,b:st.b,miss:0,bond:0};const v=earn(100);return[T.name+'が後援者（タニマチ）になった。','タニマチがついた・ご祝儀 +'+v+'・毎場所ご祝儀が入る。会食に顔を出さないと離れていく'];}},
         {l:'丁重に断る',f:()=>{st.taniCool=st.b+3;st.stats.waza+=.8;return['「そうか、また気が向いたら」と笑って帰っていった。','技 +0.8'];}}]};},
-  tani_leave:()=>{const T=st.tani;return{t:'タニマチが離れた',scene:'tani',text:T.name+'から連絡があった。「ずいぶん顔を見せんな。ワシはもう、ほかの力士を応援するわ」',
+  tani_leave:()=>{const T=st.tani,full=TANIS.find(x=>x.id===taniId(T))||{};return{t:'タニマチが離れた',scene:'tani',tw:{id:taniId(T),show:'angry'},text:T.name+'から連絡があった。'+(full.bye||'「ずいぶん顔を見せんな。ワシはもう、ほかの力士を応援するわ」'),
     ch:[{l:'受け入れる',f:()=>{st.tani=null;st.taniCool=st.b+4;addBuff(st,'power',1,1,'見返したい');return['大事な人を失ってしまった。土俵で見返すしかない。','タニマチが離れた・次の場所で取組の力 +1'];}}]};},
   school:()=>{const R=st.rival;return{t:'相撲教習所',scene:'school',text:'新弟子は両国国技館の相撲教習所に半年間通う。朝は四股・てっぽう・すり足の実技、そのあと相撲史や書道の授業。隣の席の同期、'+R.name+'（'+R.home+'出身）が話しかけてきた。「おれは絶対、お前より先に関取になる」',
     ch:[{l:'「受けて立つ」',f:()=>{R.edge=(R.edge||0)+.5;addBuff(st,'growth',.05,3,'あいつには負けない');return[R.name+'がにやりと笑った。これから長い付き合いになりそうだ。',R.name+'が宿敵になった・教習所の間、稽古の伸び +5%'];}},
@@ -2254,14 +2264,14 @@ const LIFE={
     ch:[{l:'すぐに病院へ駆けつける',f:()=>{rom().kid={b:st.b};addBuff(st,'power',1,999,'父になった');return['小さな手が、指をぎゅっと握った。','取組の力 +1（ずっと）・引退後、この子を新弟子として入門させられる'];}}]}),
 };
 function wed(pid,gift){const R=rom();R.stage='married';R.weddingB=st.b;earn(gift);applySpouse(pid);addLog(firstName(pid)+'と結婚した。');}
-let kScene='home',kMark=null,kW=null;
+let kScene='home',kMark=null,kW=null,kT=null;
 function openLife(item){
-  const s=st,ev=LIFE[item.kind](item.pid);kScene=ev.scene||'date';kMark=ev.mark||null;kEv=null;kW=ev.w?{pid:item.pid||(st.rom&&st.rom.pid),e:ev.w.e||'normal',look:ev.w.look||null}:null;
+  const s=st,ev=LIFE[item.kind](item.pid);kScene=ev.scene||'date';kMark=ev.mark||null;kEv=null;kT=ev.tw?{id:ev.tw.id,show:ev.tw.show}:null;kW=ev.w?{pid:item.pid||(st.rom&&st.rom.pid),e:ev.w.e||'normal',look:ev.w.look||null}:null;
   $('kWhen').textContent=yearOf(s)+'年目　'+ageOf(s)+'歳';$('kTitle').textContent=ev.scene==='tani'?'後援者':ev.scene==='school'?'相撲教習所':ev.scene==='wedding'?'結婚披露宴':ev.scene==='baby'?'家族':ev.scene==='juryo'?'関取昇進':'恋と土俵';
   $('kEvName').textContent=ev.t;$('kText').textContent=ev.text;
   const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;$('kDone').hidden=true;$('kDone').textContent='部屋に戻る';
   for(const c of ev.ch){const b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=c.l;
-    b.addEventListener('click',()=>{const a0=st.rom?st.rom.aff:0,[story,fx]=c.f();box.innerHTML='';if(kW&&ev.w){if(ev.w.after)kW.e=ev.w.after(a0);if(ev.w.afterLook)kW.look=ev.w.afterLook();}$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;
+    b.addEventListener('click',()=>{const a0=st.rom?st.rom.aff:0,[story,fx]=c.f();box.innerHTML='';if(kT&&ev.tw&&ev.tw.after)kT.show=ev.tw.after();if(kW&&ev.w){if(ev.w.after)kW.e=ev.w.after(a0);if(ev.w.afterLook)kW.look=ev.w.afterLook();}$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;
       if(s.lateReturn){s.used=1;s.lateReturn=false;}addLog(ev.t+'：'+story);checkAch();persist();});box.append(b);}
   show('sKikyo');kCv=makeCanvas($('kCv'),220/400);kSnow=[];
 }
@@ -2282,6 +2292,13 @@ function drawLifeScene(g,W,H,t,dt){
     for(const [x,ch] of [[W*.13,'関'],[W*.87,'取']]){g.fillStyle='#f6ecd2';g.fillRect(x-H*.07,H*.34,H*.14,H*.5);g.fillStyle='#7a1f1f';g.font=Math.round(H*.12)+'px "Yuji Boku",serif';g.fillText(ch,x,H*.62);}
     if(kSnow.length<50&&!REDUCED)kSnow.push({x:Math.random()*W,y:-5,v:rnd(20,45),r:rnd(2,4),p:Math.random()*6});
     g.fillStyle='rgba(255,215,120,.9)';kSnow=kSnow.filter(f=>{f.y+=f.v*dt;f.x+=Math.sin(t+f.p)*12*dt;g.fillRect(f.x,f.y,f.r,f.r*1.6);return f.y<H+5;});return;}
+  if(kScene==='tani'&&kT&&tImg(kT.id,'scene')){const sc=tImg(kT.id,'scene'),sh=H,sw=sh*sc.naturalWidth/sc.naturalHeight;g.drawImage(sc,(W-sw)/2,0,sw,sh);
+    if(kT.show!=='scene'){g.fillStyle='rgba(8,8,20,.55)';g.fillRect(0,0,W,H);
+      const im=kT.show==='gift'?tImg(kT.id,'gift'):tImg(kT.id,'faces',kT.show);
+      if(im){const h=kT.show==='gift'?H*.92:H*.7,w=h*im.naturalWidth/im.naturalHeight;softSpot(g,W*.62,H*.6,h*.6,'255,220,160',.25);g.drawImage(im,W*.62-w/2,H-h,w,h);}
+      const pr=H*.3;g.save();g.beginPath();g.arc(W*.24,H*.62,pr,0,6.283);g.fillStyle='#f3eadb';g.fill();g.clip();g.drawImage(portrait(st.face,kT.show==='angry'?'lose':'happy',st.pos>=JURYO,256),W*.24-pr*1.2,H*.62-pr*1.1,pr*2.4,pr*2.4);g.restore();
+      g.strokeStyle='#e2b04a';g.lineWidth=2.5;g.beginPath();g.arc(W*.24,H*.62,pr,0,6.283);g.stroke();}
+    return;}
   const wed=kScene==='wedding',baby=kScene==='baby';
   const bg=g.createLinearGradient(0,0,0,H);const tn=kScene==='tani';bg.addColorStop(0,wed?'#6a1018':baby?'#26406a':tn?'#14223f':'#3a2346');bg.addColorStop(1,wed?'#b8862a':baby?'#8fb6d8':tn?'#8a6a2a':'#c97a8c');g.fillStyle=bg;g.fillRect(0,0,W,H);
   if(wed){g.save();g.translate(W/2,H*.5);g.rotate(t*.1);for(let i=0;i<16;i++){g.rotate(Math.PI/8);g.fillStyle='rgba(255,220,140,.12)';g.beginPath();g.moveTo(0,0);g.lineTo(W*.08,-W);g.lineTo(-W*.08,-W);g.fill();}g.restore();
@@ -2304,7 +2321,7 @@ function drawLifeScene(g,W,H,t,dt){
 }
 let kCv=null,kSnow=[],kEv=null;
 function openKikyo(){
-  kScene='home';kMark=null;kW=null;$('kDone').textContent='新年、部屋に戻る';const s=st;kEv=pickEvent(s);s.seenEv.push(kEv.id);persist();
+  kScene='home';kMark=null;kW=null;kT=null;$('kDone').textContent='新年、部屋に戻る';const s=st;kEv=pickEvent(s);s.seenEv.push(kEv.id);persist();
   $('kWhen').textContent=Math.max(1,yearOf(s)-1)+'年目の年の瀬　'+ageOf(s)+'歳';
   $('kTitle').textContent=s.home+'へ帰省';
   $('kEvName').textContent=kEv.t;$('kText').textContent=kEv.text(s);
