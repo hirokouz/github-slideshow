@@ -3,3 +3,6 @@ _site/
 .jekyll-metadata
 .bundle
 __pycache__/
+sumo-rpg/web/*.js
+sumo-rpg/web/index.html
+sumo-rpg/yokozuna-web.zip
