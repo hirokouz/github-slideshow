@@ -601,20 +601,27 @@ const KIMARITE={oshi:['押し出し','突き出し','押し倒し'],yotsu:['寄�
 
 /* ---------- banzuke ---------- */
 /* division sizes follow the real banzuke: jonokuchi ~30, jonidan ~100, sandanme 90, makushita 60, juryo 14, maegashira 17 */
-const DIVS=[{n:'序ノ口',c:30,b:7,step:15,lv:[10,13]},{n:'序二段',c:100,b:7,step:14,lv:[13,22]},{n:'三段目',c:90,b:7,step:11,lv:[22,31]},
-  {n:'幕下',c:60,b:7,step:7,lv:[31,40]},{n:'十両',c:14,b:15,step:1,lv:[40,47]},{n:'前頭',c:17,b:15,step:1,lv:[47,57]}];
+/* one slot = one place on the banzuke: every rank number (枚) has an East place and a West place,
+   so a division of 60枚 (幕下) has 120 slots. Sizes follow the real banzuke. */
+const DIVS=[{n:'序ノ口',c:50,b:7,lv:[10,13]},{n:'序二段',c:200,b:7,lv:[13,22]},{n:'三段目',c:180,b:7,lv:[22,31]},
+  {n:'幕下',c:120,b:7,lv:[31,40]},{n:'十両',c:28,b:15,lv:[40,47]},{n:'前頭',c:34,b:15,lv:[47,57]}];
 const DSTART=[];{let a=0;for(const d of DIVS){DSTART.push(a);a+=d.c;}}
-const SAN=['小結','関脇','大関','横綱'];const JURYO=DSTART[4],MAKU=DSTART[5],KOMU=MAKU+17,SEKI=KOMU+1,OZEKI=KOMU+2,YOKO=KOMU+3;
-function divInfo(pos){for(let i=0;i<DIVS.length;i++){const d=DIVS[i];if(pos<DSTART[i]+d.c)return{i,d,start:DSTART[i],num:d.c-(pos-DSTART[i])};}return null;}
+const SAN=['小結','関脇','大関','横綱'];const JURYO=DSTART[4],MAKU=DSTART[5],KOMU=MAKU+DIVS[5].c,SEKI=KOMU+1,OZEKI=KOMU+2,YOKO=KOMU+3;
+function divInfo(pos){for(let i=0;i<DIVS.length;i++){const d=DIVS[i];if(pos<DSTART[i]+d.c){const slot=d.c-(pos-DSTART[i]);return{i,d,start:DSTART[i],slot,num:Math.ceil(slot/2),east:slot%2===1};}}return null;}
+// position of 「(division i) num枚目」, East by default
+function posOf(i,num,east=true){const d=DIVS[i];num=clamp(Math.round(num),1,d.c/2);return DSTART[i]+d.c-(2*num-(east?1:0));}
 function levelOf(pos){if(pos>=KOMU)return[58,61,64,68][Math.min(3,pos-KOMU)];const I=divInfo(pos);return lerp(I.d.lv[0],I.d.lv[1],(pos-I.start)/I.d.c);}
+/* v2 saves: one slot per 枚 with sizes [30,100,90,60,14,17] → now two slots per 枚 */
+const V2_DIVS=[30,100,90,60,14,17];
+function mapV2(o){let a=0;for(let i=0;i<6;i++){if(o<a+V2_DIVS[i]){const num=V2_DIVS[i]-(o-a);return posOf(i,num*DIVS[i].c/2/V2_DIVS[i]);}a+=V2_DIVS[i];}return KOMU+Math.min(3,o-a);}
 /* old saves used a shorter ladder; map them onto the real one */
 const OLD_DIVS=[20,40,40,30,14,17];
 function mapOldPos(o){if(o>=161)return KOMU+Math.min(3,o-161);let a=0;for(let i=0;i<6;i++){if(o<a+OLD_DIVS[i]){const num=OLD_DIVS[i]-(o-a);const nn=Math.max(1,Math.round(num*DIVS[i].c/OLD_DIVS[i]));return DSTART[i]+DIVS[i].c-nn;}a+=OLD_DIVS[i];}return 0;}
 function rank(pos){
   if(pos>=KOMU)return{div:SAN[pos-KOMU],name:SAN[pos-KOMU],bouts:15};
-  let s=0;for(const d of DIVS){if(pos<s+d.c){const num=d.c-(pos-s);return{div:d.n,name:d.n+(d.n==='前頭'&&num===1?'筆頭':kanNum(num)+'枚目'),bouts:d.b,step:d.step};}s+=d.c;}
+  let s=0;for(const d of DIVS){if(pos<s+d.c){const num=Math.ceil((d.c-(pos-s))/2);return{div:d.n,name:d.n+(num===1&&d.n!=='序ノ口'&&d.n!=='序二段'&&d.n!=='三段目'?'筆頭':kanNum(num)+'枚目'),bouts:d.b,step:d.step};}s+=d.c;}
 }
-const side=pos=>pos%2?'西':'東';
+const side=pos=>{if(pos<KOMU){const I=divInfo(pos);return I&&I.east?'東':'西';}return pos%2?'西':'東';};
 
 /* ---------- face ---------- */
 const FACE_OPTS={
@@ -650,7 +657,8 @@ function potentialText(s){const L={oshi:'押し',chikara:'力',waza:'技',hayasa
   return '素質：'+Object.keys(c).map(k=>L[k]+c[k]).join('・')+'／得意 '+L[best]+'／体重の上限 '+s.kgMax+'kg（'+rate+'）';}
 function migrate(s){if(!s)return s;if(s.cap)for(const k in s.cap)s.cap[k]=Math.max(s.cap[k],90);if(!s.cap||!s.affin){const keep=st;st=s;rollPotential(s);st=keep;}if(!s.face){s.face=defaultFace();if(typeof s.skin==='number')s.face.skin=clamp(s.skin,0,3);}
   if(s.age0===undefined)Object.assign(s,profileSeed(s.type));
-  if(!s.v2){s.pos=mapOldPos(s.pos);for(const h of s.hist||[])h.pos=mapOldPos(h.pos);if(s.basho)s.basho=null,s.used=5;s.v2=1;}
+  if(!s.v2){s.pos=mapOldPos(s.pos);for(const h of s.hist||[])h.pos=mapOldPos(h.pos);if(s.basho)s.basho=null,s.used=5;s.v2=1;s.v3=1;s.best=Math.max(s.pos,...(s.hist||[]).map(h=>h.pos));}
+  if(!s.v3){const f=x=>mapV2(x);s.pos=f(s.pos);if(s.best!==undefined)s.best=f(s.best);for(const h of s.hist||[])h.pos=f(h.pos);if(s.basho&&s.basho.opp)s.basho.opp.pos=f(s.basho.opp.pos);s.v3=1;}
   if(!s.rival)s.rival=makeRival(s);if(s.best===undefined)s.best=s.pos;if(!s.deck)s.deck=[];if(!s.id)s.id='r'+Date.now().toString(36)+Math.floor(Math.random()*1e4);if(!s.touched)s.touched=Date.now();return s;}
 function loadRoster(){
   try{const r=JSON.parse(localStorage.getItem(ROSTER_KEY)||'null');if(r&&r.list){roster=r;}}catch(e){}
@@ -1356,7 +1364,7 @@ function enter(){
   const type=document.querySelector('input[name=type]:checked').value;const s0=START[type];
   const age=+document.querySelector('input[name=age]:checked').value,AB=AGE_START[age];
   st={id:'r'+Date.now().toString(36)+Math.floor(Math.random()*1e4),name,type,stats:{oshi:s0.oshi+AB.b,chikara:s0.chikara+AB.b,waza:s0.waza+AB.b,hayasa:s0.hayasa+AB.b},kg:s0.kg+AB.kg,fat:10,inj:0,pos:AB.pos,b:0,used:0,
-      hist:[],yusho:0,makuYusho:0,kadoban:false,log:[],basho:null,deck:[],face:Object.assign({},draftFace),...profileSeed(type),age0:age,v2:1,pBonus:prestigeBonus()};
+      hist:[],yusho:0,makuYusho:0,kadoban:false,log:[],basho:null,deck:[],face:Object.assign({},draftFace),...profileSeed(type),age0:age,v2:1,v3:1,pBonus:prestigeBonus()};
   st.best=st.pos;st.home=$('homeIn').value||st.home;st.rival=makeRival(st);st.rival.face=oppFace();st.rival.home=pick(PREFS);
   rollPotential(st);
   st.maezumo=age!==22;st.school=true;addBuff(st,'growth',.15,3,'相撲教習所');
@@ -1561,9 +1569,9 @@ function train(a){
 let B=null,anim=null,autoMode=false,ring=null,cam={z:1,fx:0,shake:0},gyX=null;
 function genOpp(myPos,used){
   let p;const I=divInfo(myPos);
-  if(myPos>=KOMU)p=pick([MAKU+8,MAKU+11,MAKU+13,MAKU+15,MAKU+16,KOMU,SEKI,SEKI,OZEKI,OZEKI,YOKO]);
-  else if(myPos>=MAKU+12)p=Math.random()<.5?pick([KOMU,SEKI,OZEKI,OZEKI,YOKO]):clamp(myPos+Math.round(rnd(-3,3)),MAKU,KOMU-1);
-  else{const span=I.i<=2?10:I.i===3?6:3;p=clamp(myPos+Math.round(rnd(-span,span)),0,KOMU-1);}
+  if(myPos>=KOMU)p=pick([MAKU+16,MAKU+22,MAKU+26,MAKU+30,MAKU+32,KOMU,SEKI,SEKI,OZEKI,OZEKI,YOKO]);
+  else if(myPos>=MAKU+24)p=Math.random()<.5?pick([KOMU,SEKI,OZEKI,OZEKI,YOKO]):clamp(myPos+Math.round(rnd(-6,6)),MAKU,KOMU-1);
+  else{const span=I.i<=2?20:I.i===3?12:6;p=clamp(myPos+Math.round(rnd(-span,span)),0,KOMU-1);}
   let name;do{name=pick(OP_A)+pick(OP_B);}while(name===st.name||used.includes(name));
   const lvl=levelOf(p),v=()=>lvl*rnd(.88,1.12);const style=pick(['oshi','yotsu','waza']);const tf=clamp((lvl-10)/55,0,1);
   const s={oshi:v(),chikara:v(),waza:v(),hayasa:v()};s[{oshi:'oshi',yotsu:'chikara',waza:'waza'}[style]]*=1.12;
@@ -1645,7 +1653,7 @@ function resolve(q){
     if(o.rival){st.rival.w=(st.rival.w||0)+1;B.earn+=earn(50);toast('宿敵 '+o.name+' に勝った！');}}
   else{B.l++;B.marks+='●';st.streak=0;if(o.rival)st.rival.l=(st.rival.l||0)+1;}B.day++;
   checkAch();
-  const upset=win&&o.pos-st.pos>=6;
+  const upset=win&&o.pos-st.pos>=(o.pos>=KOMU?2:10);
   anim={phase:'clash',t:0,win,km,ws,kind,tq:q,TL:TL[kind],dw:win?1:-1,c0:(q==='sharp'?.03:q==='late'?-.03:0),hit:{},freeze:0,upset,thrust:ws==='oshi'};
   persist();
 }
@@ -1828,7 +1836,7 @@ function endBasho(){
   const wasMae=!!st.maezumo,w=B.w,l=B.l,old=st.pos,r=wasMae?{div:'前相撲',name:'前相撲',bouts:3}:rank(old),endedIdx=st.b;let p=old,msg='';const ex=[];
   const top=old>=JURYO;let yusho=!top?w===7:(w>=14||(w===13&&Math.random()<.4)||(w===12&&Math.random()<.1));
   const prev=st.hist[st.hist.length-1];
-  if(wasMae){p=w>=3?16:w>=2?10:w>=1?5:1;yusho=false;st.maezumo=false;msg=w>=2?'新序出世！ 来場所から序ノ口に名前が載る。':'前相撲を終えた。来場所は序ノ口の下位から。';}
+  if(wasMae){p=w>=3?posOf(0,17,Math.random()<.5):w>=2?posOf(0,20):w>=1?posOf(0,23):posOf(0,25,false);yusho=false;st.maezumo=false;msg=w>=2?'新序出世！ 来場所から序ノ口に名前が載る。':'前相撲を終えた。来場所は序ノ口の下位から。';}
   else if(old<KOMU){const mv=moveBanzuke(old,w,l);p=mv.p;if(mv.msg)msg=mv.msg;}
   else if(old===KOMU){p=w>=8?(w>=10?SEKI:KOMU+(Math.random()<.5?1:0)):Math.max(MAKU,KOMU-1-Math.round((l-w)*1.3));if(w>=8&&p===KOMU)msg='小結の地位を守った。';}
   else if(old===SEKI){const last3=w+st.hist.slice(-2).reduce((a,h)=>a+h.w,0);
@@ -2039,20 +2047,31 @@ function renderDeck(){
    juryo promotion only from upper makushita (≈5枚目以内の勝ち越し, or 15枚目以内の全勝);
    makuuchi promotion only from upper juryo; demotions fall into the division below. */
 function moveBanzuke(old,w,l){
-  const I=divInfo(old),net=w-l;let msg='';
-  let mv=net*I.d.step*(net<0&&I.i>=4?1.3:1);if(w===I.d.b&&I.i<4)mv+=I.d.step*2.5;
-  mv=net>0?Math.max(1,Math.round(mv)):Math.min(-1,Math.round(mv));
-  let p=old+mv;
-  if(I.i===0&&w>l)p=Math.max(p,DSTART[1]+DIVS[1].c-70);
-  if(I.i<3&&p>=JURYO)p=JURYO-1;
-  if(I.i===3&&p>=JURYO){const ok=(I.num<=5&&w>l)||(w===7&&I.num<=15);
-    if(ok)p=JURYO+(I.num<=1&&w>=6?3:Math.floor(rnd(0,3)));else{p=JURYO-1;msg='十両昇進はならず。幕下筆頭で次こそ。';}}
-  if(I.i===4){
-    if(p>=MAKU){const ok=w>l&&net>=I.num-1;if(ok)p=MAKU+Math.floor(rnd(0,3));else{p=MAKU-1;msg='入幕はお預け。十両筆頭で迎える来場所が勝負だ。';}}
-    else if(p<JURYO){p=JURYO-1-Math.round((JURYO-p)*3);msg='十両から陥落……。幕下で出直しだ。';}}
-  if(I.i===5){
-    if(p>=KOMU){const ok=(I.num<=2&&net>=2)||(I.num<=5&&w>=11)||w>=12;if(!ok)p=KOMU-1;}
-    else if(p<MAKU){p=MAKU-1-Math.round((MAKU-p)*.8);msg='十両に陥落。もう一度幕内へ。';}}
+  /* movement in 枚 by wins (0..7) for the 7-bout divisions, from typical real banzuke */
+  const T7={1:[-45,-32,-20,-8,15,30,55,130],2:[-50,-36,-22,-10,10,22,40,100],3:[-40,-26,-15,-5,5,13,24,36]};
+  const I=divInfo(old),net=w-l,eastR=()=>Math.random()<.5;let msg='',p;
+  const mono=x=>w>l?Math.max(x,old+1):w<l?Math.min(x,old-1):x; // kachikoshi never goes down, makekoshi never up
+  if(I.i===0){ // 序ノ口: any kachikoshi reaches 序二段
+    if(w>l)p=posOf(1,{4:rnd(80,95),5:rnd(60,72),6:rnd(40,52),7:rnd(15,25)}[w],eastR());
+    else p=old-Math.round((4-w)*rnd(2,4)*2);}
+  else if(I.i<=3){
+    let mv=T7[I.i][w]*rnd(.85,1.15);
+    if(I.i===3&&I.num<=15&&w<7)mv*=.6;           // upper makushita is crowded: smaller steps
+    p=mono(old+Math.round(mv*2));
+    if(I.i===2&&w===7)p=Math.min(p,posOf(3,15));    // 三段目 zensho tops out around 幕下15枚目
+    if(I.i===3&&w===7&&I.num>15)p=Math.min(p,posOf(3,3));   // makushita zensho from below 15枚目: near the top, not straight to 十両
+    if(I.i<3)p=Math.min(p,JURYO-1);
+    if(I.i===3){const need=I.num<=1?4:I.num<=3?5:I.num<=5?6:I.num<=15?7:99;
+      if(w>=need)p=posOf(4,I.num<=2&&w>=6?rnd(9,12):rnd(11,14),eastR());
+      else if(p>=JURYO){p=posOf(3,1,true);msg='十両昇進はならず。幕下筆頭で次こそ。';}}}
+  else{ // 十両・前頭 (15 bouts): about 1.3枚 per net win
+    p=mono(old+Math.round(net*(net>0?1.25:1.4)*rnd(.85,1.15)*2));
+    if(I.i===4){
+      if(p>=MAKU||(I.num<=1&&w>l)){const ok=w>l&&net>=I.num;if(ok)p=posOf(5,rnd(13,17),eastR());else{p=posOf(4,1,true);msg='入幕はお預け。十両筆頭で迎える来場所が勝負だ。';}}
+      else if(p<JURYO)msg='十両から陥落……。幕下で出直しだ。';}
+    if(I.i===5){
+      if(p>=KOMU||(I.num<=1&&w>l)){const ok=(I.num<=1&&w>l&&Math.random()<.6)||(I.num<=2&&net>=2)||(I.num<=5&&w>=11)||w>=12;p=ok?KOMU:Math.min(p,KOMU-1);}
+      else if(p<MAKU)msg='十両に陥落。もう一度幕内へ。';}}
   return{p:clamp(p,0,KOMU),msg};
 }
 
