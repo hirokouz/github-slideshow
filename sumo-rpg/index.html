@@ -658,6 +658,7 @@ function play(id){st=roster.list[id];if(!st)return;roster.active=id;saveRoster()
 const PREFS=['北海道','青森','秋田','岩手','山形','宮城','福島','茨城','栃木','群馬','埼玉','千葉','東京','神奈川','新潟','富山','石川','福井','山梨','長野','岐阜','静岡','愛知','三重','滋賀','京都','大阪','兵庫','奈良','和歌山','鳥取','島根','岡山','広島','山口','徳島','香川','愛媛','高知','福岡','佐賀','長崎','熊本','大分','宮崎','鹿児島','沖縄'];
 function profileSeed(type){return{age0:15+Math.floor(Math.random()*8),height:Math.round(({oshi:180,yotsu:184,waza:175}[type]||180)+rnd(-4,5)),home:pick(PREFS)};}
 const ageOf=s=>s.age0+Math.floor(s.b/6);
+const LOVE_AGE=18; // romance events start at 18
 const yearOf=s=>Math.floor(s.b/6)+1;
 
 /* ---------- drawing helpers ---------- */
@@ -2047,7 +2048,7 @@ const EVENTS=[
     text:()=>'学生相撲で鳴らした父は、膝の古傷で今は四股も踏めない。「おまえの四股を見せてくれ」',
     ch:[{l:'父の前で四股を踏む',f:s=>{s.stats.chikara+=2;setFlag(s,'fatherShiko');return['父が一つひとつ、足の上げ方を直してくれた。','力 +2・四股の伸びがずっと +10%'];}},
         {l:'肩をもんで休ませる',f:s=>{setFlag(s,'fatherKesho');return['父は押し入れから古い化粧まわしを出してきた。「十両に上がったら締めてくれ」','十両昇進のとき、父の化粧まわしが届く'];}}]},
-  {id:'osana',t:'幼なじみとの再会',need:s=>!hasP(s),
+  {id:'osana',t:'幼なじみとの再会',need:s=>ageOf(s)>=LOVE_AGE&&!hasP(s),
     text:()=>'商店街で、小学校の同級生とばったり会った。「テレビ見てるよ。今度、場所に応援に行っていい？」',
     ch:[{l:'連絡先を交換する',f:s=>{setFlag(s,'osana');addBuff(s,'power',1,1,'幼なじみの応援');return['次の場所、客席に見慣れた顔があるはずだ。','次の場所で取組の力 +1・来年の帰省に続きがある'];}},
         {l:'照れくさくて帰る',f:s=>{setFlag(s,'osanaShy');return['言いたいことは、また来年に。','（なにも起きない）'];}}]},
@@ -2062,7 +2063,7 @@ const EVENTS=[
           if(s.rom.stage==='married'){s.cheatHeat=(s.cheatHeat||0)+.5;return['返事はできなかった。家に帰っても、遥の言葉が頭から離れない。','妻にばれる危険が大きくなった……'];}
           const old=s.rom.pid;s.rom.declined.push(old);s.rom.pid='osana';s.rom.stage='dating';s.rom.aff=55;s.rom.dateMiss=0;s.flags.secretOsana=false;setFlag(s,'partner');
           addBuff(s,'power',-1,2,'修羅場の後');return[''+firstName(old)+'に別れを告げた。泣かれ、なじられた。それでも遥の手を取った。','遥と交際を始めた（親密度 55）・前の恋人とは別れた・2場所のあいだ取組の力 −1'];}}]},
-  {id:'osana2',t:'幼なじみからの手紙',need:s=>s.flags&&s.flags.osana&&!hasP(s),
+  {id:'osana2',t:'幼なじみからの手紙',need:s=>ageOf(s)>=LOVE_AGE&&s.flags&&s.flags.osana&&!hasP(s),
     text:()=>'一年間、毎場所応援に来てくれた幼なじみから手紙を渡された。「ずっと支えさせてほしい」',
     ch:[{l:'気持ちを受けとめる',f:s=>{setFlag(s,'partner');addBuff(s,'power',1,999,'支えてくれる人');s.fat=0;return['二人で初詣に行った。帰る場所ができた。','取組の力がずっと +1'];}},
         {l:'今は相撲に集中したい',f:s=>{addBuff(s,'growth',.1,6,'決意');return['「待ってるから」の一言を背に、部屋へ戻った。','この1年、稽古の伸び +10%'];}}]},
@@ -2126,7 +2127,7 @@ function spouse(){return st&&st.rom&&st.rom.stage==='married'?st.rom.pid:null;}
 function checkLife(w,l,yusho,endedIdx){
   const R=rom();
   if(flag('secretOsana')&&hasP(st)&&Math.random()<.22+(st.cheatHeat||0)){queueLife('caught');}
-  if(!R.stage){
+  if(!R.stage){if(ageOf(st)<LOVE_AGE)return;
     const cand=[['osana',(flag('osana')||flag('partner'))&&!flag('osanaFriend')],['reijo',flag('koenkai')],['eiyo',(st.chankoN||0)>=20],['imouto',st.rival&&(st.rival.w||0)>=5],['deshi',(st.trainN||0)>=60]]
       .filter(([k,ok])=>ok&&!R.declined.includes(k));
     if(cand.length&&Math.random()<.6)queueLife('meet',cand[0][0]);return;}
