@@ -283,6 +283,11 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
   background:var(--sumi);color:var(--washi);border:1.5px solid var(--kin);border-radius:999px;padding:6px 8px 6px 14px;font-size:12.5px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.45);max-width:calc(100vw - 32px)}
 #autoBar{white-space:nowrap;gap:6px;padding:5px 6px 5px 12px}
 #autoBar select{max-width:7.5em}
+#autoTxt{max-width:9.5em;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+.acfg{display:grid;gap:6px}.acfg .chk{display:grid;grid-template-columns:1fr 1fr;gap:6px}.acfg label{display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.04);font-size:14px}
+.acfg label small{display:block;color:var(--muted,#b9ad96);font-size:11.5px}.acfg #autoGo{position:sticky;bottom:0}
+.acfg input{width:20px;height:20px;accent-color:var(--kin);flex:none}
+.acfg .seg{display:flex;gap:6px;flex-wrap:wrap}.acfg .seg label{flex:1;justify-content:center;padding:8px 4px;font-size:13px;white-space:nowrap;gap:5px}
 #autoBar .dot{width:8px;height:8px;border-radius:50%;background:var(--kin);animation:pulse 1s infinite}
 @keyframes pulse{50%{opacity:.25}}
 #autoBar select{font:inherit;font-size:12px;background:#2a2620;color:var(--washi);border:1px solid var(--line);border-radius:6px;padding:2px 4px}
@@ -361,7 +366,6 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
 
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="autoBar" hidden><span class="dot" aria-hidden="true"></span><span id="autoTxt">オート中</span>
-  <select id="autoStop" aria-label="自動で止める条件"><option value="none">止めない</option><option value="promo" selected>昇進したら止める</option><option value="yusho">優勝したら止める</option><option value="event">イベントで止める</option><option value="kikyo">帰省で止める</option></select>
   <select id="autoSpeed" aria-label="速さ"><option value="1">ふつう</option><option value="3" selected>速い</option></select>
   <button type="button" id="autoOff">停止</button></div>
 <div class="wrap">
@@ -456,6 +460,22 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
       <div data-p="hist" class="washi"><div class="histbox"><table class="hist" id="hHist"></table></div></div>
       <div data-p="log"><div class="log" id="hLog"></div><p class="label" style="margin-top:12px">いま効いている出来事</p><div class="log" id="hBuffs"></div></div>
       <div data-p="ach"><div class="achs" id="hAch"></div></div>
+      <div data-p="auto" class="acfg">
+        <p class="muted" style="font-size:12.5px">オートで育成を進めます。止めたいタイミングを選んでください（いくつでも）。</p>
+        <div class="chk">
+        <label><input type="checkbox" data-a="promo"><span>昇進したら</span></label>
+        <label><input type="checkbox" data-a="yusho"><span>優勝したら</span></label>
+        <label><input type="checkbox" data-a="love"><span>恋愛・結婚<small>告白・プロポーズなど</small></span></label>
+        <label><input type="checkbox" data-a="event"><span>全イベント<small>タニマチ・教習所も</small></span></label>
+        <label><input type="checkbox" data-a="kikyo"><span>年末の帰省</span></label>
+        <label><input type="checkbox" data-a="inj"><span>けがをしたら</span></label>
+        </div>
+        <p class="label" style="margin-top:4px">場所数で止める</p>
+        <div class="seg"><label><input type="radio" name="aN" value="0">なし</label><label><input type="radio" name="aN" value="1">1場所</label><label><input type="radio" name="aN" value="3">3場所</label><label><input type="radio" name="aN" value="6">1年</label></div>
+        <p class="label" style="margin-top:4px">速さ</p>
+        <div class="seg"><label><input type="radio" name="aS" value="1">ふつう</label><label><input type="radio" name="aS" value="3">速い</label></div>
+        <button class="primary" id="autoGo" style="margin-top:6px">この設定でオート開始</button>
+      </div>
       <div data-p="deck"><p class="muted" style="font-size:12px;margin-bottom:8px" id="pickHint"></p><div id="hPick"></div></div>
     </div>
   </div>
@@ -2331,6 +2351,21 @@ function descs(){$('ageDesc').textContent=AGE_DESC[document.querySelector('input
 document.querySelectorAll('input[name=age],input[name=type]').forEach(i=>i.addEventListener('change',descs));descs();
 /* ---------- auto growth: trains, fights and moves on by itself until stopped ---------- */
 let autoGrow=false,autoTimer=null,autoBusy=false;
+const AUTO_DEF={promo:true,yusho:true,love:true,event:false,kikyo:false,inj:false,n:0,speed:3};
+const autoCfg=()=>Object.assign({},AUTO_DEF,roster.autoCfg||{});
+let autoB0=0,autoInj0=0;
+const AUTO_LAB={promo:'昇進',yusho:'優勝',love:'恋愛',event:'イベント',kikyo:'帰省',inj:'けが'};
+function openAutoCfg(){const c=autoCfg(),sh=$('sheet');
+  sh.querySelectorAll('[data-a]').forEach(i=>i.checked=!!c[i.dataset.a]);
+  sh.querySelectorAll('input[name=aN]').forEach(i=>i.checked=+i.value===c.n);sh.querySelectorAll('input[name=aS]').forEach(i=>i.checked=+i.value===c.speed);
+  openSheet('auto','オートの設定');}
+function startAutoFromCfg(){const sh=$('sheet'),c={};
+  sh.querySelectorAll('[data-a]').forEach(i=>c[i.dataset.a]=i.checked);
+  c.n=+((sh.querySelector('input[name=aN]:checked')||{}).value||0);c.speed=+((sh.querySelector('input[name=aS]:checked')||{}).value||3);
+  roster.autoCfg=c;saveRoster();$('autoSpeed').value=String(c.speed);closeSheet();
+  const on=Object.keys(AUTO_LAB).filter(k=>c[k]).map(k=>AUTO_LAB[k]);if(c.n)on.push(c.n===6?'1年':c.n+'場所');
+  $('autoTxt').textContent=on.length?'止める：'+on.join('・'):'オート中（止めない）';
+  autoB0=st.b;autoInj0=st.inj||0;setAuto(true);}
 const autoSpd=()=>autoGrow?+($('autoSpeed').value||1):1;
 function pickAct(){const S=st.stats,id=k=>ACTS.find(a=>a.id===k);
   if(st.tani&&!st.tani.this&&(st.tani.miss||0)>=1&&st.fat<70&&Math.random()<.6)return TANI_ACT;
@@ -2344,23 +2379,27 @@ function setAuto(on){autoGrow=on;$('autoBar').hidden=!on;document.body.classList
   if(on){autoTimer=setInterval(autoStep,250);toast('オート成長を始めた');}}
 function autoStop(why){setAuto(false);if(why)toast(why);}
 function autoStep(){
-  if(!autoGrow)return;if(!st){autoStop();return;}
+  if(!autoGrow)return;if(!st){autoStop();return;}const C=autoCfg();
+  if(cur==='sHome'||cur==='sResult'){if(C.inj&&(st.inj||0)>autoInj0){autoInj0=st.inj;autoStop('けがをしました。オート成長を止めました');if(cur==='sResult')$('backHome').click();return;}autoInj0=st.inj||0;}
   const sh=$('sheet');if(sh&&!sh.hidden)closeSheet();
   if(cur==='sHome'){if(avatar&&avatar.act)return;if(st.used<TURNS)train(pickAct());else startBasho();}
   else if(cur==='sBout'){if(!autoMode){const c=$('autoChk');c.checked=true;c.dispatchEvent(new Event('change'));}}
-  else if(cur==='sResult'){if(autoBusy)return;autoBusy=true;const stopOn=$('autoStop').value,txt=$('rBig').textContent,promo=$('rBig').classList.contains('gold')&&!/勝ち越し/.test(txt);
+  else if(cur==='sResult'){if(autoBusy)return;autoBusy=true;const txt=$('rBig').textContent,promo=$('rBig').classList.contains('gold')&&!/勝ち越し/.test(txt);
     setTimeout(()=>{autoBusy=false;if(!autoGrow)return;
-      if(stopOn==='promo'&&promo){autoStop('昇進！ オート成長を止めました');return;}
-      if(stopOn==='yusho'&&/優勝/.test(txt)){autoStop('優勝！ オート成長を止めました');return;}
-      if(stopOn==='kikyo'&&st.pendingKikyo){autoStop('年末の帰省です。オート成長を止めました');$('backHome').click();return;}
+      if(C.promo&&promo){autoStop('昇進！ オート成長を止めました');return;}
+      if(C.yusho&&/優勝/.test(txt)){autoStop('優勝！ オート成長を止めました');return;}
+      if(C.n&&st.b-autoB0>=C.n){autoStop((C.n===6?'1年':C.n+'場所')+'たちました。オート成長を止めました');$('backHome').click();return;}
+      if(C.kikyo&&st.pendingKikyo){autoStop('年末の帰省です。オート成長を止めました');$('backHome').click();return;}
       $('backHome').click();},1400/autoSpd());}
   else if(cur==='sKikyo'){if(autoBusy)return;const bs=[...document.querySelectorAll('#kChoices button')];
-    if(bs.length&&$('autoStop').value==='event'){autoStop('「'+$('kEvName').textContent+'」です。オート成長を止めました');return;}
+    const love=['date','wedding','baby'].includes(kScene)&&kScene!=='home';
+    if(bs.length&&(C.event||(C.love&&love&&!kEv))){autoStop('「'+$('kEvName').textContent+'」です。オート成長を止めました');return;}
     if(bs.length){autoBusy=true;setTimeout(()=>{autoBusy=false;if(autoGrow)pick(bs).click();},900/autoSpd());}
     else if(!$('kDone').hidden){autoBusy=true;setTimeout(()=>{autoBusy=false;if(autoGrow)$('kDone').click();},1300/autoSpd());}}
   else autoStop();
 }
-$('autoBtn').addEventListener('click',()=>setAuto(!autoGrow));
+$('autoBtn').addEventListener('click',()=>{if(autoGrow)autoStop('オート成長を止めました');else openAutoCfg();});
+$('autoGo').addEventListener('click',startAutoFromCfg);
 $('autoOff').addEventListener('click',()=>autoStop('オート成長を止めました'));
 $('autoChk').addEventListener('change',e=>{autoMode=e.target.checked;
   if(autoMode&&anim){if(anim.phase==='ready'||anim.phase==='intro')choose(counterOf(B.opp.style));else if(anim.phase==='tachi'){$('bTachi').hidden=true;resolve('normal');}else if(anim.phase==='done')nextBout();}});
