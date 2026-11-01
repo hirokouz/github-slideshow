@@ -254,6 +254,9 @@ details.more summary::after{content:'▾';color:var(--kin)}details.more[open] su
 .stat b.g-S{color:#ff7a59}.stat b.g-A{color:#e2b04a}.stat b.g-B{color:#e6d27a}.stat b.g-C{color:#9fd18b}.stat b.g-D{color:#7fb7e0}.stat b.g-E{color:#a7a3c8}.stat b.g-F{color:#8a8fa3}
 .home .bar{height:7px}
 .home .acts{grid-template-columns:repeat(3,1fr);gap:6px}
+.home .acts.four{grid-template-columns:repeat(4,1fr);gap:5px}
+.home .acts.four span.d{font-size:8.5px}.home .acts.four b{font-size:12px}
+.acts button.fam .k{background:#f6d6dc;color:#8a2a3c}
 .home .acts button{grid-template-columns:1fr;justify-items:center;text-align:center;padding:7px 4px;gap:1px}
 .home .acts .k{grid-row:auto;width:28px;height:28px;font-size:16px}
 .home .acts b{font-size:13px}.home .acts span.d{font-size:9.5px;line-height:1.35}
@@ -1239,6 +1242,7 @@ function enter(){
 
 /* ---------- home ---------- */
 const TURNS=5;
+const FAMILY_ACT={id:'family',k:'家',name:'家族サービス',desc:'疲れ−20・家族の絆',fat:-20,family:true};
 const ACTS=[
   {id:'shiko', k:'四',name:'四股',     desc:'力が上がる　疲れ+12',      fat:12,gain:{chikara:1}},
   {id:'teppo', k:'鉄',name:'てっぽう', desc:'押しが上がる　疲れ+12',    fat:12,gain:{oshi:1}},
@@ -1274,7 +1278,8 @@ function renderHome(){
   else if((st.tiredB||0)>=1){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ffb36b;margin:0';d.textContent='疲れがたまっている（'+st.tiredB+'場所連続）：休まないとけがをしやすい';sb.append(d);}
   $('hPower').textContent=growthLabel(ageOf(st))+'（成長×'+ageGrowth(ageOf(st)).toFixed(2)+'）　総合力 '+Math.round((st.stats.oshi+st.stats.chikara+st.stats.waza+st.stats.hayasa)/4+(st.kg-90)*.1);
   const ab=$('hActs');ab.innerHTML='';const done=st.used>=TURNS;
-  for(const a of ACTS){const b=document.createElement('button');b.type='button';b.disabled=done;
+  const list=spouse()?[...ACTS,FAMILY_ACT]:ACTS;ab.classList.toggle('four',!!spouse());
+  for(const a of list){const b=document.createElement('button');b.type='button';b.disabled=done;if(a.family)b.className='fam';
     b.innerHTML='<span class="k"></span><b></b><span class="d"></span>';b.children[0].textContent=a.k;b.children[1].textContent=a.name;b.children[2].textContent=a.desc;
     b.addEventListener('click',()=>train(a));ab.append(b);}
   const bb=$('bashoBtn');bb.disabled=!done;bb.textContent=done?BASHO[st.b%6]+'へ（'+r.bouts+'番）':'稽古あと'+(TURNS-st.used)+'回で'+BASHO[st.b%6];
@@ -1328,7 +1333,7 @@ function drawAvatarPortrait(t,dt){
   const{g,W,H,d}=avatar;g.clearRect(0,0,W,H);const A=avatar.act;let ex=(t%4.1)<.13?'blink':'normal',dy=0,zz=false,shake=0;
   if(A){A.t+=dt;const k=A.t/A.dur;
     if(A.id==='rest'){ex='blink';zz=true;}
-    else if(A.id==='chanko'){ex='happy';dy=-Math.abs(Math.sin(A.t*6))*H*.03;}
+    else if(A.id==='chanko'||A.id==='family'){ex='happy';dy=-Math.abs(Math.sin(A.t*6))*H*.03;}
     else{ex='strain';shake=Math.sin(A.t*30)*W*.012*(1-k);dy=-Math.abs(Math.sin(A.t*(A.id==='shiko'?4:9)))*H*.035;}
     if(A.t>=A.dur)avatar.act=null;}
   const img=portrait(st.face,ex,st.pos>=JURYO,Math.min(400,Math.round(H*d*1.1)));
@@ -1339,7 +1344,18 @@ function drawAvatarPortrait(t,dt){
 }
 function train(a){
   if(st.used>=TURNS)return;st.used++;st.trainN=(st.trainN||0)+1;if(a.id==='chanko')st.chankoN=(st.chankoN||0)+1;let msg='';const D=deckFx(),AG=ageGrowth(ageOf(st));
-  if(a.rest){st.fat=Math.max(0,st.fat+a.fat*(1+D.rest));if(st.inj>0){st.inj--;msg=st.inj>0?'休んで少し楽になった。まだ痛みが残る（もう一度休めば治る）。':'ゆっくり休んで、けがが治った。';}else msg=pick(['よく眠った。体が軽い。','部屋の掃除をして英気を養った。','近所のお寺で静かに過ごした。']);}
+  if(a.family){const R=st.rom,kid=R.kid,wifeN=PARTNERS[R.pid].name.replace(/^.*[・の]/,'');R.bond=(R.bond||0)+1;R.famThis=true;R.famMiss=0;
+    st.fat=Math.max(0,st.fat-20);if(st.tiredB)st.tiredB=Math.max(0,st.tiredB-1);
+    const ev=pick([
+      ()=>{addBuff(st,'power',1,1,'家族の応援');return wifeN+'と買い物に出かけた。「次の場所、見に行くね」　次の場所で取組の力 +1';},
+      ()=>{const v=earn(80);return wifeN+'の実家に顔を出した。お義父さんから「これで精をつけて」　ご祝儀 +'+v;},
+      ()=>{addBuff(st,'growth',.08,1,'家族の笑顔');return '家で手料理を囲んだ。久しぶりにゆっくり笑った。　次の場所まで稽古の伸び +8%';},
+      ...(kid?[()=>{st.stats.chikara+=1;return '息子を肩車して公園へ。一緒に四股のまねをした。　力 +1';},
+               ()=>{addBuff(st,'power',1,1,'息子の声援');return '息子の運動会に出た。「お父さん、がんばって！」　次の場所で取組の力 +1';}]:[]),
+    ])();
+    if(R.bond===10)addLog('家族の絆が深まった。妻の支えがいっそう心強い。');
+    msg='家族サービス：'+ev+'（疲れ −20）';}
+  else if(a.rest){st.fat=Math.max(0,st.fat+a.fat*(1+D.rest));if(st.inj>0){st.inj--;msg=st.inj>0?'休んで少し楽になった。まだ痛みが残る（もう一度休めば治る）。':'ゆっくり休んで、けがが治った。';}else msg=pick(['よく眠った。体が軽い。','部屋の掃除をして英気を養った。','近所のお寺で静かに過ごした。']);}
   else if(a.kg){const g=kgGain((a.kg+rnd(-.5,1))*(1+D.kg+(spouse()==='eiyo'?.3:0)));st.kg+=g;lastGain.kg=g;st.fat=Math.max(0,st.fat+a.fat*(1+D.rest));msg=pick(['ちゃんこを五杯おかわりした。','タニマチから牛肉の差し入れ。','兄弟子と鍋を囲んだ。']);}
   else{const tired=st.fat>75;
     const chronic=st.tiredB||0,risk=(tired?.3:0)+(chronic>=2&&st.fat>50?.06*chronic:0);
@@ -1649,6 +1665,8 @@ function endBasho(){
   if(endedIdx%6===5){st.pendingKikyo=true;ex.push('年の瀬だ。地元に帰ろう。');}
   if(st.rom&&st.rom.waitYoko&&p>=YOKO&&st.rom.stage==='dating'){st.rom.waitYoko=false;queueLife('propose',st.rom.pid);}
   else checkLife(w,l,yusho,endedIdx);
+  if(spouse()){const R=st.rom;R.famMiss=R.famThis?0:(R.famMiss||0)+1;R.famThis=false;
+    if(R.famMiss>=3){R.famMiss=0;addBuff(st,'power',-1,1,'家庭がぎくしゃく');addLog('相撲ばかりで家に帰れていない。妻が寂しそうだ……（次の場所で取組の力 −1。家族サービスで防げる）');}}
   if(st.school){if(endedIdx<2)queueLife('class');else{queueLife('graduate');st.school=false;}}
   st.tiredB=st.fat>=60?(st.tiredB||0)+1:0;if(st.tiredB>=2)addLog('疲れが抜けないまま場所を終えた（'+st.tiredB+'場所連続）。けがに注意。');
   st.pos=p;st.best=Math.max(st.best||0,p);st.b++;st.used=0;st.basho=null;st.fat=Math.max(0,st.fat-25);
@@ -2166,6 +2184,7 @@ document.querySelectorAll('input[name=age],input[name=type]').forEach(i=>i.addEv
 let autoGrow=false,autoTimer=null,autoBusy=false;
 const autoSpd=()=>autoGrow?+($('autoSpeed').value||1):1;
 function pickAct(){const S=st.stats,id=k=>ACTS.find(a=>a.id===k);
+  if(spouse()&&st.fat>35&&((st.rom.famMiss||0)>=1&&!st.rom.famThis)&&Math.random()<.5)return FAMILY_ACT;
   if(st.inj>0||st.fat>68||((st.tiredB||0)>=1&&st.fat>45))return id('rest');
   const want=Math.min(st.kgMax-4,105+st.b*3.2);if(st.kg<want&&st.fat<55&&Math.random()<.35)return id('chanko');
   const main={oshi:'teppo',yotsu:'shiko',waza:'moushi'}[st.type]||'teppo';if(Math.random()<.45)return id(main);
