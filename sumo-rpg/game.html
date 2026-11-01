@@ -907,7 +907,7 @@ const AIF={};
 const IMG=u=>{const im=new Image();im.src=u;return im;};
 for(const f of [...(window.AI_CAST||[]),...(window.AI_CHARS||[]),...(window.AI_FACES||[])]){const o={meta:f,img:new Image(),ex:{}};o.img.src=f.src;
   if(f.faces){o.faces={};for(const k in f.faces)o.faces[k]=IMG(f.faces[k]);o.poses={};for(const k in f.poses)o.poses[k]=f.poses[k].map(p=>IMG(p.src));}
-  if(f.exprs){o.exprs={};for(const h in f.exprs){o.exprs[h]={};for(const e in f.exprs[h])o.exprs[h][e]=IMG(f.exprs[h][e]);}}if(f.ring){o.ring=new Image();o.ring.src=f.ring;}if(f.side){o.side=new Image();o.side.src=f.side;o.sideLow=new Image();o.sideLow.src=f.sideLow;}if(f.ex)for(const k in f.ex){const im=new Image();im.src=f.ex[k];o.ex[k]=im;}AIF[f.id]=o;}
+  if(f.exprs){o.exprs={};for(const h in f.exprs){o.exprs[h]={};for(const e in f.exprs[h])o.exprs[h][e]=IMG(f.exprs[h][e]);}}if(f.ring){o.ring=new Image();o.ring.src=f.ring;}if(typeof f.side==='string'){o.side=new Image();o.side.src=f.side;o.sideLow=new Image();o.sideLow.src=f.sideLow;}if(f.ex)for(const k in f.ex){const im=new Image();im.src=f.ex[k];o.ex[k]=im;}AIF[f.id]=o;}
 const EXMAP={blink:'blink',sleep:'blink',happy:'happy',win:'happy',lose:'lose',strain:'strain',surprise:'surprise',normal:'normal'};
 function aiReady(F){const o=F&&F.img&&AIF[F.img];return o&&o.img.complete&&o.img.naturalWidth>0?o:null;}
 function isZan(F){return !!(st&&st.b<6&&st.pos<JURYO&&(F===st.face||(st.rival&&F===st.rival.face)));}
@@ -1175,7 +1175,7 @@ function renderTitle(){
     const nm=document.createElement('div');nm.className='nm';nm.textContent=s.name;
     const rk=document.createElement('div');rk.className='rk';rk.textContent=s.maezumo?'前相撲':side(s.pos)+' '+rank(s.pos).name+(s.pos===YOKO?'':'');
     const mt=document.createElement('div');mt.className='mt';
-    mt.textContent=(s.inj>0?'負傷中・':'')+ageOf(s)+'歳・入門'+yearOf(s)+'年目・'+s.hist.reduce((a,h)=>a+h.w,0)+'勝'+s.hist.reduce((a,h)=>a+h.l,0)+'敗'+(s.yusho?'・優勝'+s.yusho+'回':'')+(s.basho?'・場所中':'');
+    mt.textContent=(s.inj>0?'負傷中・':'')+ageOf(s)+'歳・入門'+yearOf(s)+'年目・'+s.hist.reduce((a,h)=>a+h.w,0)+'勝'+s.hist.reduce((a,h)=>a+h.l-(h.kyu||0),0)+'敗'+(s.hist.some(h=>h.kyu)?s.hist.reduce((a,h)=>a+(h.kyu||0),0)+'休':'')+(s.yusho?'・優勝'+s.yusho+'回':'')+(s.basho?'・場所中':'');
     info.append(nm,rk,mt);
     const btns=document.createElement('div');btns.className='btns';
     const go=document.createElement('button');go.className='go';go.type='button';go.textContent='続ける';go.addEventListener('click',()=>play(id));
@@ -1459,10 +1459,10 @@ function startBasho(){
 }
 let faceCv=null;
 function renderProfile(){
-  const r=rank(st.pos),cw=st.hist.reduce((a,h)=>a+h.w,0)+(B?B.w:0),cl=st.hist.reduce((a,h)=>a+h.l,0)+(B?B.l:0);
+  const r=rank(st.pos),cw=st.hist.reduce((a,h)=>a+h.w,0)+(B?B.w:0),ck=st.hist.reduce((a,h)=>a+(h.kyu||0),0)+(B?B.kyu||0:0),cl=st.hist.reduce((a,h)=>a+h.l,0)+(B?B.l:0)-ck;
   $('pName').textContent=st.name;$('pRank').textContent=st.maezumo?'前相撲':side(st.pos)+' '+r.name+(st.kadoban&&st.pos===OZEKI?'（カド番）':'');
   $('pAge').textContent=ageOf(st)+'歳';$('pYear').textContent=yearOf(st)+'年目';$('pYear').title=(st.b+1)+'場所目';$('pHome').textContent=st.home;
-  $('pBody').textContent=st.height+'cm・'+Math.round(st.kg)+'kg';$('pCareer').textContent=cw+'勝'+cl+'敗';
+  $('pBody').textContent=st.height+'cm・'+Math.round(st.kg)+'kg';$('pCareer').textContent=cw+'勝'+cl+'敗'+(ck?ck+'休':'');
   $('pYusho').textContent=st.yusho?('通算'+st.yusho+'回'+(st.makuYusho?'（幕内'+st.makuYusho+'）':'')):'なし';
 }
 function drawProfFace(t){if(!faceCv||!st)return;const{g,W,H,d}=faceCv;g.clearRect(0,0,W,H);
@@ -1508,9 +1508,9 @@ function resolve(q){
   const win=Math.random()<1/(1+Math.exp(-(me-op)/5));
   const ws=win?s:ostrat,km=pick(KIMARITE[ws]);
   const kind=ws==='waza'&&km!=='送り出し'?'slap':km.includes('投げ')?'throw':km.includes('倒し')?'down':'out';
-  st.fat=Math.min(100,st.fat+2.5);
+  st.fat=Math.min(100,st.fat+(B.n>7?1.4:2.5));
   if(!st.inj&&Math.random()<.006*Math.max(0,1+deckFx().inj+buff('inj')))injure(pick([1,1,1,2,2,3]),'取組中の不運な倒れ方で');
-  if(!st.inj&&(st.tiredB||0)>=1&&Math.random()<(.025*st.tiredB+(st.fat>80?.04:0))*Math.max(0,1+deckFx().inj+buff('inj'))){injure((st.tiredB||0)>=3?3:2,'たまった疲れで、取組中に');}
+  if(!st.inj&&(st.tiredB||0)>=1&&Math.random()<(.025*st.tiredB+(st.fat>80?.04:0))*(B.n>7?.5:1)*Math.max(0,1+deckFx().inj+buff('inj'))){injure((st.tiredB||0)>=3?3:2,'たまった疲れで、取組中に');}
   const k=win?{oshi:'oshi',yotsu:'chikara',waza:'waza'}[s]:null;if(k)st.stats[k]+=.25*Math.max(0,1-st.stats[k]/capOf(k));
   if(st.inj>=2&&!B.withdraw){B.withdraw=true;addLog('ケガがひどく、この場所は途中休場することになった。');}
   if(win){B.w++;B.marks+='○';B.earn=(B.earn||0)+earn(st.pos>=MAKU?50:st.pos>=JURYO?30:10);st.streak=(st.streak||0)+1;st.bestStreak=Math.max(st.bestStreak||0,st.streak);
@@ -1980,7 +1980,7 @@ function bestRankName(s){return rank(Math.max(s.best||0,s.pos)).div==='前頭'?'
 function prestigeOf(s){const b=Math.max(s.best||0,s.pos);return (b>=YOKO?20:b>=OZEKI?12:b>=KOMU?8:b>=MAKU?5:b>=JURYO?3:1)+s.makuYusho*3+Math.floor(totalWins(s)/100);}
 const prestigeBonus=()=>Math.min(.3,(roster.prestige||0)*.01);
 function retire(id){const s=roster.list[id];if(!s)return;const pts=prestigeOf(s);
-  roster.hall.push({name:s.name,face:s.face,best:bestRankName(s),bestPos:Math.max(s.best||0,s.pos),makuYusho:s.makuYusho,yusho:s.yusho,w:totalWins(s),l:s.hist.reduce((a,h)=>a+h.l,0),age:ageOf(s),years:yearOf(s),oicho:Math.max(s.best||0,s.pos)>=JURYO});
+  roster.hall.push({name:s.name,face:s.face,best:bestRankName(s),bestPos:Math.max(s.best||0,s.pos),makuYusho:s.makuYusho,yusho:s.yusho,w:totalWins(s),l:s.hist.reduce((a,h)=>a+h.l-(h.kyu||0),0),age:ageOf(s),years:yearOf(s),oicho:Math.max(s.best||0,s.pos)>=JURYO});
   const married=s.rom&&s.rom.stage==='married';if(married&&s.rom.kid){roster.sonOf=s.name;roster.sonHome=s.home;}
   const bonusP=(s.flags&&s.flags.oyakoko?3:0)+(married?3:0)+(s.weddingPrestige||0);roster.prestige=(roster.prestige||0)+pts+bonusP;delete roster.list[id];if(roster.active===id)roster.active=null;if(st&&st.id===id)st=null;
   checkAchStable();saveRoster();toast(s.name+' が引退し親方に。部屋の格 +'+pts+'（新弟子の成長 +'+Math.round(prestigeBonus()*100)+'%）');renderTitle();}
