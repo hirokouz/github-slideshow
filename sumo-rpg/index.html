@@ -263,6 +263,8 @@ details.more summary::after{content:'▾';color:var(--kin)}details.more[open] su
 .ties{display:inline-flex;gap:4px;margin-left:8px;vertical-align:1px;flex-wrap:wrap}
 .tie{display:inline-flex;align-items:center;gap:2px;font-family:var(--f-body);font-size:10px;letter-spacing:0;font-weight:700;padding:1px 6px;border-radius:999px;border:1px solid}
 .tie.love{color:#b0344f;border-color:#e59aaa;background:#fbe6ea}.tie.fam{color:#7a4a12;border-color:#e2b04a;background:#fbf0d4}.tie.tani{color:#1f4a7a;border-color:#7fa8d6;background:#e4eef9}
+.tie.inj{color:#fff;border-color:#c0392b;background:#c0392b}
+button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:#fff!important;box-shadow:0 4px 0 #5a1f17!important}
 .tie.warn{box-shadow:0 0 0 1.5px #ff6b6b}
 .acts button.tani .k{background:#dbe7f6;color:#1f4a7a}
 .home .acts.four span.d{font-size:8.5px}.home .acts.four b{font-size:12px}
@@ -1179,7 +1181,7 @@ function renderTitle(){
     const nm=document.createElement('div');nm.className='nm';nm.textContent=s.name;
     const rk=document.createElement('div');rk.className='rk';rk.textContent=s.maezumo?'前相撲':side(s.pos)+' '+rank(s.pos).name+(s.pos===YOKO?'':'');
     const mt=document.createElement('div');mt.className='mt';
-    mt.textContent=ageOf(s)+'歳・入門'+yearOf(s)+'年目・'+s.hist.reduce((a,h)=>a+h.w,0)+'勝'+s.hist.reduce((a,h)=>a+h.l,0)+'敗'+(s.yusho?'・優勝'+s.yusho+'回':'')+(s.basho?'・場所中':'');
+    mt.textContent=(s.inj>0?'負傷中・':'')+ageOf(s)+'歳・入門'+yearOf(s)+'年目・'+s.hist.reduce((a,h)=>a+h.w,0)+'勝'+s.hist.reduce((a,h)=>a+h.l,0)+'敗'+(s.yusho?'・優勝'+s.yusho+'回':'')+(s.basho?'・場所中':'');
     info.append(nm,rk,mt);
     const btns=document.createElement('div');btns.className='btns';
     const go=document.createElement('button');go.className='go';go.type='button';go.textContent='続ける';go.addEventListener('click',()=>play(id));
@@ -1276,6 +1278,7 @@ function renderHome(){
     const add=(cls,txt,warn,title)=>{const t=document.createElement('span');t.className='tie '+cls+(warn?' warn':'');t.textContent=txt;t.title=title;ties.append(t);};
     const Rm=st.rom;if(Rm&&(Rm.stage==='dating'||Rm.stage==='engaged'))add('love','♥'+PARTNERS[Rm.pid].name.replace(/^.*[・の]/,'')+' '+Rm.aff,(Rm.dateMiss||0)>=2,Rm.stage==='engaged'?'婚約中':'交際中');
     if(spouse())add('fam','家 '+PARTNERS[Rm.pid].name.replace(/^.*[・の]/,'')+(Rm.kid?'・長男':''),(Rm.famMiss||0)>=2,'家族');
+    if(st.inj>0)add('inj','負傷 '+(st.injPart||''),false,'ケガ：'+INJ_SEV[clamp(st.inj,1,3)]);
     if(st.tani)add('tani','谷 '+st.tani.short,(st.tani.miss||0)>=2,'タニマチ：'+st.tani.name);
     if(ties.childNodes.length)hs.append(ties);}
   const hr=$('hRank');hr.innerHTML='';const r1=document.createElement('span');r1.textContent=r.div;hr.append(r1);
@@ -1293,16 +1296,16 @@ function renderHome(){
   row('疲れ',st.fat,100,Math.round(st.fat),'fat');
   lastGain={};
   if(st.pos===OZEKI){const lack=Object.keys(st.stats).filter(k=>st.stats[k]<85);if(lack.length){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#e2b04a;margin:0';d.textContent='綱取りには全能力A以上が必要（あと：'+lack.map(k=>STAT_LABEL[k]).join('・')+'）';sb.append(d);}}
-  if(st.inj>0){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ff8a80;margin:0';d.textContent=(st.injPart||'')+'の'+INJ_SEV[clamp(st.inj,1,3)]+'：あと'+st.inj+'回休めば治る（出場すると悪化することも）';sb.append(d);}
+  if(st.inj>0){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ff8a80;margin:0';d.textContent=(st.injPart||'')+'の'+INJ_SEV[clamp(st.inj,1,3)]+'：'+(st.inj>=2?'稽古も出場もできない（休場）':'稽古・出場はできるが悪化に注意')+'・あと'+(st.injHeal||st.inj*2)+'回休めば治る';sb.append(d);}
   else if((st.tiredB||0)>=1){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ffb36b;margin:0';d.textContent='疲れがたまっている（'+st.tiredB+'場所連続）：休まないとけがをしやすい';sb.append(d);}
   $('hPower').textContent=growthLabel(ageOf(st))+'（成長×'+ageGrowth(ageOf(st)).toFixed(2)+'）　総合力 '+Math.round((st.stats.oshi+st.stats.chikara+st.stats.waza+st.stats.hayasa)/4+(st.kg-90)*.1);
   const ab=$('hActs');ab.innerHTML='';const done=st.used>=TURNS;
   const dating=st.rom&&(st.rom.stage==='dating'||st.rom.stage==='engaged');
   const list=[...ACTS,...(spouse()?[FAMILY_ACT]:dating?[DATE_ACT]:[]),...(st.tani?[TANI_ACT]:[])];ab.classList.toggle('four',list.length>6);
-  for(const a of list){const b=document.createElement('button');b.type='button';b.disabled=done;if(a.family||a.date)b.className='fam';if(a.tani)b.className='tani';
+  for(const a of list){const b=document.createElement('button');b.type='button';b.disabled=done||(st.inj>=2&&!INJ_OK(a));if(a.family||a.date)b.className='fam';if(a.tani)b.className='tani';
     b.innerHTML='<span class="k"></span><b></b><span class="d"></span>';b.children[0].textContent=a.k;b.children[1].textContent=a.name;b.children[2].textContent=a.desc;
     b.addEventListener('click',()=>train(a));ab.append(b);}
-  const bb=$('bashoBtn');bb.disabled=!done;bb.textContent=done?BASHO[st.b%6]+'へ（'+r.bouts+'番）':'稽古あと'+(TURNS-st.used)+'回で'+BASHO[st.b%6];
+  const bb=$('bashoBtn');bb.disabled=!done;bb.classList.toggle('kyujo',st.inj>=2&&done);bb.textContent=done?(st.inj>=2?BASHO[st.b%6]+'を休場する（ケガ）':st.inj===1?BASHO[st.b%6]+'へ（ケガをおして出場）':BASHO[st.b%6]+'へ（'+r.bouts+'番）'):'稽古あと'+(TURNS-st.used)+'回で'+BASHO[st.b%6];
   renderDeck();
   $('hAchN').textContent=Object.keys(roster.ach).length+'/'+ACH.length;renderAch($('hAch'));
   const lg=$('hLog');lg.innerHTML='';for(const t of st.log){const p=document.createElement('p');p.textContent=t;lg.append(p);}
@@ -1315,7 +1318,7 @@ function renderHome(){
   const ht=$('hHist');ht.innerHTML='';
   if(!st.hist.length){const tr=ht.insertRow();const td=tr.insertCell();td.textContent='まだ本場所に出ていない';td.style.color='#5b5246';}
   for(const h of st.hist.slice().reverse()){const tr=ht.insertRow();
-    tr.insertCell().textContent=h.when;tr.insertCell().textContent=h.rank;const c=tr.insertCell();c.textContent=h.w+'勝'+h.l+'敗'+(h.yusho?' 優勝':'');if(h.yusho)c.className='yusho';}
+    tr.insertCell().textContent=h.when;tr.insertCell().textContent=h.rank;const c=tr.insertCell();c.textContent=h.w+'勝'+(h.l-(h.kyu||0))+'敗'+(h.kyu?h.kyu+'休':'')+(h.yusho?' 優勝':'');if(h.yusho)c.className='yusho';}
   const keepAct=avatar&&avatar.act;
   if(cur!=='sHome')show('sHome');
   avatar=makeCanvas($('avatar'),102/84);avatar.act=keepAct||null;avatar.fx=[];
@@ -1360,6 +1363,9 @@ function drawAvatarPortrait(t,dt){
   g.save();g.beginPath();g.roundRect(1,1,W-2,H-2,6);g.clip();g.fillStyle='#f3eadb';g.fillRect(0,0,W,H);
   const S=H*1.08;g.drawImage(img,(W-S)/2+shake,(H-S)/2+dy+H*.02,S,S);g.restore();
   g.strokeStyle='rgba(26,22,18,.55)';g.lineWidth=1.5;g.beginPath();g.roundRect(1,1,W-2,H-2,6);g.stroke();
+  if(st.inj>0){g.save();g.translate(W*.72,H*.82);g.rotate(-.18);g.fillStyle='#fff';g.strokeStyle='#c0392b';g.lineWidth=2;g.beginPath();g.roundRect(-W*.24,-H*.08,W*.48,H*.16,4);g.fill();g.stroke();
+    g.fillStyle='#c0392b';g.font='700 '+Math.round(H*.1)+'px "Zen Kaku Gothic New",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('負傷中',0,1);g.restore();
+    g.strokeStyle='rgba(255,255,255,.95)';g.lineWidth=H*.05;g.beginPath();g.moveTo(W*.18,H*.18);g.lineTo(W*.42,H*.12);g.stroke();g.strokeStyle='rgba(200,190,170,.8)';g.lineWidth=1;g.stroke();}
   if(zz){g.fillStyle='#5b5246';g.font='700 '+Math.round(H*.14)+'px "Zen Kaku Gothic New",sans-serif';for(let i=0;i<3;i++){const p=(t*.8+i/3)%1;g.globalAlpha=1-p;g.fillText('Z',W*.68+p*W*.18,H*.32-p*H*.2);}g.globalAlpha=1;}
 }
 /* injuries: severity 1-3 and a body part; stats drop at once by severity, and
@@ -1368,10 +1374,12 @@ const INJ_PARTS=[{n:'膝',k:['hayasa','chikara']},{n:'腰',k:['chikara','oshi']}
 const INJ_SEV=['','軽傷','中傷','重傷'],INJ_HIT=[0,.03,.07,.13];
 function injure(sev,cause){sev=clamp(sev,1,3);const part=pick(INJ_PARTS);
   const lost=[];for(const k in st.stats){const r=part.k.includes(k)?INJ_HIT[sev]:INJ_HIT[sev]*.3;if(r<=0)continue;const d=st.stats[k]*r;st.stats[k]-=d;if(d>=.5)lost.push(STAT_LABEL[k]+' −'+d.toFixed(1));}
-  st.inj=Math.max(st.inj||0,sev);st.injPart=part.n;st.injSev=Math.max(st.injSev||0,sev);
+  st.inj=Math.max(st.inj||0,sev);st.injHeal=Math.max(st.injHeal||0,[0,2,5,9][sev]);st.injPart=part.n;st.injSev=Math.max(st.injSev||0,sev);
   const txt=cause+part.n+'を痛めた（'+INJ_SEV[sev]+'）。'+lost.join('　');addLog(txt);toast(part.n+'の'+INJ_SEV[sev]+'……　'+lost.slice(0,2).join(' '));return txt;}
+const INJ_OK=a=>a.rest||a.kg||a.family||a.date;
 function train(a){
-  if(st.used>=TURNS)return;st.used++;st.trainN=(st.trainN||0)+1;if(a.id==='chanko')st.chankoN=(st.chankoN||0)+1;let msg='';const D=deckFx(),AG=ageGrowth(ageOf(st));
+  if(st.used>=TURNS)return;if(st.inj>=2&&!INJ_OK(a)){toast('中傷以上は稽古できない。休んで治そう');return;}
+  if(st.inj===1&&!INJ_OK(a)&&Math.random()<.15){addLog('痛みをこらえて稽古したが、'+(st.injPart||'けが')+'が悪化した。');st.inj=2;st.injHeal=(st.injHeal||2)+3;}st.used++;st.trainN=(st.trainN||0)+1;if(a.id==='chanko')st.chankoN=(st.chankoN||0)+1;let msg='';const D=deckFx(),AG=ageGrowth(ageOf(st));
   if(a.tani){const T=st.tani;T.this=true;T.miss=0;T.bond=(T.bond||0)+1;st.fat=Math.min(100,st.fat+5);const kg=kgGain(1.5);st.kg+=kg;
     const v=earn(st.pos>=MAKU?120:st.pos>=JURYO?80:40);
     const ev=pick([T.name+'の行きつけの料亭でふぐをごちそうになった。',T.name+'の会社の宴会に呼ばれ、社員の前で四股を踏んだ。',T.name+'とゴルフに行った。「次の場所も応援しとるで」',T.name+'の誕生会で鏡開きをした。']);
@@ -1397,7 +1405,7 @@ function train(a){
     ])();
     if(R.bond===10)addLog('家族の絆が深まった。妻の支えがいっそう心強い。');
     msg='家族サービス：'+ev+'（疲れ −20）';}
-  else if(a.rest){st.fat=Math.max(0,st.fat+a.fat*(1+D.rest));if(st.inj>0){st.inj--;msg=st.inj>0?'休んで少し楽になった。'+(st.injPart||'')+'の痛みがまだ残る（あと'+st.inj+'回休めば治る）。':(st.injPart||'')+'のけがが治った。';if(!st.inj){st.injPart=null;st.injSev=0;}}else msg=pick(['よく眠った。体が軽い。','部屋の掃除をして英気を養った。','近所のお寺で静かに過ごした。']);}
+  else if(a.rest){st.fat=Math.max(0,st.fat+a.fat*(1+D.rest));if(st.inj>0){st.injHeal=(st.injHeal||st.inj*2)-1;if(st.injHeal<=0){st.inj=0;st.injHeal=0;msg=(st.injPart||'')+'のけがが治った！ 稽古に戻れる。';st.injPart=null;st.injSev=0;}else{st.inj=Math.min(st.inj,Math.ceil(st.injHeal/3));msg='治療に専念した。'+(st.injPart||'')+'はまだ治らない（あと'+st.injHeal+'回）。';}}else msg=pick(['よく眠った。体が軽い。','部屋の掃除をして英気を養った。','近所のお寺で静かに過ごした。']);}
   else if(a.kg){const g=kgGain((a.kg+rnd(-.5,1))*(1+D.kg+(spouse()==='eiyo'?.3:0)));st.kg+=g;lastGain.kg=g;st.fat=Math.max(0,st.fat+a.fat*(1+D.rest));msg=pick(['ちゃんこを五杯おかわりした。','タニマチから牛肉の差し入れ。','兄弟子と鍋を囲んだ。']);}
   else{const tired=st.fat>75;
     const chronic=st.tiredB||0,risk=(tired?.3:0)+(chronic>=2&&st.fat>50?.06*chronic:0);
@@ -1434,7 +1442,9 @@ function power(s,kg,strat,fat,inj){
 function startBasho(){
   const r=st.maezumo?{div:'前相撲',name:'前相撲',bouts:3}:rank(st.pos);
   if(!st.basho)st.basho={n:r.bouts,day:0,w:0,l:0,marks:'',used:[]};
-  B=st.basho;autoMode=false;$('autoChk').checked=false;persist();show('sBout');ring=makeCanvas($('ring'),330/400);faceCv=makeCanvas($('bFace'),1);nextBout();
+  B=st.basho;
+  if(st.inj>=2&&B.day===0){B.kyu=B.n;B.l=B.n;B.day=B.n;B.marks='や'.repeat(B.n);toast((st.injPart||'')+'のケガで、全休することになった');endBasho();return;}
+  autoMode=false;$('autoChk').checked=false;persist();show('sBout');ring=makeCanvas($('ring'),330/400);faceCv=makeCanvas($('bFace'),1);nextBout();
 }
 let faceCv=null;
 function renderProfile(){
@@ -1452,6 +1462,7 @@ function drawProfFace(t){if(!faceCv||!st)return;const{g,W,H,d}=faceCv;g.clearRec
 function dayLabel(){if(B.n===3)return '前相撲 '+KAN[B.day]+'番';return B.n===15?(B.day===0?'初日':B.day===14?'千秋楽':KAN[B.day]+'日目'):KAN[B.day]+'番相撲';}
 const counterOf=s=>Object.keys(BEATS).find(k=>BEATS[k]===s);
 function nextBout(){
+  if(B.withdraw&&B.day<B.n){const rest=B.n-B.day;B.kyu=(B.kyu||0)+rest;B.l+=rest;B.marks+='や'.repeat(rest);B.day=B.n;toast('ケガのため途中休場');}
   if(B.day>=B.n){endBasho();return;}
   B.opp=(st.rival&&B.day===Math.floor(B.n/2))?rivalOpp():genOpp(st.pos,B.used);B.used.push(B.opp.name);renderProfile();
   $('bDay').textContent=dayLabel();
@@ -1490,6 +1501,7 @@ function resolve(q){
   if(!st.inj&&Math.random()<.006*Math.max(0,1+deckFx().inj+buff('inj')))injure(pick([1,1,1,2,2,3]),'取組中の不運な倒れ方で');
   if(!st.inj&&(st.tiredB||0)>=1&&Math.random()<(.025*st.tiredB+(st.fat>80?.04:0))*Math.max(0,1+deckFx().inj+buff('inj'))){injure((st.tiredB||0)>=3?3:2,'たまった疲れで、取組中に');}
   const k=win?{oshi:'oshi',yotsu:'chikara',waza:'waza'}[s]:null;if(k)st.stats[k]+=.25*Math.max(0,1-st.stats[k]/capOf(k));
+  if(st.inj>=2&&!B.withdraw){B.withdraw=true;addLog('ケガがひどく、この場所は途中休場することになった。');}
   if(win){B.w++;B.marks+='○';B.earn=(B.earn||0)+earn(st.pos>=MAKU?50:st.pos>=JURYO?30:10);st.streak=(st.streak||0)+1;st.bestStreak=Math.max(st.bestStreak||0,st.streak);
     if(o.pos>=OZEKI)B.beatTop=true;if(s==='waza')B.wazaWins=(B.wazaWins||0)+1;
     if(o.pos===YOKO&&st.pos>=MAKU&&st.pos<KOMU){st.kinboshi=(st.kinboshi||0)+1;B.earn+=earn(100);toast('金星！ 横綱を破った（ご祝儀 +100）');}
@@ -1693,7 +1705,7 @@ function endBasho(){
       else if(good&&prevGood&&(yusho||prev.yusho)){p=YOKO;msg='横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。';}else if(good)msg='来場所は綱取りの場所だ。';}}
   if(yusho){st.yusho++;if(old>=MAKU)st.makuYusho++;}
   const when=(Math.floor(st.b/6)+1)+'年目 '+BASHO[st.b%6];
-  st.hist.push({when,rank:r.name,pos:old,w,l,yusho,mae:wasMae||undefined});
+  st.hist.push({when,rank:r.name,pos:old,w,l,yusho,mae:wasMae||undefined,kyu:B.kyu||undefined});
   if(w>l)B.earn=(B.earn||0)+earn(30);if(yusho)B.earn=(B.earn||0)+earn(old>=MAKU?300:150);
   // sansho for maegashira, komusubi and sekiwake
   const sansho=[];if(old>=MAKU&&old<OZEKI&&w>l){if(B.beatTop&&w>=8)sansho.push('殊勲賞');if(w>=11)sansho.push('敢闘賞');if((B.wazaWins||0)>=6&&w>=10)sansho.push('技能賞');}
@@ -1715,7 +1727,7 @@ function endBasho(){
   if(spouse()){const R=st.rom;R.famMiss=R.famThis?0:(R.famMiss||0)+1;R.famThis=false;
     if(R.famMiss>=3){R.famMiss=0;addBuff(st,'power',-1,1,'家庭がぎくしゃく');addLog('相撲ばかりで家に帰れていない。妻が寂しそうだ……（次の場所で取組の力 −1。家族サービスで防げる）');}}
   if(st.school){if(endedIdx<2)queueLife('class');else{queueLife('graduate');st.school=false;}}
-  if(st.inj>0){for(const k in st.stats)st.stats[k]*=1-.01*st.inj;if(Math.random()<.3&&st.inj<3){st.inj++;addLog('けがを抱えたまま場所を戦い、'+(st.injPart||'けが')+'が悪化した。');}}
+  if(st.inj>0&&!(B.kyu>=B.n)){for(const k in st.stats)st.stats[k]*=1-.01*st.inj;if(!B.kyu&&Math.random()<.3&&st.inj<3){st.injHeal=(st.injHeal||0)+3;st.inj++;addLog('けがを抱えたまま場所を戦い、'+(st.injPart||'けが')+'が悪化した。');}}
   st.tiredB=st.fat>=60?(st.tiredB||0)+1:0;if(st.tiredB>=2)addLog('疲れが抜けないまま場所を終えた（'+st.tiredB+'場所連続）。けがに注意。');
   st.pos=p;st.best=Math.max(st.best||0,p);st.b++;st.used=0;st.basho=null;st.fat=Math.max(0,st.fat-25);
   if(st.rival){st.rival.edge=(st.rival.edge||0)+.35;st.rival.kg=Math.min(185,st.rival.kg+rnd(0,3));}
@@ -1726,8 +1738,9 @@ function endBasho(){
   $('rBasho').textContent=when;
   const big=$('rBig');big.textContent=yusho?(old>=MAKU?'幕内優勝':r.div+'優勝'):w>l?'勝ち越し':'負け越し';
   if(wasMae)big.textContent=w>=2?'新序出世':'前相撲';
+  if(B.kyu)big.textContent=B.kyu>=B.n?'全休':'途中休場';
   big.className='result-big '+(yusho||p>old?'gold':w>l?'':'down');
-  $('rHoshi').textContent=B.marks+'　'+w+'勝'+l+'敗';
+  $('rHoshi').textContent=B.marks+'　'+w+'勝'+(l-(B.kyu||0))+'敗'+(B.kyu?B.kyu+'休':'');
   if(!msg){if(old<JURYO&&p>=JURYO)msg='十両昇進！ 関取の仲間入り。大銀杏を結い、絹のまわしを締められる。';else if(old<MAKU&&p>=MAKU)msg='新入幕！ 幕内の土俵に上がる。';
     else if(old<KOMU&&p>=KOMU)msg='新三役！ 小結に昇進した。';else msg=w>l?pick(['この調子で上を目指そう。','親方「まずまずだな」']):pick(['悔しさを稽古にぶつけよう。','親方「下を向くな、四股を踏め」']);}
   $('rMsg').textContent=msg+(sansho.length?'　'+sansho.join('・')+'受賞！':'')+(B.earn?'　ご祝儀 +'+B.earn:'')+(newAch.length?'　実績「'+newAch.join('」「')+'」達成':'')+(ex.length?'　'+ex.join('　'):'');
