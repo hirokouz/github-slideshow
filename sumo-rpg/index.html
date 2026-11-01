@@ -653,7 +653,7 @@ function lookFor(kg,pos,face,mawashi,height,ctx,b){const h=height||182,bmi=kg/((
   const hair=ctx==='keiko'?(young&&!seki?'zan':'chon'):seki?'oicho':(young?'zan':'chon');
   const maw=mawashi||(!seki?'#26262e':ctx==='keiko'?'#efeadc':(silkOf(face)||mawashiFor(pos)));
   const so=face&&face.img&&AIF[face.img];const sprite=so&&so.side?(seki?so.side:so.sideLow):null;
-  const kg2=so&&so.meta.kgs,pk=seki&&ctx!=='keiko'?'seki':!so||!so.poses?'low':so.poses.slim?(kg2&&kg<(kg2[0]+kg2[1])/2?'slim':'mid'):'low',poses=so&&so.poses?so.poses[pk]:null,poseH=poses?so.meta.poses[pk].map(p=>p.h):null;
+  const kg2=so&&so.meta.kgs,pk=seki&&ctx!=='keiko'?'seki':!so||!so.poses?'low':so.poses.slim?(kg2&&kg<(kg2[0]+kg2[1])/2?'slim':'mid'):'low',pk2=so&&so.poses?(so.poses[pk]?pk:so.poses.mid?'mid':'low'):pk,poses=so&&so.poses?so.poses[pk2]:null,poseH=poses?so.meta.poses[pk2].map(p=>p.h):null;
   return{w:clamp(.6+(bmi-34)*.026,.5,1.18),hs:clamp(h/182,.9,1.1),face,skin:SKIN[face.skin],mawashi:maw,tsuna:ctx==='ceremony'&&pos>=YOKO,oicho:hair==='oicho',hair,sprite,sm:so&&so.meta,poses,poseH};}
 
 /* ===== realistic rendering: shaded capsule limbs, sculpted torso, painted head ===== */
