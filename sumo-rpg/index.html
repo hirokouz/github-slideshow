@@ -553,6 +553,7 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
 
 <script src="faces.js"></script>
 <script src="cast.js"></script>
+<script src="women.js"></script>
 <script>
 (()=>{
 "use strict";
@@ -915,6 +916,9 @@ const IMG=u=>{const im=new Image();im.src=u;return im;};
 for(const f of [...(window.AI_CAST||[]),...(window.AI_CHARS||[]),...(window.AI_FACES||[])]){const o={meta:f,img:new Image(),ex:{}};o.img.src=f.src;
   if(f.faces){o.faces={};for(const k in f.faces)o.faces[k]=IMG(f.faces[k]);o.poses={};for(const k in f.poses)o.poses[k]=f.poses[k].map(p=>IMG(p.src));}
   if(f.exprs){o.exprs={};for(const h in f.exprs){o.exprs[h]={};for(const e in f.exprs[h])o.exprs[h][e]=IMG(f.exprs[h][e]);}}if(f.ring){o.ring=new Image();o.ring.src=f.ring;}if(typeof f.side==='string'){o.side=new Image();o.side.src=f.side;o.sideLow=new Image();o.sideLow.src=f.sideLow;}if(f.ex)for(const k in f.ex){const im=new Image();im.src=f.ex[k];o.ex[k]=im;}AIF[f.id]=o;}
+const WIMG={};for(const pid in (window.AI_WOMEN||{})){const w=window.AI_WOMEN[pid],o={exprs:{},looks:{}};for(const k in w.exprs)o.exprs[k]=IMG(w.exprs[k]);for(const k in w.looks)o.looks[k]=IMG(w.looks[k]);WIMG[pid]=o;}
+const okImg=im=>im&&im.complete&&im.naturalWidth>0?im:null;
+function wImg(pid,kind,key){const o=WIMG[pid];return o?okImg(o[kind][key])||(kind==='exprs'?okImg(o.exprs.normal):null):null;}
 const EXMAP={blink:'blink',sleep:'blink',happy:'happy',win:'happy',lose:'lose',strain:'strain',surprise:'surprise',normal:'normal'};
 function aiReady(F){const o=F&&F.img&&AIF[F.img];return o&&o.img.complete&&o.img.naturalWidth>0?o:null;}
 function isZan(F){return !!(st&&st.b<6&&st.pos<JURYO&&(F===st.face||(st.rival&&F===st.rival.face)));}
@@ -1384,6 +1388,7 @@ function drawAvatarPortrait(t,dt){
   if(st.inj>0){g.save();g.translate(W*.72,H*.82);g.rotate(-.18);g.fillStyle='#fff';g.strokeStyle='#c0392b';g.lineWidth=2;g.beginPath();g.roundRect(-W*.24,-H*.08,W*.48,H*.16,4);g.fill();g.stroke();
     g.fillStyle='#c0392b';g.font='700 '+Math.round(H*.1)+'px "Zen Kaku Gothic New",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('負傷中',0,1);g.restore();
     g.strokeStyle='rgba(255,255,255,.95)';g.lineWidth=H*.05;g.beginPath();g.moveTo(W*.18,H*.18);g.lineTo(W*.42,H*.12);g.stroke();g.strokeStyle='rgba(200,190,170,.8)';g.lineWidth=1;g.stroke();}
+  if(A&&(A.id==='date'||A.id==='family')&&st.rom&&st.rom.pid){const im=wImg(st.rom.pid,'exprs',A.id==='date'?'shy':'smile');if(im){const r=H*.27,x=W-r-3,y=H-r-3;g.save();g.beginPath();g.arc(x,y,r,0,6.283);g.fillStyle='#f7e6ea';g.fill();g.clip();const bw=r*2.25,bh=bw*im.naturalHeight/im.naturalWidth;g.drawImage(im,x-bw/2,y+r*1.02-bh,bw,bh);g.restore();g.strokeStyle='#c9707f';g.lineWidth=2;g.beginPath();g.arc(x,y,r,0,6.283);g.stroke();}}
   if(zz){g.fillStyle='#5b5246';g.font='700 '+Math.round(H*.14)+'px "Zen Kaku Gothic New",sans-serif';for(let i=0;i<3;i++){const p=(t*.8+i/3)%1;g.globalAlpha=1-p;g.fillText('Z',W*.68+p*W*.18,H*.32-p*H*.2);}g.globalAlpha=1;}
 }
 /* injuries: severity 1-3 and a body part; stats drop at once by severity, and
@@ -2142,13 +2147,13 @@ const LIFE={
         {l:'師匠と兄弟子に頭を下げる',f:()=>{addBuff(st,'inj',-.3,6,'付け人がついた');st.fat=0;return['「ここからが本当の勝負だ」と師匠。付け人もつき、身の回りが楽になった。','十両昇進・疲れが全快・1年間けがをしにくい（−30%）'];}}]};},
   confess:pid=>{const P=PARTNERS[pid],her=P.name.replace(/^.*[・の]/,''),place={osana:'地元の堤防',reijo:'後援会の帰り道',eiyo:'ちゃんこ屋の閉店後',imouto:'駅までの帰り道',deshi:'稽古場の前'}[pid]||'帰り道';
     const yes=aff=>{const R=rom();R.stage='dating';R.aff=aff;R.dateMiss=0;R.dateThis=true;return aff;};
-    return{t:'告白',scene:'date',mark:'heart',text:'何度も会ううちに、'+her+'のことばかり考えるようになった。'+place+'で二人きりになった。胸の鼓動が、立ち合いの前よりうるさい。',
+    return{t:'告白',scene:'date',mark:'heart',w:{e:'shy',after:()=>rom().stage==='dating'?(rom().aff>=40?'joycry':'smile'):'worry'},text:'何度も会ううちに、'+her+'のことばかり考えるようになった。'+place+'で二人きりになった。胸の鼓動が、立ち合いの前よりうるさい。',
     ch:[{l:'「好きです。付き合ってください」',f:()=>{const R=rom();if(Math.random()<.55+R.aff/100){yes(40);return[her+'は目を丸くして、それから笑った。「……私も、ずっと待ってた」',P.name+'と交際を始めた（親密度 40）'];}
           R.aff=clamp(R.aff-5,0,100);R.confCool=st.b+2;return['「少し……考えさせて」。'+her+'はうつむいてしまった。','返事は保留・もう少し距離を縮めてから、また伝えよう'];}},
         {l:'手紙を渡す',f:()=>{yes(30);return['次の日、'+her+'から「手紙、読んだよ。よろしくお願いします」と返事が来た。',P.name+'と交際を始めた（親密度 30）'];}},
         {l:'やっぱり言えない',f:()=>{const R=rom();R.confCool=st.b+1;addBuff(st,'power',1,1,'胸に秘めた想い');return['言葉が出てこなかった。この気持ちは土俵にぶつけよう。','次の場所で取組の力 +1・また告白のチャンスが来る'];}}]};},
   caught:()=>{const R=rom(),P=PARTNERS[R.pid],her=P.name.replace(/^.*[・の]/,''),married=R.stage==='married',big=st.pos>=MAKU;
-    return{t:'修羅場',scene:'date',text:her+'がスマホの通知を見てしまった。「この“遥”って誰？」'+(married&&big?'翌週、週刊誌に「人気力士、深夜の密会」の見出しが出た。':''),
+    return{t:'修羅場',scene:'date',w:{e:'angry',after:()=>rom().stage?'sulk':'sad'},text:her+'がスマホの通知を見てしまった。「この“遥”って誰？」'+(married&&big?'翌週、週刊誌に「人気力士、深夜の密会」の見出しが出た。':''),
     ch:[{l:'正直に謝る',f:()=>{st.flags.secretOsana=false;setFlag(st,'osanaFriend');st.cheatHeat=0;
           if(married){R.famMiss=3;R.bond=0;addBuff(st,'power',-2,2,'家庭の危機');if(big){addBuff(st,'money',-.3,6,'週刊誌の報道');if(st.tani){st.tani.miss=3;}}
             return[her+'は長い間黙っていた。「次はないからね」。家の空気が冷えきっている。','取組の力 −2（2場所）・家族の絆リセット・家族サービスを続けて信頼を取り戻そう'+(big?'・報道で1年間ご祝儀 −30%、タニマチも離れかけている':'')];}
@@ -2174,44 +2179,44 @@ const LIFE={
     return{t:C.t,scene:'school',text:C.text,ch:C.ch};},
   graduate:()=>{const R=st.rival,mine=st.hist.reduce((a,h)=>a+h.w,0);return{t:'教習所卒業',scene:'school',text:'半年間の教習所を卒業した。ここまでの白星は'+mine+'。'+R.name+'が手を差し出してきた。「土俵の上で、また会おう」',
     ch:[{l:'固く握手する',f:()=>{addBuff(st,'power',1,1,'同期の誓い');return['同期の仲間たちと記念写真を撮った。','卒業・次の場所で取組の力 +1'];}},{l:'「次は勝つ」と言い返す',f:()=>{R.edge=(R.edge||0)+.3;addBuff(st,'growth',.05,6,'宿敵への闘志');return[R.name+'の目つきが変わった。','卒業・1年間、稽古の伸び +5%（宿敵も強くなる）'];}}]};},
-  meet:pid=>{const P=PARTNERS[pid];return{t:'出会い',scene:'date',text:P.how+'、'+P.name+'。何度か話すうちに、気になる存在になった。',
+  meet:pid=>{const P=PARTNERS[pid];return{t:'出会い',scene:'date',w:{e:'smile',after:()=>rom().stage==='crush'?'shy':'sad'},text:P.how+'、'+P.name+'。何度か話すうちに、気になる存在になった。',
     ch:[{l:'連絡先を交換する',f:()=>{const R=rom();R.stage='crush';R.pid=pid;R.aff=pid==='osana'&&flag('partner')?30:20;R.metB=st.b;return['その夜、さっそくメッセージが届いた。「今日はありがとう。場所、応援してるね」',P.name+'が気になる人になった（親密度 '+R.aff+'）・場所で勝つと距離が縮まり、告白のチャンスが来る'];}},
         {l:'今は相撲に集中する',f:()=>{rom().declined.push(pid);addBuff(st,'growth',.05,6,'迷いを断つ');return['気持ちを胸にしまい、稽古場に戻った。','1年間、稽古の伸び +5%'];}}]};},
-  gift:pid=>({t:'場所前の差し入れ',scene:'date',text:pName()+'が手作りの弁当を持って部屋に来た。兄弟子たちがにやにやしている。',
+  gift:pid=>({t:'場所前の差し入れ',scene:'date',w:{e:'smile',after:a0=>rom().aff>a0?'shy':'sulk'},text:pName()+'が手作りの弁当を持って部屋に来た。兄弟子たちがにやにやしている。',
     ch:[{l:'ありがたく受け取る',f:()=>{const R=rom();R.aff=clamp(R.aff+8,0,100);st.fat=Math.max(0,st.fat-10);return['「次も勝ってね」と笑顔で帰っていった。','親密度 +8・疲れ −10'];}},
         {l:'稽古中だと断る',f:()=>{const R=rom();R.aff=clamp(R.aff-3,0,100);st.stats.waza+=.8;return['少しさみしそうな顔をさせてしまった。','親密度 −3・技 +0.8'];}}]}),
-  visit:pid=>({t:'けがの見舞い',scene:'date',text:'けがを知った'+pName()+'が、病院まで駆けつけてくれた。',
+  visit:pid=>({t:'けがの見舞い',scene:'date',w:{e:'worry',after:()=>'smile'},text:'けがを知った'+pName()+'が、病院まで駆けつけてくれた。',
     ch:[{l:'弱音を打ち明ける',f:()=>{const R=rom();R.aff=clamp(R.aff+15,0,100);st.inj=0;return['黙って話を聞いてくれた。不思議と痛みが引いた気がする。','親密度 +15・けがが治った'];}},
         {l:'強がって見せる',f:()=>{const R=rom();R.aff=clamp(R.aff+5,0,100);addBuff(st,'power',1,1,'意地');return['「無理しないでね」と心配された。','親密度 +5・次の場所で力 +1'];}}]}),
-  apart:pid=>({t:'すれ違い',scene:'date',text:'稽古と巡業続きで、'+pName()+'となかなか会えていない。電話の声が少し冷たい。',
+  apart:pid=>({t:'すれ違い',scene:'date',w:{e:'sulk',after:a0=>rom().aff>a0?'smile':'sad'},text:'稽古と巡業続きで、'+pName()+'となかなか会えていない。電話の声が少し冷たい。',
     ch:[{l:'夜、会いに行く',f:()=>{const R=rom();R.aff=clamp(R.aff+12,0,100);st.fat=Math.min(100,st.fat+20);return['ちゃんと顔を見て話したら、笑ってくれた。','親密度 +12・疲れ +20'];}},
         {l:'稽古を優先する',f:()=>{const R=rom();R.aff=clamp(R.aff-10,0,100);addBuff(st,'growth',.05,2,'集中');return['今は相撲しかない、と自分に言い聞かせた。','親密度 −10・稽古の伸び +5%（2場所）'];}}]}),
-  breakup:pid=>({t:'別れ',scene:'date',text:(rom().dateMiss>=3?pName()+'から「ずっと会えなくて、さみしかった。もう待てない」と言われた。':pName()+'から「少し距離を置きたい」と言われた。'),
+  breakup:pid=>({t:'別れ',scene:'date',w:{e:'sad'},text:(rom().dateMiss>=3?pName()+'から「ずっと会えなくて、さみしかった。もう待てない」と言われた。':pName()+'から「少し距離を置きたい」と言われた。'),
     ch:[{l:'受け入れる',f:()=>{const R=rom();R.declined.push(R.pid);R.stage=null;R.pid=null;addBuff(st,'power',1,1,'悔しさ');return['別れを受け入れた。土俵で答えを出すしかない。','次の場所で力 +1'];}}]}),
   propose:pid=>{const her=pName().replace(/^.*[・の]/,''),yoko=st.pos>=YOKO,parents=flag('fatherShiko')?'後日、地元の両親にあいさつに行くと、父が「いい嫁さんをもらったな」と肩をたたいた。':'後日、地元の両親にあいさつに行くと、父はしばらく黙ってから「しっかりやれよ」とだけ言った。';
     const ok=t=>{const R=rom();R.stage='engaged';R.aff=100;return[t+parents,'婚約した・年の瀬に結婚披露宴'];};
-    return{t:'プロポーズ',scene:'date',mark:'ring',text:(yoko?'横綱になったら、と約束した日から、ずっとこの日を待っていた。':'関取になった今なら、胸を張って言える。')+'婚約指輪を買った。今夜、'+her+'に伝えると決めた。',
+    return{t:'プロポーズ',scene:'date',mark:'ring',w:{e:'surprise',after:()=>rom().stage==='engaged'?'joycry':'smile'},text:(yoko?'横綱になったら、と約束した日から、ずっとこの日を待っていた。':'関取になった今なら、胸を張って言える。')+'婚約指輪を買った。今夜、'+her+'に伝えると決めた。',
     ch:[{l:'夜景のレストランで指輪を渡す',f:()=>ok('小さな箱を開けると、'+her+'は両手で口をおさえた。「……はい。よろしくお願いします」。涙がぽろぽろこぼれていた。')},
         {l:'思い出の場所で、まっすぐ伝える',f:()=>ok('初めて二人で歩いた道で、「一生、支えてください」と頭を下げた。'+her+'は「頭を上げて」と笑って、指輪を受け取ってくれた。')},
         {l:yoko?'もう少しだけ待ってもらう':'横綱になってから、と約束する',f:()=>{const R=rom();R.aff=80;if(!yoko)R.waitYoko=true;R.propCool=st.b+6;R.stage='dating';addBuff(st,'growth',.1,6,'約束');return['指輪はポケットにしまったまま。「待ってる」と言ってくれた。',yoko?'1年間、稽古の伸び +10%（1年後にまたプロポーズのチャンス）':'1年間、稽古の伸び +10%（横綱になると改めてプロポーズへ）'];}}]};},
   wedding:pid=>{const r=rank(st.pos),gift=st.pos>=YOKO?3000:st.pos>=OZEKI?2000:st.pos>=KOMU?1500:st.pos>=MAKU?1000:500;
     const venue=st.pos>=YOKO?'都内の大ホテルの大宴会場。招待客は二千人を超えた':st.pos>=MAKU?'都内のホテルの宴会場。後援者や力士仲間が大勢集まった':'ホテルの宴会場。部屋の仲間と地元の人たちが祝ってくれた';
-    return{t:'結婚披露宴',scene:'wedding',text:venue+'。紋付き羽織袴の'+st.name+'（'+r.name+'）と、白無垢の'+PARTNERS[pid].name+'。',
+    return{t:'結婚披露宴',scene:'wedding',w:{look:'shiromuku',afterLook:()=>'dress'},text:venue+'。紋付き羽織袴の'+st.name+'（'+r.name+'）と、白無垢の'+PARTNERS[pid].name+'。',
     ch:[{l:'新婚旅行に行く',f:()=>{wed(pid,gift);st.fat=0;st.lateReturn=true;return['南の島で、ゆっくり二人の時間を過ごした。','結婚した・ご祝儀 +'+gift+'・疲れが全快（次の稽古は1回少ない）・'+PARTNERS[pid].fx];}},
         {l:'すぐ稽古に戻る',f:()=>{wed(pid,gift);addBuff(st,'power',2,1,'新婚の誓い');return['翌朝にはもう、稽古場で四股を踏んでいた。','結婚した・ご祝儀 +'+gift+'・次の場所で力 +2・'+PARTNERS[pid].fx];}},
         {l:'両親を壇上に招く',f:()=>{wed(pid,gift);setFlag(st,'oyakoko');st.weddingPrestige=2;return['母が泣いていた。父は最後まで背筋を伸ばしていた。','結婚した・ご祝儀 +'+gift+'・引退時の部屋の格 +2・母の手料理がよく効く・'+PARTNERS[pid].fx];}}]};},
-  baby:pid=>({t:'誕生',scene:'baby',text:'場所後、'+PARTNERS[pid].name.replace(/^.*[・の]/,'')+'から電話があった。元気な男の子が生まれた。',
+  baby:pid=>({t:'誕生',scene:'baby',w:{look:'baby'},text:'場所後、'+PARTNERS[pid].name.replace(/^.*[・の]/,'')+'から電話があった。元気な男の子が生まれた。',
     ch:[{l:'すぐに病院へ駆けつける',f:()=>{rom().kid={b:st.b};addBuff(st,'power',1,999,'父になった');return['小さな手が、指をぎゅっと握った。','取組の力 +1（ずっと）・引退後、この子を新弟子として入門させられる'];}}]}),
 };
 function wed(pid,gift){const R=rom();R.stage='married';R.weddingB=st.b;earn(gift);applySpouse(pid);addLog(PARTNERS[pid].name+'と結婚した。');}
-let kScene='home',kMark=null;
+let kScene='home',kMark=null,kW=null;
 function openLife(item){
-  const s=st,ev=LIFE[item.kind](item.pid);kScene=ev.scene||'date';kMark=ev.mark||null;kEv=null;
+  const s=st,ev=LIFE[item.kind](item.pid);kScene=ev.scene||'date';kMark=ev.mark||null;kEv=null;kW=ev.w?{pid:item.pid||(st.rom&&st.rom.pid),e:ev.w.e||'normal',look:ev.w.look||null}:null;
   $('kWhen').textContent=yearOf(s)+'年目　'+ageOf(s)+'歳';$('kTitle').textContent=ev.scene==='tani'?'後援者':ev.scene==='school'?'相撲教習所':ev.scene==='wedding'?'結婚披露宴':ev.scene==='baby'?'家族':ev.scene==='juryo'?'関取昇進':'恋と土俵';
   $('kEvName').textContent=ev.t;$('kText').textContent=ev.text;
   const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;$('kDone').hidden=true;$('kDone').textContent='部屋に戻る';
   for(const c of ev.ch){const b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=c.l;
-    b.addEventListener('click',()=>{const [story,fx]=c.f();box.innerHTML='';$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;
+    b.addEventListener('click',()=>{const a0=st.rom?st.rom.aff:0,[story,fx]=c.f();box.innerHTML='';if(kW&&ev.w){if(ev.w.after)kW.e=ev.w.after(a0);if(ev.w.afterLook)kW.look=ev.w.afterLook();}$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;
       if(s.lateReturn){s.used=1;s.lateReturn=false;}addLog(ev.t+'：'+story);checkAch();persist();});box.append(b);}
   show('sKikyo');kCv=makeCanvas($('kCv'),220/400);kSnow=[];
 }
@@ -2236,12 +2241,16 @@ function drawLifeScene(g,W,H,t,dt){
   const bg=g.createLinearGradient(0,0,0,H);const tn=kScene==='tani';bg.addColorStop(0,wed?'#6a1018':baby?'#26406a':tn?'#14223f':'#3a2346');bg.addColorStop(1,wed?'#b8862a':baby?'#8fb6d8':tn?'#8a6a2a':'#c97a8c');g.fillStyle=bg;g.fillRect(0,0,W,H);
   if(wed){g.save();g.translate(W/2,H*.5);g.rotate(t*.1);for(let i=0;i<16;i++){g.rotate(Math.PI/8);g.fillStyle='rgba(255,220,140,.12)';g.beginPath();g.moveTo(0,0);g.lineTo(W*.08,-W);g.lineTo(-W*.08,-W);g.fill();}g.restore();
     g.fillStyle='#fff3d6';g.font=Math.round(H*.2)+'px "Yuji Boku",serif';g.textAlign='center';g.fillText('寿',W/2,H*.2);}
-  const pf=portrait(st.face,'happy',st.pos>=JURYO,256),S=H*.78;
-  g.save();g.beginPath();g.arc(wed?W*.3:W*.36,H*.52,S*.42,0,6.283);g.fillStyle='#f3eadb';g.fill();g.clip();g.drawImage(pf,(wed?W*.3:W*.36)-S*.5,H*.52-S*.45,S,S);g.restore();
-  const pid=st.rom&&st.rom.pid,P=kScene==='tani'?{k:'谷'}:PARTNERS[pid];const cx=wed?W*.7:W*.64,cy=H*.52,r=S*.42;
-  g.fillStyle=wed?'#fffaf0':'#f7e6ea';g.beginPath();g.arc(cx,cy,r,0,6.283);g.fill();g.strokeStyle=wed?'#d6b25a':'#c9707f';g.lineWidth=3;g.stroke();
-  g.fillStyle=wed?'#8a1d22':'#8a3a4c';g.font=Math.round(r*1.05)+'px "Yuji Boku",serif';g.textAlign='center';g.fillText(P?P.k:'？',cx,cy+r*.36);
-  if(baby){g.fillStyle='#fff6e8';g.font=Math.round(H*.2)+'px "Yuji Boku",serif';g.fillText('祝・誕生',W/2,H*.22);}
+  const pf=portrait(st.face,kW&&['sad','angry','sulk','worry'].includes(kW.e)?'lose':kW&&['shy','surprise'].includes(kW.e)?'surprise':'happy',st.pos>=JURYO,256),S=H*.78,two=wed||baby;
+  g.save();g.beginPath();g.arc(two?W*.3:W*.36,H*.52,S*.42,0,6.283);g.fillStyle='#f3eadb';g.fill();g.clip();g.drawImage(pf,(two?W*.3:W*.36)-S*.5,H*.52-S*.45,S,S);g.restore();
+  const pid=st.rom&&st.rom.pid,P=kScene==='tani'?{k:'谷'}:PARTNERS[pid];const cx=two?W*.7:W*.64,cy=H*.52,r=S*.42;
+  const wp=kScene!=='tani'&&kW&&kW.pid,full=wp&&kW.look&&wImg(wp,'looks',kW.look),bust=wp&&!full&&wImg(wp,'exprs',kW.e);
+  if(full){const h=H*.97,w=h*full.naturalWidth/full.naturalHeight;g.fillStyle='rgba(0,0,0,.22)';g.beginPath();g.ellipse(cx,H*.97,w*.42,H*.025,0,0,6.283);g.fill();g.drawImage(full,cx-w/2,H*.985-h,w,h);}
+  else{g.fillStyle=wed?'#fffaf0':'#f7e6ea';g.beginPath();g.arc(cx,cy,r,0,6.283);g.fill();
+    if(bust){g.save();g.beginPath();g.arc(cx,cy,r,0,6.283);g.clip();const bw=r*2.25,bh=bw*bust.naturalHeight/bust.naturalWidth;g.drawImage(bust,cx-bw/2,cy+r*1.02-bh,bw,bh);g.restore();}
+    g.strokeStyle=wed?'#d6b25a':'#c9707f';g.lineWidth=3;g.beginPath();g.arc(cx,cy,r,0,6.283);g.stroke();
+    if(!bust){g.fillStyle=wed?'#8a1d22':'#8a3a4c';g.font=Math.round(r*1.05)+'px "Yuji Boku",serif';g.textAlign='center';g.fillText(P?P.k:'？',cx,cy+r*.36);}}
+  if(baby){g.fillStyle='#fff6e8';g.font=Math.round(H*.13)+'px "Yuji Boku",serif';g.textAlign='center';g.fillText('祝・誕生',W*.46,H*.15);}
   if(kMark==='heart'){const s2=H*.09*(1+.08*Math.sin(t*5)),x=W/2,y=H*.2;g.fillStyle='#ff6f8e';g.beginPath();g.moveTo(x,y+s2*.9);g.bezierCurveTo(x-s2*1.6,y-s2*.2,x-s2*.7,y-s2*1.3,x,y-s2*.35);g.bezierCurveTo(x+s2*.7,y-s2*1.3,x+s2*1.6,y-s2*.2,x,y+s2*.9);g.fill();}
   if(kMark==='ring'){const x=W/2,y=H*.24,r2=H*.08;softSpot(g,x,y-r2*1.3,r2*1.6,'255,255,255',.35+.15*Math.sin(t*4));g.strokeStyle='#f2d27a';g.lineWidth=r2*.28;g.beginPath();g.arc(x,y,r2,0,6.283);g.stroke();
     g.fillStyle='#e8f6ff';g.beginPath();g.moveTo(x,y-r2*.85);g.lineTo(x-r2*.55,y-r2*1.35);g.lineTo(x-r2*.3,y-r2*1.7);g.lineTo(x+r2*.3,y-r2*1.7);g.lineTo(x+r2*.55,y-r2*1.35);g.closePath();g.fill();g.strokeStyle='#9fc6e0';g.lineWidth=1.5;g.stroke();}
@@ -2250,7 +2259,7 @@ function drawLifeScene(g,W,H,t,dt){
 }
 let kCv=null,kSnow=[],kEv=null;
 function openKikyo(){
-  kScene='home';kMark=null;$('kDone').textContent='新年、部屋に戻る';const s=st;kEv=pickEvent(s);s.seenEv.push(kEv.id);persist();
+  kScene='home';kMark=null;kW=null;$('kDone').textContent='新年、部屋に戻る';const s=st;kEv=pickEvent(s);s.seenEv.push(kEv.id);persist();
   $('kWhen').textContent=Math.max(1,yearOf(s)-1)+'年目の年の瀬　'+ageOf(s)+'歳';
   $('kTitle').textContent=s.home+'へ帰省';
   $('kEvName').textContent=kEv.t;$('kText').textContent=kEv.text(s);
