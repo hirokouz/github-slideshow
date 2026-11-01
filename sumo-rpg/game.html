@@ -199,7 +199,7 @@ body.autoOn #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 66px)}
 .fmode button.on{background:var(--sumi);color:var(--washi);border-color:var(--sumi)}
 .aipick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:78px;align-content:start;gap:4px;max-height:186px;overflow-y:auto;padding:2px}
 .aipick button{padding:0;border:2px solid transparent;border-radius:8px;background:none;overflow:hidden;min-height:0}
-.aipick button{position:relative;background:#f3eadb}.aipick img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;display:block}
+.aipick button{position:relative;background:#f3eadb}.aipick img{width:100%;height:100%;object-fit:cover;display:block}
 .aipick button span{position:absolute;left:0;right:0;bottom:0;background:rgba(20,16,12,.72);color:#fff3dc;font-size:10.5px;line-height:1.6;text-align:center;white-space:nowrap;overflow:hidden}
 .aipick button.on{border-color:var(--shu);box-shadow:0 0 0 1px var(--shu)}
 @media (max-height:740px){.aipick{max-height:150px}}
@@ -284,6 +284,16 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
   background:var(--sumi);color:var(--washi);border:1.5px solid var(--kin);border-radius:999px;padding:6px 8px 6px 14px;font-size:12.5px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.45);max-width:calc(100vw - 32px)}
 #autoBar{white-space:nowrap;gap:6px;padding:5px 6px 5px 12px}
 #autoBar select{max-width:7.5em}
+.tutq{margin-left:6px;border:1px solid var(--kin);background:transparent;color:var(--kin);border-radius:999px;font-size:10.5px;padding:1px 8px;letter-spacing:0;font-weight:700;vertical-align:1px}
+#tut{position:fixed;inset:0;z-index:90}
+#tut .tut-hole{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(3,5,14,.72);border:2px solid var(--kin);transition:all .25s ease;pointer-events:none}
+#tut .tut-box{position:fixed;left:12px;right:12px;max-width:420px;margin:0 auto;background:#fbf4e4;color:#2a2118;border:2px solid var(--kin);border-radius:14px;padding:12px 14px;box-shadow:0 8px 30px rgba(0,0,0,.5);transition:top .25s ease}
+#tut .tut-who{display:flex;align-items:center;gap:8px;font-weight:700;color:#7a1f1f;font-size:13px;margin-bottom:4px}
+#tut .tut-who span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#7a1f1f;color:#fbf4e4;font-family:"Yuji Boku",serif;font-size:16px}
+#tut p{font-size:14px;line-height:1.75;white-space:pre-line;margin:0}
+#tut .tut-ctl{display:flex;align-items:center;gap:8px;margin-top:10px}#tut .tut-ctl span{flex:1;font-size:11.5px;color:#7d6e58}
+#tut .tut-skip{background:none;border:0;color:#7d6e58;font-size:12.5px;text-decoration:underline}
+#tut .tut-next{border:0;border-radius:999px;background:linear-gradient(#f0cf73,#d9a73c);color:#2a1700;font-weight:800;padding:8px 22px;font-size:14px}
 #autoTxt{max-width:9.5em;overflow:hidden;text-overflow:ellipsis;font-size:12px}
 .acfg{display:grid;gap:6px}.acfg .chk{display:grid;grid-template-columns:1fr 1fr;gap:6px}.acfg label{display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.04);font-size:14px}
 .acfg label small{display:block;color:var(--muted,#b9ad96);font-size:11.5px}.acfg #autoGo{position:sticky;bottom:0}
@@ -366,6 +376,7 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
 </style>
 
 <div id="toast" role="status" aria-live="polite"></div>
+<div id="tut" hidden><div class="tut-hole" id="tutHole"></div><div class="tut-box" id="tutBox" role="dialog" aria-live="polite"><div class="tut-who"><span>親</span>親方</div><p id="tutText"></p><div class="tut-ctl"><span id="tutStep"></span><button type="button" id="tutSkip" class="tut-skip">スキップ</button><button type="button" id="tutNext" class="tut-next">次へ</button></div></div></div>
 <div id="autoBar" hidden><span class="dot" aria-hidden="true"></span><span id="autoTxt">オート中</span>
   <select id="autoSpeed" aria-label="速さ"><option value="1">ふつう</option><option value="3" selected>速い</option></select>
   <button type="button" id="autoOff">停止</button></div>
@@ -438,7 +449,7 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
       </div>
     </div>
     <div class="panel hst">
-      <div class="row" style="justify-content:space-between"><p class="label">体と技</p><span class="muted" style="font-size:10.5px" id="hPower"></span></div>
+      <div class="row" style="justify-content:space-between"><p class="label">体と技 <button type="button" id="tutBtn" class="tutq" aria-label="遊び方を見る">？ 遊び方</button></p><span class="muted" style="font-size:10.5px" id="hPower"></span></div>
       <div class="stats" id="hStats"></div>
     </div>
     <div class="acts" id="hActs"></div>
@@ -646,7 +657,20 @@ function loadRoster(){
   if(roster.money===undefined)roster.money=300;if(!roster.cards)roster.cards={};if(!roster.ach)roster.ach={};if(!roster.hall)roster.hall=[];if(roster.prestige===undefined)roster.prestige=0;
   if(!roster.migrated){roster.migrated=true;try{const old=JSON.parse(localStorage.getItem(KEY)||'null');if(old&&old.name&&!Object.keys(roster.list).length){const m=migrate(old);roster.list[m.id]=m;roster.active=m.id;}}catch(e){}saveRoster();}
   for(const id in roster.list)migrate(roster.list[id]);
+  recastRoster();
 }
+/* rikishi made with the old illustrations (or the parts editor) move to the
+   registered cast, so every stable member has full per-rank art */
+const castIds=()=>(window.AI_CAST||[]).map(c=>c.id);
+const isCast=F=>!!(F&&F.img&&castIds().includes(F.img));
+function recastRoster(){const ids=castIds();if(!ids.length)return;let changed=false;
+  const used=new Set(Object.values(roster.list).map(s=>s.face).filter(isCast).map(f=>f.img));
+  const choose=(F,seed)=>{const free=ids.filter(i=>!used.has(i)),pool=free.length?free:ids;
+    const bySkin=pool.filter(i=>{const m=AIF[i]&&AIF[i].meta;return m&&F&&m.skin===F.skin;});const P=bySkin.length?bySkin:pool;
+    let h=0;for(const ch of String(seed))h=(h*31+ch.charCodeAt(0))>>>0;const id=P[h%P.length];used.add(id);return id;};
+  for(const k in roster.list){const s=roster.list[k];if(!isCast(s.face)){const id=choose(s.face,s.id||s.name);s.face={...(s.face||randFace()),img:id,skin:AIF[id].meta.skin};changed=true;}}
+  for(const h of roster.hall){if(!isCast(h.face)){const id=choose(h.face,h.name);h.face={...(h.face||randFace()),img:id,skin:AIF[id].meta.skin};changed=true;}}
+  if(changed)saveRoster();}
 function saveRoster(){try{localStorage.setItem(ROSTER_KEY,JSON.stringify(roster));}catch(e){}}
 function persist(){if(!st)return;st.touched=Date.now();roster.list[st.id]=st;roster.active=st.id;saveRoster();}
 function play(id){st=roster.list[id];if(!st)return;roster.active=id;saveRoster();if(st.pendingKikyo)openKikyo();else if(st.basho)startBasho();else renderHome();}
@@ -937,14 +961,22 @@ const okImg=im=>im&&im.complete&&im.naturalWidth>0?im:null;
 function wImg(pid,kind,key){const o=WIMG[pid];return o?okImg(o[kind][key])||(kind==='exprs'?okImg(o.exprs.normal):null):null;}
 const EXMAP={blink:'blink',sleep:'blink',happy:'happy',win:'happy',lose:'lose',strain:'strain',surprise:'surprise',normal:'normal'};
 function aiReady(F){const o=F&&F.img&&AIF[F.img];return o&&o.img.complete&&o.img.naturalWidth>0?o:null;}
-function isZan(F){if(cur==='sCreate'&&F===draftFace)return true;return !!(st&&st.b<6&&st.pos<JURYO&&(F===st.face||(st.rival&&F===st.rival.face)));}
+const ZAN_F=new WeakSet(); // faces of first-year rikishi drawn outside their own career (title list)
+function isZan(F){if(cur==='sCreate'&&F===draftFace)return true;if(F&&ZAN_F.has(F))return true;return !!(st&&st.b<6&&st.pos<JURYO&&(F===st.face||(st.rival&&F===st.rival.face)));}
+/* the illustrated faces were drawn at slightly different sizes; [eyeY, eye-to-chin] in the
+   256px source, so every portrait is rescaled to eyes near 110 and an ~80px eye-to-chin face */
+const FACE_FIT={n1:{zan:[100,65],chon:[115,85],oicho:[100,75]},n2:{zan:[85,70],chon:[100,85],oicho:[100,80]},n3:{zan:[75,70],chon:[75,70],oicho:[100,70]},
+  n4:{zan:[110,80],chon:[110,85],oicho:[115,90]},n5:{zan:[100,60],chon:[100,65],oicho:[100,70]}};
+function drawFit(x,im,N,fit){if(!fit){x.drawImage(im,0,0,N,N);return;}const k=N/256,sc=Math.max(1,80/fit[1]);
+  // never shrink (that would leave gaps at the shoulders); keep the eyes on one line
+  const w=256*sc*k,ey=Math.max(110*k-fit[0]*sc*k,N-w);x.drawImage(im,128*k-128*sc*k,Math.min(0,ey),w,w);}
 function portrait(F,expr,oicho,N){
   const o=aiReady(F);
   if(o){const k=EXMAP[expr]||'normal';let im=o.ex[k]&&o.ex[k].complete&&o.ex[k].naturalWidth?o.ex[k]:o.img;let hk='';
     if(o.exprs){hk=oicho===true?'oicho':isZan(F)?'zan':'chon';const set=o.exprs[hk]||o.exprs.chon,ok=x=>x&&x.complete&&x.naturalWidth;im=ok(set[k])?set[k]:ok(set.normal)?set.normal:im;hk+=k;}
     else if(o.faces&&im===o.img){hk=oicho===true?'oicho':isZan(F)?'zan':'chon';const fi=o.faces[hk];if(fi&&fi.complete&&fi.naturalWidth)im=fi;}
     const key='ai,'+F.img+','+(im===o.img?'base':k)+hk+','+N;let c=portraitCache.get(key);if(c)return c;
-    c=document.createElement('canvas');c.width=c.height=N;c.getContext('2d').drawImage(im,0,0,N,N);c.isAi=true;
+    c=document.createElement('canvas');c.width=c.height=N;drawFit(c.getContext('2d'),im,N,im===o.img?null:(FACE_FIT[F.img]||{})[['zan','chon','oicho'].find(b=>hk.startsWith(b))]);c.isAi=true;
     if(portraitCache.size>48)portraitCache.clear();portraitCache.set(key,c);return c;}
   const key=[F.shape,F.brow,F.eye,F.nose,F.mouth,F.extra,F.skin,expr,oicho?1:0,N].join(',');
   let c=portraitCache.get(key);if(c)return c;
@@ -1192,12 +1224,19 @@ function closeSheet(){const sh=$('sheet');if(sh)sh.hidden=true;}
 
 /* ---------- title ---------- */
 let hero=null;const HERO_FACES=[randFace(),randFace()];
+let titleWait=0;
+function castArtReady(){for(const id of castIds()){const o=AIF[id];if(!o||!o.img.complete)return false;for(const h in (o.faces||{}))if(!o.faces[h].complete)return false;}return true;}
+function refreshTitleFaces(){
+  // art may still be loading on the first paint; redraw the faces once it has arrived
+  if(cur!=='sTitle')return;if(!castArtReady()){if(titleWait++<60)setTimeout(refreshTitleFaces,250);return;}titleWait=0;
+  document.querySelectorAll('#roster img[data-rk]').forEach(im=>{const s=roster.list[im.dataset.rk];if(s&&s.b<6&&s.pos<JURYO&&s.face)ZAN_F.add(s.face);if(s)try{im.src=portrait(s.face,'normal',s.pos>=JURYO,160).toDataURL();}catch(e){}});
+  document.querySelectorAll('img[data-hall]').forEach(im=>{const h=roster.hall[+im.dataset.hall];if(h)try{im.src=portrait(h.face,'normal',h.oicho,96).toDataURL();}catch(e){}});}
 function renderTitle(){
-  loadRoster();const box=$('roster');box.innerHTML='';
+  setTimeout(refreshTitleFaces,0);loadRoster();const box=$('roster');box.innerHTML='';
   const ids=Object.keys(roster.list).sort((a,b)=>(roster.list[b].touched||0)-(roster.list[a].touched||0));
   $('rosterLabel').hidden=!ids.length;
   for(const id of ids){const s=roster.list[id],card=document.createElement('div');card.className='washi rk-card'+(id===roster.active?' active':'');
-    const img=document.createElement('img');img.alt=s.name+'の顔';try{img.src=portrait(s.face,'normal',s.pos>=JURYO,160).toDataURL();}catch(e){}
+    if(s.b<6&&s.pos<JURYO&&s.face)ZAN_F.add(s.face);const img=document.createElement('img');img.alt=s.name+'の顔';img.dataset.rk=id;try{img.src=portrait(s.face,'normal',s.pos>=JURYO,160).toDataURL();}catch(e){}
     const info=document.createElement('div');info.style.minWidth='0';
     const nm=document.createElement('div');nm.className='nm';nm.textContent=s.name;
     const rk=document.createElement('div');rk.className='rk';rk.textContent=s.maezumo?'前相撲':side(s.pos)+' '+rank(s.pos).name+(s.pos===YOKO?'':'');
@@ -1214,7 +1253,7 @@ function renderTitle(){
   $('tAchN').textContent=Object.keys(roster.ach).length+' / '+ACH.length;renderAch($('tAch'));
   $('tPrestige').textContent='部屋の格 '+(roster.prestige||0)+'（新弟子の成長 +'+Math.round(prestigeBonus()*100)+'%）';
   const hb=$('tHall');hb.innerHTML='';if(!roster.hall.length){const pp=document.createElement('p');pp.className='muted';pp.style.fontSize='12.5px';pp.textContent='まだいない。力士を引退させると親方になり、部屋の格が上がる。';hb.append(pp);}
-  for(const h of roster.hall.slice().reverse()){const row=document.createElement('div');row.className='h';const im=document.createElement('img');im.alt='';try{im.src=portrait(h.face,'normal',h.oicho,96).toDataURL();}catch(e){}
+  for(const h of roster.hall.slice().reverse()){const row=document.createElement('div');row.className='h';const im=document.createElement('img');im.alt='';im.dataset.hall=roster.hall.indexOf(h);try{im.src=portrait(h.face,'normal',h.oicho,96).toDataURL();}catch(e){}
     const a=document.createElement('div');a.innerHTML='<div class="hn"></div><div class="muted"></div>';a.children[0].textContent=h.name;a.children[1].textContent='最高位 '+h.best+'・'+h.w+'勝'+h.l+'敗・'+h.years+'年';
     const y=document.createElement('div');y.style.cssText='color:var(--kin);font-weight:700;text-align:right';y.textContent=h.makuYusho?'幕内優勝'+h.makuYusho+'回':'';row.append(im,a,y);hb.append(row);}
   $('newBtn').textContent=ids.length?'新しい力士を入門させる':'新弟子として入門する';$('newBtn').className=ids.length?'ghost':'primary';
@@ -1289,8 +1328,8 @@ function aiFace(id){const m=AIF[id]&&AIF[id].meta;const f=randFace();f.img=id;if
 const entryIds=()=>Object.keys(AIF).filter(id=>AIF[id].meta.cast&&AIF[id].meta.faces);
 function randAiFace(){const ids=entryIds();return ids.length?aiFace(pick(ids)):randFace();}
 function buildAiPick(){const box=$('aiPick');box.innerHTML='';
-  for(const id of entryIds()){const m=AIF[id].meta,b=document.createElement('button');b.type='button';b.className=draftFace.img===id?'on':'';b.title=m.name;b.setAttribute('aria-label',m.name+'の顔');
-    const im=document.createElement('img');im.src=(m.faces&&m.faces.zan)||m.src;im.alt='';const cap=document.createElement('span');cap.textContent=m.name;b.append(im,cap);b.addEventListener('click',()=>{draftFace=aiFace(id);facePop=1;buildAiPick();});box.append(b);}}
+  for(const id of entryIds()){const m=AIF[id].meta,b=document.createElement('button');b.type='button';b.className=draftFace.img===id?'on':'';b.setAttribute('aria-label','力士 '+(entryIds().indexOf(id)+1));
+    const im=document.createElement('img');const PF=aiFace(id);ZAN_F.add(PF);im.src=castArtReady()?portrait(PF,'normal',false,160).toDataURL():(m.faces&&m.faces.zan)||m.src;im.alt='';b.append(im);b.addEventListener('click',()=>{draftFace=aiFace(id);facePop=1;buildAiPick();});box.append(b);}}
 function setFaceMode(m){faceMode=m;$('modeAi').classList.toggle('on',m==='ai');$('modeParts').classList.toggle('on',m==='parts');$('aiPick').hidden=m!=='ai';$('faceOpts').hidden=m!=='parts';
   if(m==='ai'&&!draftFace.img)draftFace=randAiFace();if(m==='parts'&&draftFace.img){delete draftFace.img;}buildAiPick();buildFaceOpts();facePop=1;}
 function fillHomes(){const h=$('homeIn');if(h.options.length)return;for(const p of PREFS){const o=document.createElement('option');o.value=p;o.textContent=p+'出身';h.append(o);}}
@@ -1345,6 +1384,26 @@ const ACTS=[
 const STAT_LABEL={oshi:'押し',chikara:'力',waza:'技',hayasa:'速さ'};
 let avatar=null,lastGain={};
 function addLog(t){st.log.unshift(t);st.log=st.log.slice(0,5);}
+/* ---------- first-visit tutorial: the stablemaster walks through the home screen ---------- */
+function tutSteps(){const fav={oshi:['てっぽう','押し'],yotsu:['四股','力'],waza:['申し合い','技']}[st.type]||['てっぽう','押し'];
+  return[
+  {t:'よく来たな、'+st.name+'。ここがおまえの部屋だ。\n稽古で体と技をきたえて、本場所で勝ち、番付を上げていく。めざすは横綱だ。'},
+  {sel:'#hStats',t:'これがおまえの「体と技」だ。\n押し・力・技・速さの4つと、体重、疲れ。\n取組の強さは、この合計で決まる。'},
+  {sel:'#hActs',t:'稽古はこの6つから選ぶ。\n・四股 → 力が上がる\n・てっぽう → 押しが上がる\n・すり足 → 速さが上がる\n・申し合い → 技がよく上がる（力も少し）\n・ちゃんこ → 体重が増える（重いほど押されにくい）\n・休む → 疲れが取れる。けがも治る'},
+  {sel:'#hStats',t:'稽古をすると「疲れ」がたまる。\n疲れが多いと伸びが悪くなり、けがもしやすい。\n疲れが60をこえたら「休む」か「ちゃんこ」で回復しろ。'},
+  {sel:'#hActs',t:'迷ったら、おまえは'+({oshi:'押し相撲',yotsu:'四つ相撲',waza:'技能派'}[st.type]||'押し相撲')+'だから「'+fav[0]+'」を中心に'+fav[1]+'をのばせ。\n序盤は「ちゃんこ」で体重を増やすのも大事だ。'},
+  {sel:'#hTurns',t:'稽古は1場所につき5回。\nこの丸が全部うまったら、本場所に出る。'},
+  {sel:'#bashoBtn',t:'本場所では毎日1番ずつ取組がある。\n勝ち越せば番付が上がり、負け越せば下がる。\nまずは序ノ口からだ。'},
+  {sel:'#autoBtn',t:'忙しいときは「オート」で進められる。\nどこで止めるかも選べるぞ。\n遊び方は「？ 遊び方」でいつでも見られる。さあ、稽古だ！'}];}
+let tutI=0,tutList=null;
+function startTut(){if(!st||autoGrow)return;tutList=tutSteps();tutI=0;$('tut').hidden=false;showTut();}
+function showTut(){const S=tutList[tutI],hole=$('tutHole'),box=$('tutBox');$('tutText').textContent=S.t;$('tutStep').textContent=(tutI+1)+' / '+tutList.length;
+  $('tutNext').textContent=tutI===tutList.length-1?'はじめる':'次へ';
+  const el=S.sel&&document.querySelector(S.sel);
+  if(el){el.scrollIntoView({block:'center'});const r=el.getBoundingClientRect(),pd=6;Object.assign(hole.style,{display:'block',left:(r.left-pd)+'px',top:(r.top-pd)+'px',width:(r.width+pd*2)+'px',height:(r.height+pd*2)+'px'});
+    requestAnimationFrame(()=>{const bh=box.offsetHeight,below=r.bottom+pd+12;box.style.top=(below+bh<innerHeight-8?below:Math.max(8,r.top-pd-12-bh))+'px';});}
+  else{Object.assign(hole.style,{display:'block',left:'50%',top:'40%',width:'0px',height:'0px'});requestAnimationFrame(()=>{box.style.top=Math.max(8,(innerHeight-box.offsetHeight)/2)+'px';});}}
+function endTut(){$('tut').hidden=true;roster.tutDone=true;saveRoster();}
 function renderHome(){
   const r=st.maezumo?{div:'前相撲',name:'前相撲',bouts:3}:rank(st.pos);
   const plate=$('hTate');plate.innerHTML='';const n=document.createElement('span');n.textContent=st.name;plate.append(n);
@@ -1397,6 +1456,7 @@ function renderHome(){
   const keepAct=avatar&&avatar.act;
   if(cur!=='sHome')show('sHome');
   avatar=makeCanvas($('avatar'),102/84);avatar.act=keepAct||null;avatar.fx=[];
+  if(!roster.tutDone&&!autoGrow&&$('tut').hidden)setTimeout(()=>{if(cur==='sHome'&&!roster.tutDone&&$('tut').hidden)startTut();},350);
 }
 /* home avatar: idle breathing + a short animation for each kind of training */
 function drawAvatar(t,dt){
@@ -2456,6 +2516,9 @@ function autoStep(){
 }
 $('autoBtn').addEventListener('click',()=>{if(autoGrow)autoStop('オート成長を止めました');else openAutoCfg();});
 $('autoGo').addEventListener('click',startAutoFromCfg);
+$('tutNext').addEventListener('click',()=>{if(tutI<tutList.length-1){tutI++;showTut();}else endTut();});
+$('tutSkip').addEventListener('click',endTut);$('tutBtn').addEventListener('click',startTut);
+addEventListener('resize',()=>{if(!$('tut').hidden)showTut();});
 $('autoOff').addEventListener('click',()=>autoStop('オート成長を止めました'));
 $('autoChk').addEventListener('change',e=>{autoMode=e.target.checked;
   if(autoMode&&anim){if(anim.phase==='ready'||anim.phase==='intro')choose(counterOf(B.opp.style));else if(anim.phase==='tachi'){$('bTachi').hidden=true;resolve('normal');}else if(anim.phase==='done')nextBout();}});
