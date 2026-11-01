@@ -197,6 +197,7 @@ details.more summary::after{content:'▾';color:var(--kin)}details.more[open] su
 #toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);transform:translate(-50%,20px);z-index:50;max-width:min(92vw,420px);
   background:var(--washi);color:var(--sumi);border:1.5px solid var(--sumi);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
 #toast.on{opacity:1;transform:translate(-50%,0)}
+body.autoOn #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 66px)}
 .homesel{flex:0 0 auto;max-width:6.2em;font:inherit;font-size:14px;font-weight:700;background:#fffaf0;color:var(--sumi);border:1.5px solid var(--sumi);border-radius:6px;padding:8px 4px}
 .fmode{display:grid;grid-template-columns:1fr 1fr;gap:4px}
 .fmode button{border:1.5px solid rgba(26,22,18,.3);background:#fffaf0;color:var(--sumi);border-radius:8px;padding:4px 2px;font-size:11px;font-weight:700}
@@ -283,7 +284,7 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
 .deck.mini .slot .empty{grid-column:1 / -1;justify-self:center;font-size:11px}
 .tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
 .tabs button.on{background:var(--kin);color:#2a1700}.tabs button.on .ti{color:#2a1700}
-#autoBar{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 8px);z-index:60;display:flex;gap:10px;align-items:center;
+#autoBar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);z-index:60;display:flex;gap:10px;align-items:center;
   background:var(--sumi);color:var(--washi);border:1.5px solid var(--kin);border-radius:999px;padding:6px 8px 6px 14px;font-size:12.5px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.45);max-width:calc(100vw - 32px)}
 #autoBar{white-space:nowrap;gap:6px;padding:5px 6px 5px 12px}
 #autoBar select{max-width:7.5em}
@@ -2264,7 +2265,7 @@ function pickAct(){const S=st.stats,id=k=>ACTS.find(a=>a.id===k);
   const want=Math.min(st.kgMax-4,105+st.b*3.2);if(st.kg<want&&st.fat<55&&Math.random()<.35)return id('chanko');
   const main={oshi:'teppo',yotsu:'shiko',waza:'moushi'}[st.type]||'teppo';if(Math.random()<.45)return id(main);
   const low=Object.entries({teppo:S.oshi,shiko:S.chikara,moushi:S.waza,suri:S.hayasa}).sort((a,b)=>a[1]-b[1])[0][0];return id(low);}
-function setAuto(on){autoGrow=on;$('autoBar').hidden=!on;const b=$('autoBtn');if(b)b.classList.toggle('on',on);clearInterval(autoTimer);
+function setAuto(on){autoGrow=on;$('autoBar').hidden=!on;document.body.classList.toggle('autoOn',on);const b=$('autoBtn');if(b)b.classList.toggle('on',on);clearInterval(autoTimer);
   if(on){autoTimer=setInterval(autoStep,250);toast('オート成長を始めた');}}
 function autoStop(why){setAuto(false);if(why)toast(why);}
 function autoStep(){
