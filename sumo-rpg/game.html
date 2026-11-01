@@ -62,7 +62,7 @@ p{margin:0;line-height:1.75}
 .hero{display:grid;gap:14px;justify-items:center;text-align:center;padding-top:6px}
 .logo{font-family:var(--f-brush);font-size:clamp(60px,19vw,92px);line-height:1;color:var(--shiro);text-shadow:0 0 34px rgba(226,176,74,.35)}
 .logo .sub{display:block;font-family:var(--f-mincho);font-weight:800;font-size:12px;letter-spacing:.5em;color:var(--kin);margin-bottom:12px;text-shadow:none}
-#heroCv{width:100%;max-width:400px;aspect-ratio:400/300;display:block;border-radius:10px}
+#heroCv{width:100%;max-width:440px;aspect-ratio:3/2;display:block;border-radius:10px}
 
 /* create */
 input[type=text]{width:100%;box-sizing:border-box;background:#fffaf0;color:var(--sumi);border:1.5px solid var(--sumi);border-radius:6px;padding:10px 14px;font-size:26px;font-family:var(--f-brush)}
@@ -326,7 +326,7 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
 #bPick .hint{margin-bottom:5px!important;font-size:11px}
 #bTachi .hint{margin-top:5px!important;font-size:11px}
 /* title + result */
-#heroCv{width:min(100%,calc(30dvh * 1.333))}
+#heroCv{width:min(100%,calc(30dvh * 1.5))}
 #rCv{max-width:min(240px,26dvh)}
 .result-big{font-size:clamp(40px,12vw,58px)}
 /* homecoming */
@@ -375,7 +375,7 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
   <section id="sTitle" class="scr">
     <div class="hero">
       <h1 class="logo"><span class="sub">SUMO CAREER RPG</span>横綱への道</h1>
-      <canvas id="heroCv" aria-label="土俵の上の力士"></canvas>
+      <canvas id="heroCv" aria-label="国技館の土俵に立つ力士たち"></canvas>
       <p>序ノ口の新弟子から、稽古と本場所で番付を上げていく。<br>めざすは綱を締めるその日。</p>
     </div>
     <p class="label" id="rosterLabel" hidden>部屋の力士</p>
@@ -1218,7 +1218,7 @@ function renderTitle(){
     const a=document.createElement('div');a.innerHTML='<div class="hn"></div><div class="muted"></div>';a.children[0].textContent=h.name;a.children[1].textContent='最高位 '+h.best+'・'+h.w+'勝'+h.l+'敗・'+h.years+'年';
     const y=document.createElement('div');y.style.cssText='color:var(--kin);font-weight:700;text-align:right';y.textContent=h.makuYusho?'幕内優勝'+h.makuYusho+'回':'';row.append(im,a,y);hb.append(row);}
   $('newBtn').textContent=ids.length?'新しい力士を入門させる':'新弟子として入門する';$('newBtn').className=ids.length?'ghost':'primary';
-  show('sTitle');hero=makeCanvas($('heroCv'),.75);
+  show('sTitle');hero=makeCanvas($('heroCv'),2/3);
 }
 /* title: a commemorative group photo of the cast in their kesho-mawashi */
 /* title key visual: night Kokugikan, spotlight on the dohyo; one featured rikishi
@@ -1265,8 +1265,16 @@ function drawGroupPhoto(t){
   // vignette
   const vg=g.createRadialGradient(W/2,H*.55,H*.3,W/2,H*.55,W*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');g.fillStyle=vg;g.fillRect(0,0,W,H);
   return true;}
+const KEYART=IMG('title.webp');
+function drawKeyArt(t){const im=okImg(KEYART);if(!im)return false;const{g,W,H}=hero;
+  // slow push-in, like a camera drifting toward the dohyo
+  const z=REDUCED?1:1.02+.03*(.5-.5*Math.cos(t*.25)),w=W*z,h=w*im.naturalHeight/im.naturalWidth;g.drawImage(im,(W-w)/2,(H-h)*.35,w,h);
+  if(heroDust.length<36&&!REDUCED)heroDust.push({x:Math.random()*W,y:H*(.3+Math.random()*.7),v:rnd(4,10),p:Math.random()*6,r:rnd(.6,1.7)});
+  g.fillStyle='rgba(255,246,220,.7)';heroDust=heroDust.filter(d=>{d.y-=d.v*.016;d.x+=Math.sin(t+d.p)*.15;g.globalAlpha=Math.min(1,d.y/(H*.3));g.beginPath();g.arc(d.x,d.y,d.r,0,6.283);g.fill();return d.y>0;});g.globalAlpha=1;
+  const vg=g.createRadialGradient(W/2,H*.5,H*.45,W/2,H*.5,W*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(5,6,16,.4)');g.fillStyle=vg;g.fillRect(0,0,W,H);
+  return true;}
 function drawHero(t){
-  if(!hero)return;if(drawGroupPhoto(t))return;const{g,W,H}=hero;const sc=drawScene(g,W,H,0);const u=H*.15;
+  if(!hero)return;if(drawKeyArt(t)||drawGroupPhoto(t))return;const{g,W,H}=hero;const sc=drawScene(g,W,H,0);const u=H*.15;
   drawGyoji(g,sc.cx,sc.floorY-H*.075,u*.55,0,t);
   const br=Math.sin(t*2)*.03;
   drawRikishi(g,sc.cx-W*.22,sc.floorY+H*.02,u,1,{...READY,lean:READY.lean+br,t},lookFor(150,KOMU,HERO_FACES[0],'#5d3a92',184));
@@ -2369,7 +2377,7 @@ function loop(now){
   else if(cur==='sKikyo')drawKikyo(t,dt);
   requestAnimationFrame(loop);
 }
-addEventListener('resize',()=>{crowdCache=null;if(cur==='sTitle')hero=makeCanvas($('heroCv'),.75);if(cur==='sCreate')facePrev=makeCanvas($('facePrev'),1);
+addEventListener('resize',()=>{crowdCache=null;if(cur==='sTitle')hero=makeCanvas($('heroCv'),2/3);if(cur==='sCreate')facePrev=makeCanvas($('facePrev'),1);
   if(cur==='sHome'&&avatar){const a=avatar.act;avatar=makeCanvas($('avatar'),102/84);avatar.act=a;}if(cur==='sKikyo')kCv=makeCanvas($('kCv'),220/400);if(cur==='sBout'){ring=makeCanvas($('ring'),330/400);faceCv=makeCanvas($('bFace'),1);}if(cur==='sResult'&&rc)rc=makeCanvas($('rCv'),4/3);});
 
 /* ---------- wire ---------- */
