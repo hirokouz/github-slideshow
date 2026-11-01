@@ -590,9 +590,9 @@ const defaultFace=()=>({shape:0,brow:0,eye:0,nose:0,mouth:0,extra:0,skin:1});
 const KEY='sumo-rpg-v1',ROSTER_KEY='sumo-rpg-roster-v1';let st=null,roster={active:null,list:{}};
 /* each rikishi's potential: stat ceilings and a target weight set at entry from body type,
    character and chance; weight pace differs from person to person */
-const CAPS={oshi:{oshi:122,chikara:106,waza:92,hayasa:96},yotsu:{oshi:100,chikara:122,waza:106,hayasa:90},waza:{oshi:94,chikara:92,waza:122,hayasa:116}};
+const CAPS={oshi:{oshi:125,chikara:108,waza:97,hayasa:100},yotsu:{oshi:104,chikara:125,waza:108,hayasa:96},waza:{oshi:98,chikara:96,waza:125,hayasa:118}};
 const KGMAX={oshi:165,yotsu:178,waza:142};
-function rollPotential(s){const base=CAPS[s.type]||CAPS.oshi,c={};for(const k in base)c[k]=Math.round(base[k]+rnd(-9,9));
+function rollPotential(s){const base=CAPS[s.type]||CAPS.oshi,c={};for(const k in base)c[k]=Math.round(base[k]+rnd(-8,8));
   const so=s.face&&s.face.img&&AIF[s.face.img],ck=so&&so.meta.kgs?so.meta.kgs[2]+15:null;
   const bias={oshi:{teppo:.15},yotsu:{shiko:.15},waza:{moushi:.12,suri:.1}}[s.type]||{};s.affin={};
   for(const a of ['shiko','teppo','suri','moushi'])s.affin[a]=+clamp(rnd(.72,1.32)+(bias[a]||0),.6,1.5).toFixed(2);
@@ -603,7 +603,7 @@ function kgGain(g){const room=clamp((st.kgMax-st.kg)/25,0,1);return g*(st.kgRate
 function potentialText(s){const L={oshi:'押し',chikara:'力',waza:'技',hayasa:'速さ'},c=s.cap;
   const best=Object.keys(c).sort((a,b)=>c[b]-c[a])[0],rate=s.kgRate>1.15?'太りやすい':s.kgRate<.85?'太りにくい':'ふつう';
   return '素質：'+Object.keys(c).map(k=>L[k]+c[k]).join('・')+'／得意 '+L[best]+'／体重の上限 '+s.kgMax+'kg（'+rate+'）';}
-function migrate(s){if(!s)return s;if(!s.cap||!s.affin){const keep=st;st=s;rollPotential(s);st=keep;}if(!s.face){s.face=defaultFace();if(typeof s.skin==='number')s.face.skin=clamp(s.skin,0,3);}
+function migrate(s){if(!s)return s;if(s.cap)for(const k in s.cap)s.cap[k]=Math.max(s.cap[k],90);if(!s.cap||!s.affin){const keep=st;st=s;rollPotential(s);st=keep;}if(!s.face){s.face=defaultFace();if(typeof s.skin==='number')s.face.skin=clamp(s.skin,0,3);}
   if(s.age0===undefined)Object.assign(s,profileSeed(s.type));
   if(!s.v2){s.pos=mapOldPos(s.pos);for(const h of s.hist||[])h.pos=mapOldPos(h.pos);if(s.basho)s.basho=null,s.used=5;s.v2=1;}
   if(!s.rival)s.rival=makeRival(s);if(s.best===undefined)s.best=s.pos;if(!s.deck)s.deck=[];if(!s.id)s.id='r'+Date.now().toString(36)+Math.floor(Math.random()*1e4);if(!s.touched)s.touched=Date.now();return s;}
@@ -1269,7 +1269,9 @@ function renderHome(){
   row('体重',st.kg-60,140,Math.round(st.kg)+'kg','kg',lastGain.kg);
   row('疲れ',st.fat,100,Math.round(st.fat),'fat');
   lastGain={};
-  if(st.inj>0){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ff8a80;margin:0';d.textContent='けが中：休めば治る';sb.append(d);}
+  if(st.pos===OZEKI){const lack=Object.keys(st.stats).filter(k=>st.stats[k]<85);if(lack.length){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#e2b04a;margin:0';d.textContent='綱取りには全能力A以上が必要（あと：'+lack.map(k=>STAT_LABEL[k]).join('・')+'）';sb.append(d);}}
+  if(st.inj>0){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ff8a80;margin:0';d.textContent=st.inj>1?'重いけが：休み2回で治る':'けが中：休めば治る';sb.append(d);}
+  else if((st.tiredB||0)>=1){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ffb36b;margin:0';d.textContent='疲れがたまっている（'+st.tiredB+'場所連続）：休まないとけがをしやすい';sb.append(d);}
   $('hPower').textContent=growthLabel(ageOf(st))+'（成長×'+ageGrowth(ageOf(st)).toFixed(2)+'）　総合力 '+Math.round((st.stats.oshi+st.stats.chikara+st.stats.waza+st.stats.hayasa)/4+(st.kg-90)*.1);
   const ab=$('hActs');ab.innerHTML='';const done=st.used>=TURNS;
   for(const a of ACTS){const b=document.createElement('button');b.type='button';b.disabled=done;
@@ -1337,10 +1339,11 @@ function drawAvatarPortrait(t,dt){
 }
 function train(a){
   if(st.used>=TURNS)return;st.used++;st.trainN=(st.trainN||0)+1;if(a.id==='chanko')st.chankoN=(st.chankoN||0)+1;let msg='';const D=deckFx(),AG=ageGrowth(ageOf(st));
-  if(a.rest){st.fat=Math.max(0,st.fat+a.fat*(1+D.rest));if(st.inj>0){st.inj=0;msg='ゆっくり休んで、けがが治った。';}else msg=pick(['よく眠った。体が軽い。','部屋の掃除をして英気を養った。','近所のお寺で静かに過ごした。']);}
+  if(a.rest){st.fat=Math.max(0,st.fat+a.fat*(1+D.rest));if(st.inj>0){st.inj--;msg=st.inj>0?'休んで少し楽になった。まだ痛みが残る（もう一度休めば治る）。':'ゆっくり休んで、けがが治った。';}else msg=pick(['よく眠った。体が軽い。','部屋の掃除をして英気を養った。','近所のお寺で静かに過ごした。']);}
   else if(a.kg){const g=kgGain((a.kg+rnd(-.5,1))*(1+D.kg+(spouse()==='eiyo'?.3:0)));st.kg+=g;lastGain.kg=g;st.fat=Math.max(0,st.fat+a.fat*(1+D.rest));msg=pick(['ちゃんこを五杯おかわりした。','タニマチから牛肉の差し入れ。','兄弟子と鍋を囲んだ。']);}
   else{const tired=st.fat>75;
-    if(tired&&Math.random()<.3*Math.max(0,1+D.inj+buff('inj'))){st.inj=1;st.fat=Math.min(100,st.fat+a.fat*(1+D.fat));msg='無理がたたってけがをした……。休んで治そう。';}
+    const chronic=st.tiredB||0,risk=(tired?.3:0)+(chronic>=2&&st.fat>50?.06*chronic:0);
+    if(risk>0&&Math.random()<risk*Math.max(0,1+D.inj+buff('inj'))){st.inj=chronic>=2?2:1;st.fat=Math.min(100,st.fat+a.fat*(1+D.fat));msg='無理がたたってけがをした……。休んで治そう。';}
     else{const crit=Math.random()<.12+D.crit;const mul=(crit?2:1)*(st.inj?.5:1)*(tired?.6:1);const parts=[];
       for(const k in a.gain){const g=a.gain[k]*rnd(.96,1.56)*Math.max(0,1-st.stats[k]/capOf(k))*mul*AG*((st.affin&&st.affin[a.id])||1)*(1+D.all+(D[a.id]||0)+(st.pBonus||0)+buff('growth')+(a.id==='shiko'&&flag('fatherShiko')?.1:0));st.stats[k]+=g;lastGain[k]=g;parts.push(STAT_LABEL[k]+' +'+g.toFixed(1));}
       if(a.id==='moushi'||a.id==='shiko')st.kg+=kgGain(.4);
@@ -1426,6 +1429,7 @@ function resolve(q){
   const ws=win?s:ostrat,km=pick(KIMARITE[ws]);
   const kind=ws==='waza'&&km!=='送り出し'?'slap':km.includes('投げ')?'throw':km.includes('倒し')?'down':'out';
   st.fat=Math.min(100,st.fat+2.5);
+  if(!st.inj&&(st.tiredB||0)>=1&&Math.random()<(.025*st.tiredB+(st.fat>80?.04:0))*Math.max(0,1+deckFx().inj+buff('inj'))){st.inj=2;toast('たまった疲れで、取組中に膝を痛めた……');addLog('慢性的な疲れがたたり、本場所の取組中にけがをした（休み2回で治る）。');}
   const k=win?{oshi:'oshi',yotsu:'chikara',waza:'waza'}[s]:null;if(k)st.stats[k]+=.25*Math.max(0,1-st.stats[k]/capOf(k));
   if(win){B.w++;B.marks+='○';B.earn=(B.earn||0)+earn(st.pos>=MAKU?50:st.pos>=JURYO?30:10);st.streak=(st.streak||0)+1;st.bestStreak=Math.max(st.bestStreak||0,st.streak);
     if(o.pos>=OZEKI)B.beatTop=true;if(s==='waza')B.wazaWins=(B.wazaWins||0)+1;
@@ -1625,7 +1629,9 @@ function endBasho(){
   else if(old===OZEKI){
     if(w<8){if(st.kadoban){p=SEKI;st.kadoban=false;msg='カド番で負け越し、大関から陥落……。';}else{st.kadoban=true;msg='負け越し。次の場所はカド番だ。';}}
     else{st.kadoban=false;const good=yusho||w>=13;const prevGood=prev&&prev.pos===OZEKI&&(prev.yusho||prev.w>=13);
-      if(good&&prevGood&&(yusho||prev.yusho)){p=YOKO;msg='横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。';}else if(good)msg='来場所は綱取りの場所だ。';}}
+      const allA=Object.values(st.stats).every(v=>v>=85);
+      if(good&&prevGood&&(yusho||prev.yusho)&&!allA){msg='横審「成績は申し分ないが、力量にまだ穴がある」。綱には全能力A以上が必要だ（'+Object.keys(st.stats).filter(k=>st.stats[k]<85).map(k=>STAT_LABEL[k]+gradeOf(st.stats[k])[0]).join('・')+'）。';}
+      else if(good&&prevGood&&(yusho||prev.yusho)){p=YOKO;msg='横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。';}else if(good)msg='来場所は綱取りの場所だ。';}}
   if(yusho){st.yusho++;if(old>=MAKU)st.makuYusho++;}
   const when=(Math.floor(st.b/6)+1)+'年目 '+BASHO[st.b%6];
   st.hist.push({when,rank:r.name,pos:old,w,l,yusho,mae:wasMae||undefined});
@@ -1644,6 +1650,7 @@ function endBasho(){
   if(st.rom&&st.rom.waitYoko&&p>=YOKO&&st.rom.stage==='dating'){st.rom.waitYoko=false;queueLife('propose',st.rom.pid);}
   else checkLife(w,l,yusho,endedIdx);
   if(st.school){if(endedIdx<2)queueLife('class');else{queueLife('graduate');st.school=false;}}
+  st.tiredB=st.fat>=60?(st.tiredB||0)+1:0;if(st.tiredB>=2)addLog('疲れが抜けないまま場所を終えた（'+st.tiredB+'場所連続）。けがに注意。');
   st.pos=p;st.best=Math.max(st.best||0,p);st.b++;st.used=0;st.basho=null;st.fat=Math.max(0,st.fat-25);
   if(st.rival){st.rival.edge=(st.rival.edge||0)+.35;st.rival.kg=Math.min(185,st.rival.kg+rnd(0,3));}
   const newAch=checkAch();
@@ -2159,7 +2166,7 @@ document.querySelectorAll('input[name=age],input[name=type]').forEach(i=>i.addEv
 let autoGrow=false,autoTimer=null,autoBusy=false;
 const autoSpd=()=>autoGrow?+($('autoSpeed').value||1):1;
 function pickAct(){const S=st.stats,id=k=>ACTS.find(a=>a.id===k);
-  if(st.inj>0||st.fat>68)return id('rest');
+  if(st.inj>0||st.fat>68||((st.tiredB||0)>=1&&st.fat>45))return id('rest');
   const want=Math.min(st.kgMax-4,105+st.b*3.2);if(st.kg<want&&st.fat<55&&Math.random()<.35)return id('chanko');
   const main={oshi:'teppo',yotsu:'shiko',waza:'moushi'}[st.type]||'teppo';if(Math.random()<.45)return id(main);
   const low=Object.entries({teppo:S.oshi,shiko:S.chikara,moushi:S.waza,suri:S.hayasa}).sort((a,b)=>a[1]-b[1])[0][0];return id(low);}
