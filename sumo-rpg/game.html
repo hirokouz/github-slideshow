@@ -1300,8 +1300,19 @@ const SND=(()=>{
     sad:{bpm:58,len:32,fn:(i,t,b)=>{if(i%4===0)I.koto(t,nt(MIYAKO,[0,3,1,0,-1,0,2,1][i/4]+5),.5,b);
       if(i%8===0){const m=[[9,7],[8,6],[7,8],[6,5]][i/8];I.fue(t,nt(MIYAKO,m[0]+5),60/58*1.9,.9,b);I.fue(t+60/58*2,nt(MIYAKO,m[1]+5),60/58*1.9,.9,b);}}},
   };
-  function loop(){if(!ctx||!track)return;const T=TR[track],sp=60/T.bpm/2;while(nextT<ctx.currentTime+.35){T.fn(step,nextT,bus);step=(step+1)%T.len;nextT+=sp;}}
+  function loop(){if(!ctx||!track||songOn)return;const T=TR[track],sp=60/T.bpm/2;while(nextT<ctx.currentTime+.35){T.fn(step,nextT,bus);step=(step+1)%T.len;nextT+=sp;}}
+  /* recorded songs replace a synth track when the file loads; streamed, so they cost nothing until played */
+  const SONG={title:{src:'bgm/title.mp3',vol:.9}};const songEl={};let songOn=null;
+  function songFor(name){const S=SONG[name];if(!S)return null;let o=songEl[name];
+    if(!o){const a=new Audio();a.src=S.src;a.loop=true;a.preload='none';const g=ctx.createGain();g.gain.value=0;try{ctx.createMediaElementSource(a).connect(g);}catch(e){return null;}g.connect(bgm);
+      o=songEl[name]={a,g,vol:S.vol,bad:false};a.addEventListener('error',()=>{o.bad=true;if(songOn===o){songOn=null;track=null;play(name);}});}
+    return o.bad?null:o;}
+  function stopSong(){if(!songOn)return;const o=songOn;songOn=null;o.g.gain.setTargetAtTime(0,ctx.currentTime,.3);setTimeout(()=>{if(songOn!==o)o.a.pause();},1500);}
   function play(name){if(!ctx||name===track)return;const t=ctx.currentTime;
+    const sg=name&&songFor(name);
+    if(sg){if(bus){const old=bus;old.gain.setTargetAtTime(0,t,.25);setTimeout(()=>old.disconnect(),1500);bus=null;}stopSong();track=name;songOn=sg;
+      sg.g.gain.cancelScheduledValues(t);sg.g.gain.setValueAtTime(sg.g.gain.value,t);sg.g.gain.linearRampToValueAtTime(sg.vol,t+1);const pr=sg.a.play();if(pr&&pr.catch)pr.catch(()=>{});return;}
+    stopSong();
     if(bus){const old=bus;old.gain.setTargetAtTime(0,t,.25);setTimeout(()=>old.disconnect(),1500);}
     track=name||null;bus=null;if(!track)return;bus=ctx.createGain();bus.gain.setValueAtTime(0,t);bus.gain.linearRampToValueAtTime(1,t+.8);bus.connect(bgm);step=0;nextT=t+.08;}
   function want(){if(cur==='sTitle'||cur==='sCreate')return'title';if(cur==='sHome'||cur==='sGacha')return'home';if(cur==='sBout')return'basho';if(cur==='sResult')return null;
@@ -1309,7 +1320,7 @@ const SND=(()=>{
   function sync(){if(!ctx||!unlocked)return;play(want());}
   function unlock(){if(!init())return;if(ctx.state==='suspended')ctx.resume();if(!unlocked){unlocked=true;timer=setInterval(loop,90);sync();}}
   addEventListener('pointerdown',unlock,{passive:true});addEventListener('keydown',unlock);
-  document.addEventListener('visibilitychange',()=>{if(!ctx)return;if(document.hidden)ctx.suspend();else if(unlocked)ctx.resume();});
+  document.addEventListener('visibilitychange',()=>{if(!ctx)return;if(document.hidden){ctx.suspend();if(songOn)songOn.a.pause();}else if(unlocked){ctx.resume();if(songOn){const pr=songOn.a.play();if(pr&&pr.catch)pr.catch(()=>{});}}});
   // one-shot effects
   const fx={
     hit:()=>{const t=ctx.currentTime;I.taiko(t,1);noise(t,.18,{f:180,q:.7,type:'lowpass',vol:.6});},
@@ -1326,7 +1337,7 @@ const SND=(()=>{
       else if(id==='moushi'){I.taiko(t,.6);I.shime(t+.12,.9);}else if(id==='chanko'){for(let k=0;k<4;k++)tone(t+k*.09,500+Math.random()*300,.06,{vol:.08,bend:.4});}
       else if(id==='rest'){I.koto(t,nt(YO,7),.5);I.koto(t+.2,nt(YO,9),.4);}else I.koto(t,nt(YO,7),.5);},
   };
-  return{state:()=>ctx?ctx.state+':'+(track||'-'):'none',sync,play:(n,...a)=>{if(ctx&&unlocked&&fx[n])try{fx[n](...a);}catch(e){}},cfg,save,unlock};
+  return{state:()=>ctx?ctx.state+':'+(track||'-')+(songOn?'(song '+(songOn.a.paused?'paused':'playing')+')':''):'none',sync,play:(n,...a)=>{if(ctx&&unlocked&&fx[n])try{fx[n](...a);}catch(e){}},cfg,save,unlock};
 })();
 function show(id){for(const s of SCR)$(s).hidden=s!==id;cur=id;closeSheet();window.scrollTo(0,0);document.body.classList.toggle('onTitle',id==='sTitle');SND.sync();}
 function openSheet(k,title){const sh=$('sheet');sh.hidden=false;$('sheetT').textContent=title||'';for(const el of sh.querySelectorAll('[data-p]'))el.hidden=el.dataset.p!==k;}

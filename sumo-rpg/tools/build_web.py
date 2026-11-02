@@ -27,6 +27,7 @@ assert html.count('<title>横綱への道</title>')==1
 html=html.replace('<title>横綱への道</title>',meta)
 open(os.path.join(WEB,'index.html'),'w',encoding='utf-8').write(html)
 for f in ['cast.js','faces.js','women.js','tani.js','title.webp']:shutil.copy(os.path.join(ROOT,f),os.path.join(WEB,f))
+shutil.copytree(os.path.join(ROOT,'bgm'),os.path.join(WEB,'bgm'),dirs_exist_ok=True)
 json.dump({'name':'横綱への道','short_name':'横綱への道','start_url':'./','display':'standalone','orientation':'portrait',
   'background_color':'#0d1430','theme_color':'#0d1430','lang':'ja',
   'icons':[{'src':'icon-192.png','sizes':'192x192','type':'image/png'},{'src':'icon-512.png','sizes':'512x512','type':'image/png'}]},
@@ -35,5 +36,6 @@ json.dump({'name':'横綱への道','short_name':'横綱への道','start_url':'
 open(os.path.join(WEB,'_headers'),'w').write('/*.js\n  Cache-Control: public, max-age=86400\n/*.png\n  Cache-Control: public, max-age=604800\n')
 z=os.path.join(ROOT,'yokozuna-web.zip')
 with zipfile.ZipFile(z,'w',zipfile.ZIP_DEFLATED) as zz:
-    for f in sorted(os.listdir(WEB)):zz.write(os.path.join(WEB,f),f)
+    for dp,dn,fn in os.walk(WEB):
+        for f in sorted(fn):full=os.path.join(dp,f);zz.write(full,os.path.relpath(full,WEB))
 print('built',WEB,'and',z,round(os.path.getsize(z)/1e6,1),'MB')
