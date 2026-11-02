@@ -347,6 +347,7 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
 /* homecoming */
 #kCv{width:100%;aspect-ratio:400/220;display:block;border-radius:10px;box-shadow:0 10px 26px rgba(0,0,0,.4)}
 .kchoices{display:grid;gap:8px}
+#kText{white-space:pre-line}
 .kchoices .ghost{background:var(--ai2);font-size:15px;padding:13px 14px}
 @media (max-height:740px){
   .wrap{gap:8px;padding-block:calc(env(safe-area-inset-top,0px) + 6px) calc(env(safe-area-inset-bottom,0px) + 8px)}
@@ -688,7 +689,7 @@ function recastRoster(){const ids=castIds();if(!ids.length)return;let changed=fa
   if(changed)saveRoster();}
 function saveRoster(){try{localStorage.setItem(ROSTER_KEY,JSON.stringify(roster));}catch(e){}}
 function persist(){if(!st)return;st.touched=Date.now();roster.list[st.id]=st;roster.active=st.id;saveRoster();}
-function play(id){st=roster.list[id];if(!st)return;roster.active=id;saveRoster();if(st.pendingKikyo)openKikyo();else if(st.basho)startBasho();else renderHome();}
+function play(id){st=roster.list[id];if(!st)return;roster.active=id;saveRoster();if(st.retiring)openRetire(id);else if(st.pendingKikyo)openKikyo();else if(st.basho)startBasho();else renderHome();}
 const PREFS=['北海道','青森','秋田','岩手','山形','宮城','福島','茨城','栃木','群馬','埼玉','千葉','東京','神奈川','新潟','富山','石川','福井','山梨','長野','岐阜','静岡','愛知','三重','滋賀','京都','大阪','兵庫','奈良','和歌山','鳥取','島根','岡山','広島','山口','徳島','香川','愛媛','高知','福岡','佐賀','長崎','熊本','大分','宮崎','鹿児島','沖縄'];
 function profileSeed(type){return{age0:15+Math.floor(Math.random()*8),height:Math.round(({oshi:180,yotsu:184,waza:175}[type]||180)+rnd(-4,5)),home:pick(PREFS)};}
 const ageOf=s=>s.age0+Math.floor(s.b/6);
@@ -1260,16 +1261,16 @@ function renderTitle(){
     info.append(nm,rk,mt);
     const btns=document.createElement('div');btns.className='btns';
     const go=document.createElement('button');go.className='go';go.type='button';go.textContent='続ける';go.addEventListener('click',()=>play(id));
-    const del=document.createElement('button');del.className='del';del.type='button';del.textContent='引退して親方に';
-    del.addEventListener('click',()=>{if(!del.classList.contains('armed')){del.classList.add('armed');del.textContent='本当に引退？もう一度押す';setTimeout(()=>{del.classList.remove('armed');del.textContent='引退して親方に';},3000);return;}
-      retire(id);});
+    const del=document.createElement('button');del.className='del';del.type='button';del.textContent='引退する';
+    del.addEventListener('click',()=>{if(!del.classList.contains('armed')){del.classList.add('armed');del.textContent='本当に引退？もう一度押す';setTimeout(()=>{del.classList.remove('armed');del.textContent='引退する';},3000);return;}
+      const r=roster.list[id];if(r){r.retiring=true;r.retireWhy=r.retireWhy||'self';}openRetire(id);});
     btns.append(go,del);card.append(img,info,btns);box.append(card);}
   loginBonus();$('tMoney').textContent=roster.money||0;
   $('tAchN').textContent=Object.keys(roster.ach).length+' / '+ACH.length;renderAch($('tAch'));
   $('tPrestige').textContent='部屋の格 '+(roster.prestige||0)+'（新弟子の成長 +'+Math.round(prestigeBonus()*100)+'%）';
   const hb=$('tHall');hb.innerHTML='';if(!roster.hall.length){const pp=document.createElement('p');pp.className='muted';pp.style.fontSize='12.5px';pp.textContent='まだいない。力士を引退させると親方になり、部屋の格が上がる。';hb.append(pp);}
   for(const h of roster.hall.slice().reverse()){const row=document.createElement('div');row.className='h';const im=document.createElement('img');im.alt='';im.dataset.hall=roster.hall.indexOf(h);try{im.src=portrait(h.face,'normal',h.oicho,96).toDataURL();}catch(e){}
-    const a=document.createElement('div');a.innerHTML='<div class="hn"></div><div class="muted"></div>';a.children[0].textContent=h.name;a.children[1].textContent='最高位 '+h.best+'・'+h.w+'勝'+h.l+'敗・'+h.years+'年';
+    const a=document.createElement('div');a.innerHTML='<div class="hn"></div><div class="muted"></div>';a.children[0].textContent=h.name;a.children[1].textContent='最高位 '+h.best+'・'+h.w+'勝'+h.l+'敗・'+h.years+'年'+(h.path?'・'+h.path:'');
     const y=document.createElement('div');y.style.cssText='color:var(--kin);font-weight:700;text-align:right';y.textContent=h.makuYusho?'幕内優勝'+h.makuYusho+'回':'';row.append(im,a,y);hb.append(row);}
   $('newBtn').textContent=ids.length?'新しい力士を入門させる':'新弟子として入門する';$('newBtn').className=ids.length?'ghost':'primary';
   show('sTitle');hero=makeCanvas($('heroCv'),2/3);
@@ -1526,7 +1527,7 @@ const INJ_PARTS=[{n:'膝',k:['hayasa','chikara']},{n:'腰',k:['chikara','oshi']}
 const INJ_SEV=['','軽傷','中傷','重傷'],INJ_HIT=[0,.03,.07,.13];
 function injure(sev,cause){sev=clamp(sev,1,3);const part=pick(INJ_PARTS);
   const lost=[];for(const k in st.stats){const r=part.k.includes(k)?INJ_HIT[sev]:INJ_HIT[sev]*.3;if(r<=0)continue;const d=st.stats[k]*r;st.stats[k]-=d;if(d>=.5)lost.push(STAT_LABEL[k]+' −'+d.toFixed(1));}
-  st.inj=Math.max(st.inj||0,sev);st.injHeal=Math.max(st.injHeal||0,[0,2,5,9][sev]);st.injPart=part.n;st.injSev=Math.max(st.injSev||0,sev);
+  if(sev>=2)st.injN=(st.injN||0)+1;st.inj=Math.max(st.inj||0,sev);st.injHeal=Math.max(st.injHeal||0,[0,2,5,9][sev]);st.injPart=part.n;st.injSev=Math.max(st.injSev||0,sev);
   const txt=cause+part.n+'を痛めた（'+INJ_SEV[sev]+'）。'+lost.join('　');addLog(txt);toast(part.n+'の'+INJ_SEV[sev]+'……　'+lost.slice(0,2).join(' '));return txt;}
 const INJ_OK=a=>a.rest||a.kg||a.family||a.date;
 function train(a){
@@ -1871,6 +1872,7 @@ function endBasho(){
     else if(endedIdx+1>=st.vowUntil){addBuff(st,'money',-.2,6,'地元の落胆');ex.push('テレビで語った目標に届かなかった…（1年間ご祝儀 −20%）');st.vowUntil=null;}}
   if(endedIdx%6===5){st.pendingKikyo=true;ex.push('年の瀬だ。地元に帰ろう。');}
   if(old<JURYO&&p>=JURYO&&(st.best||0)<JURYO)queueLife('juryo');
+  retireCheck(old,p,w,l);
   if(st.rom&&st.rom.waitYoko&&p>=YOKO&&st.rom.stage==='dating'){st.rom.waitYoko=false;queueLife('propose',st.rom.pid);}
   else checkLife(w,l,yusho,endedIdx);
   if(st.tani){const T=st.tani;T.miss=T.this?0:(T.miss||0)+1;T.this=false;
@@ -2132,17 +2134,110 @@ function renderAch(box){box.innerHTML='';for(const a of ACH){const d=document.cr
 function bestRankName(s){return rank(Math.max(s.best||0,s.pos)).div==='前頭'?'前頭':rank(Math.max(s.best||0,s.pos)).div;}
 function prestigeOf(s){const b=Math.max(s.best||0,s.pos);return (b>=YOKO?20:b>=OZEKI?12:b>=KOMU?8:b>=MAKU?5:b>=JURYO?3:1)+s.makuYusho*3+Math.floor(totalWins(s)/100);}
 const prestigeBonus=()=>Math.min(.3,(roster.prestige||0)*.01);
-function retire(id){const s=roster.list[id];if(!s)return;const pts=prestigeOf(s);
-  roster.hall.push({name:s.name,face:s.face,best:bestRankName(s),bestPos:Math.max(s.best||0,s.pos),makuYusho:s.makuYusho,yusho:s.yusho,w:totalWins(s),l:s.hist.reduce((a,h)=>a+h.l-(h.kyu||0),0),age:ageOf(s),years:yearOf(s),oicho:Math.max(s.best||0,s.pos)>=JURYO});
-  const married=s.rom&&s.rom.stage==='married';if(married&&s.rom.kid){roster.sonOf=s.name;roster.sonHome=s.home;}
+/* ---------- retirement: talk → press conference → danpatsu → career summary → second career ---------- */
+function retireCheck(old,p,w,l){if(st.retiring||(st.retireAsk||0)>st.b)return;const age=ageOf(st),H=st.hist,cur=H[H.length-1],prev=H[H.length-2];let why=null;
+  if(old>=YOKO&&((w<8&&!(cur&&cur.kyu>=15))||(cur&&cur.kyu>=15&&prev&&prev.kyu>=15)))why='yoko';
+  else if(age>=37)why='age';
+  else if(age>=33&&w<l&&Math.random()<.35)why='age';
+  else if(age>=30&&old>=JURYO&&p<JURYO)why='fall';
+  else if(age>=27&&(st.injN||0)>=3&&w<l&&Math.random()<.4)why='injury';
+  if(why){st.retireWhy=why;queueLife('retire_talk');}}
+let RT=null;
+const TANI_BYE={taisho:'「お疲れさん！ 明日からは、うちの店でたらふく食わせたる」',shacho:'「ようやった。第二の人生も、ワシが応援させてもらうで」',okami:'「長いあいだ、本当にお疲れさまでございました」',wakashacho:'「最高のキャリアだったね。次のチャレンジも応援するよ」'};
+function retireSteps(s){const best=Math.max(s.best||0,s.pos),seki=best>=JURYO,R=s.rom||{},her=R.pid&&['dating','engaged','married'].includes(R.stage)?R.pid:null,age=ageOf(s);
+  const totalL=s.hist.reduce((a,h)=>a+h.l-(h.kyu||0),0),totalK=s.hist.reduce((a,h)=>a+(h.kyu||0),0);
+  const fav=s.hist.filter(h=>!h.mae).slice().sort((a,b)=>(b.yusho?100:0)+b.pos/1000+b.w-((a.yusho?100:0)+a.pos/1000+a.w))[0];
+  const why={age:'もう体が思うように動かない。',fall:'関取の座を守れなくなった。',injury:'けがとの戦いに区切りをつけた。',yoko:'横綱として、進退は自分で決めた。',self:''}[s.retireWhy]||'';
+  const words=best>=YOKO?'「横綱として、土俵に悔いはありません。綱を締められたことを、誇りに思います」':best>=OZEKI?'「大関として最後まで戦えたことに、感謝しかありません」':best>=KOMU?'「三役まで上がれたのは、支えてくれたみなさんのおかげです」':best>=MAKU?'「幕内の土俵に立てたことは、一生の宝です」':seki?'「大銀杏を結えた日のことは、一生忘れません」':'「関取にはなれなかったけど、相撲が大好きでした。悔いはありません」';
+  const steps=[{title:'引退会見',name:rank(best).name+'・'+s.name+'、引退',scene:'kaiken',btn:seki?'断髪式へ':'部屋での断髪へ',
+    text:age+'歳。'+why+'\n両国国技館で引退会見が開かれた。'+words+(fav?'\n一番の思い出は、'+fav.when+'（'+fav.rank+'）の'+fav.w+'勝'+(fav.l-(fav.kyu||0))+'敗'+(fav.yusho?'、あの優勝だ。':'。'):'')}];
+  const cuts=[];
+  if(seki){
+    if(s.tani){const id=taniId(s.tani);cuts.push({who:s.tani.name,img:()=>tImg(id,'faces','smile'),k:'谷',say:TANI_BYE[id]||'「お疲れさん。よう頑張った」'});}
+    if(s.rival)cuts.push({who:'宿敵・'+s.rival.name,img:()=>portrait(s.rival.face,'normal',true,256),k:'敵',say:'「おまえがいたから、ここまで来られた。対戦成績は'+(s.rival.w||0)+'勝'+(s.rival.l||0)+'敗。次は親方として勝負だ」'});
+    if(her){const nm=firstName(her);cuts.push({who:(R.stage==='married'?'妻・':R.stage==='engaged'?'婚約者・':'')+nm,img:()=>wImg(her,'exprs','joycry'),k:PARTNERS[her].k,
+      say:R.stage==='married'?'「本当におつかれさま。これからは、家族の時間だね」':R.stage==='engaged'?'「ずっと隣で見てたよ。これからもよろしくね」':'「かっこよかったよ。おつかれさま」'});}
+    if(R.kid)cuts.push({who:'長男',k:'子',say:'「お父さん、かっこよかった！ ぼくもお相撲さんになる！」'});
+    cuts.push({who:'母',k:'母',say:flag2(s,'oyakoko')?'「親孝行な子だったね。体だけは大事にしてね」':'「おつかれさま。体だけは大事にしてね」'});}
+  cuts.push({who:'父',k:'父',say:flag2(s,'fatherShiko')?'「おまえの四股、ずっと見とったぞ。自慢の息子だ」':'「よくここまでやった。自慢の息子だ」'});
+  cuts.push({who:'親方',k:'親',say:'「よう頑張った。……これで、おまえは力士を卒業だ」',tome:true});
+  cuts.forEach((c,i)=>steps.push({title:seki?'断髪式':'断髪（部屋で）',name:(c.tome?'止めばさみ　':'はさみ入れ　')+c.who,scene:c.tome?'tome':'cut',cut:c,n:i+1,of:cuts.length,
+    text:(i===0?(seki?'国技館の土俵の中央に座った。ゆかりの人たちが、ひとりずつ大銀杏にはさみを入れていく。\n\n':'部屋の稽古場で、髷を落とす日が来た。\n\n'):'')+c.who+(c.tome?'が、最後のはさみを入れる。':'がはさみを入れた。')+'\n'+c.say+(c.tome?'\n\n髷が、ぽとりと落ちた。':''),btn:i===cuts.length-1?'ふりかえる':'次の人へ'}));
+  const R2=s.rival;
+  steps.push({title:'現役生活',name:s.name+'の土俵人生',scene:'sum',btn:'これからの道へ',text:[
+    '最高位　'+rank(best).name,
+    '通算成績　'+totalWins(s)+'勝'+totalL+'敗'+(totalK?totalK+'休':'')+'（'+s.hist.length+'場所）',
+    '優勝　幕内'+(s.makuYusho||0)+'回・各段'+Math.max(0,(s.yusho||0)-(s.makuYusho||0))+'回',
+    '三賞 '+(s.sanshoN||0)+'回・金星 '+(s.kinboshi||0)+'個',
+    R2?'宿敵 '+R2.name+' とは '+(R2.w||0)+'勝'+(R2.l||0)+'敗':'',
+    (s.age0)+'歳で入門 → '+age+'歳で引退（土俵生活'+Math.max(1,Math.round(s.b/6))+'年）'].filter(Boolean).join('\n')});
+  const ch=[{l:'親方として部屋に残る',d:'部屋の格が上がり、次の新弟子が育ちやすくなる',path:'oyakata'}];
+  if(R.stage==='married'&&R.kid)ch.push({l:'息子を入門させる（二代目）',d:'父の血を引く新弟子が入門。能力と成長に父のボーナス',path:'son'});
+  if(s.tani)ch.push({l:'ちゃんこ屋を開く',d:'タニマチの後押しで開店。毎日のログインご祝儀 +50（部屋の格は半分）',path:'chanko'});
+  steps.push({title:'これからの道',name:'第二の人生',scene:'sum',text:'まげを落とした頭が、少し涼しい。\nこれから、どの道を歩こう。',choices:ch});
+  return steps;}
+function flag2(s,k){return !!(s.flags&&s.flags[k]);}
+function openRetire(id){const s=roster.list[id];if(!s)return;if(autoGrow)autoStop();st=s;roster.active=id;s.retiring=true;saveRoster();
+  RT={id,s,steps:retireSteps(s),i:0,t:0,face2:null};showRetireStep();}
+function retireNext(){if(!RT)return;if(RT.i<RT.steps.length-1){RT.i++;showRetireStep();}}
+function showRetireStep(){const S=RT.steps[RT.i],s=RT.s;kScene='retire';kStop=false;RT.t=0;RT.snip=false;RT.hair=[];
+  $('kTitle').textContent=S.title;$('kWhen').textContent=ageOf(s)+'歳　'+(S.n?S.n+' / '+S.of:'');$('kEvName').textContent=S.name;$('kText').textContent=S.text;
+  const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;
+  if(S.choices){$('kDone').hidden=true;for(const c of S.choices){const b=document.createElement('button');b.type='button';b.className='ghost';b.innerHTML='<b></b><br><small style="opacity:.75"></small>';b.querySelector('b').textContent=c.l;b.querySelector('small').textContent=c.d;
+      b.addEventListener('click',()=>{const id=RT.id;RT=null;kScene='home';retire(id,c.path);});box.append(b);}}
+  else{$('kDone').hidden=false;$('kDone').textContent=S.btn||'次へ';}
+  if(cur!=='sKikyo')show('sKikyo');kCv=makeCanvas($('kCv'),220/400);kSnow=[];}
+function drawRetire(g,W,H,t,dt){if(!RT)return;const S=RT.steps[RT.i],s=RT.s;RT.t+=dt;const T=RT.t;
+  const best=Math.max(s.best||0,s.pos),oi=best>=JURYO;
+  const cutDone=S.scene==='sum'||(S.scene==='tome'&&T>1.3);
+  let F=s.face;if(cutDone){if(!RT.face2){RT.face2={...s.face};ZAN_F.add(RT.face2);}F=RT.face2;}
+  if(S.scene==='kaiken'){ // gold folding screen, a cloth-covered table, microphones and flashes
+    const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#b88a2c');bg.addColorStop(1,'#7a5410');g.fillStyle=bg;g.fillRect(0,0,W,H);
+    for(let i=0;i<6;i++){const x=i*W/6;const gg=g.createLinearGradient(x,0,x+W/6,0);gg.addColorStop(0,'rgba(255,236,170,.35)');gg.addColorStop(1,'rgba(120,80,10,.25)');g.fillStyle=gg;g.fillRect(x,0,W/6,H*.8);g.fillStyle='rgba(60,40,5,.5)';g.fillRect(x,0,1.5,H*.8);}
+    const S2=H*.62;g.save();g.beginPath();g.arc(W/2,H*.42,S2*.42,0,6.283);g.fillStyle='#f3eadb';g.fill();g.clip();g.drawImage(portrait(F,'normal',oi,256),W/2-S2*.5,H*.42-S2*.45,S2,S2);g.restore();
+    g.fillStyle='#f4f1ea';g.fillRect(W*.12,H*.74,W*.76,H*.26);g.fillStyle='#ddd6c8';g.fillRect(W*.12,H*.74,W*.76,H*.03);
+    for(const x of [.4,.47,.53,.6]){g.strokeStyle='#222';g.lineWidth=2;g.beginPath();g.moveTo(W*x,H*.74);g.lineTo(W*(x+(x-.5)*.25),H*.62);g.stroke();g.fillStyle='#333';g.beginPath();g.arc(W*(x+(x-.5)*.25),H*.61,3.5,0,6.283);g.fill();}
+    for(let i=0;i<5;i++){const ph=(t*.9+i*.29)%1;if(ph<.07)softSpot(g,W*((i*.37+.1)%1),H*(.2+((i*.53)%1)*.5),W*.09,'255,255,255',.9*(1-ph/.07));}
+    return;}
+  // arena (sekitori) or the stable's keiko-ba
+  const bg=g.createLinearGradient(0,0,0,H);if(oi){bg.addColorStop(0,'#07081a');bg.addColorStop(1,'#241a2e');}else{bg.addColorStop(0,'#3b2a1c');bg.addColorStop(1,'#7a5536');}g.fillStyle=bg;g.fillRect(0,0,W,H);
+  if(oi){g.save();g.globalCompositeOperation='lighter';const cone=g.createLinearGradient(0,0,0,H);cone.addColorStop(0,'rgba(255,236,190,.25)');cone.addColorStop(1,'rgba(255,214,150,.03)');g.fillStyle=cone;g.beginPath();g.moveTo(W*.3,0);g.lineTo(W*.46,0);g.lineTo(W*.62,H);g.lineTo(W*.14,H);g.fill();g.restore();}
+  g.fillStyle=oi?'#c79b62':'#9b7a50';g.beginPath();g.ellipse(W*.38,H*.95,W*.34,H*.07,0,0,6.283);g.fill();
+  const cx=W*.38,cy=H*.48,S2=H*.66;
+  g.save();g.beginPath();g.arc(cx,cy,S2*.42,0,6.283);g.fillStyle='#f3eadb';g.fill();g.clip();g.drawImage(portrait(F,cutDone?'happy':'normal',oi&&!cutDone,256),cx-S2*.5,cy-S2*.45,S2,S2);g.restore();
+  g.strokeStyle='#e2b04a';g.lineWidth=3;g.beginPath();g.arc(cx,cy,S2*.42,0,6.283);g.stroke();
+  if(S.scene==='cut'||S.scene==='tome'){const c=S.cut;
+    // the person holding the scissors
+    const px=W*.8,py=H*.5,pr=H*.3;g.save();g.beginPath();g.arc(px,py,pr,0,6.283);g.fillStyle='#f7ecd8';g.fill();g.clip();
+    const im=c.img&&c.img();if(im){const w2=pr*2.3,h2=w2*(im.naturalHeight||im.height)/(im.naturalWidth||im.width);g.drawImage(im,px-w2/2,py+pr*1.05-h2,w2,h2);}
+    else{g.fillStyle='#7a1f1f';g.font=Math.round(pr*1.1)+'px "Yuji Boku",serif';g.textAlign='center';g.textBaseline='middle';g.fillText(c.k,px,py+pr*.05);}g.restore();
+    g.strokeStyle='#c9a24a';g.lineWidth=2.5;g.beginPath();g.arc(px,py,pr,0,6.283);g.stroke();
+    // scissors at the topknot
+    const sx=cx+S2*.06,sy=cy-S2*.42,open=T<.9?.35+.15*Math.sin(T*10):.05;
+    if(T<1.6){g.save();g.translate(sx,sy);g.rotate(-.5);g.strokeStyle='#dcdcdc';g.lineWidth=3;for(const d of [-1,1]){g.save();g.rotate(d*open);g.beginPath();g.moveTo(0,0);g.lineTo(H*.13,0);g.stroke();g.beginPath();g.arc(-H*.03,0,H*.02,0,6.283);g.stroke();g.restore();}g.restore();}
+    if(T>.9&&!RT.snip){RT.snip=true;for(let i=0;i<14;i++)RT.hair.push({x:sx+rnd(-6,6),y:sy,vx:rnd(-20,20),vy:rnd(-10,10),r:rnd(-3,3)});}
+    g.strokeStyle='#1a1410';g.lineWidth=1.4;RT.hair=RT.hair.filter(h=>{h.vy+=60*dt;h.x+=h.vx*dt;h.y+=h.vy*dt;h.r+=dt*3;g.beginPath();g.moveTo(h.x,h.y);g.lineTo(h.x+Math.cos(h.r)*5,h.y+Math.sin(h.r)*5);g.stroke();return h.y<H;});
+    if(S.scene==='tome'&&T>1.3){const k=Math.min(1,(T-1.3)/.8),mx=sx+k*W*.25,my=sy-H*.04*Math.sin(k*3.14)+k*k*(H*.9-sy);g.save();g.translate(mx,my);g.rotate(k*2.2);
+      g.fillStyle='#14100c';g.beginPath();g.ellipse(0,0,H*.07,H*.035,0,0,6.283);g.fill();g.fillStyle='#f2efe6';g.fillRect(-H*.012,-H*.03,H*.024,H*.06);g.restore();
+      if(T>2.2){g.fillStyle='rgba(255,246,220,'+Math.min(1,(T-2.2))+')';g.font=Math.round(H*.13)+'px "Yuji Boku",serif';g.textAlign='center';g.fillText('断髪',W*.8,H*.16);}}
+    for(let i=0;i<S.of;i++){g.fillStyle=i<S.n?'#e2b04a':'rgba(255,255,255,.25)';g.beginPath();g.arc(W*.5-(S.of-1)*7+i*14,H*.06,4,0,6.283);g.fill();}
+    return;}
+  // career summary
+  g.fillStyle='rgba(239,226,196,.92)';g.fillRect(W*.62,H*.12,W*.33,H*.76);g.fillStyle='#2a2118';g.textAlign='center';
+  g.font=Math.round(H*.13)+'px "Yuji Boku",serif';const nm=s.name;for(let i=0;i<nm.length;i++)g.fillText(nm[i],W*.785,H*(.28+i*.15));
+  g.fillStyle='#7a1f1f';g.font='700 '+Math.round(H*.07)+'px "Zen Kaku Gothic New",sans-serif';g.fillText(rank(best).name.replace(/枚目$/,''),W*.785,H*.84);}
+function retire(id,path){const s=roster.list[id];if(!s)return;path=path||'oyakata';const pts=Math.round(prestigeOf(s)*(path==='chanko'?.5:1));
+  roster.hall.push({name:s.name,face:s.face,best:bestRankName(s),bestPos:Math.max(s.best||0,s.pos),makuYusho:s.makuYusho,yusho:s.yusho,w:totalWins(s),l:s.hist.reduce((a,h)=>a+h.l-(h.kyu||0),0),age:ageOf(s),years:yearOf(s),oicho:Math.max(s.best||0,s.pos)>=JURYO,path:{oyakata:'親方',son:'二代目を送り出す',chanko:'ちゃんこ屋の店主'}[path]});
+  const married=s.rom&&s.rom.stage==='married';if(path==='son'){roster.sonOf=s.name;roster.sonHome=s.home;}if(path==='chanko')roster.shops=(roster.shops||0)+1;
   const bonusP=(s.flags&&s.flags.oyakoko?3:0)+(married?3:0)+(s.weddingPrestige||0);roster.prestige=(roster.prestige||0)+pts+bonusP;delete roster.list[id];if(roster.active===id)roster.active=null;if(st&&st.id===id)st=null;
-  checkAchStable();saveRoster();toast(s.name+' が引退し親方に。部屋の格 +'+pts+'（新弟子の成長 +'+Math.round(prestigeBonus()*100)+'%）');renderTitle();}
+  checkAchStable();saveRoster();toast(path==='chanko'?s.name+' がちゃんこ屋を開いた。毎日のご祝儀 +50・部屋の格 +'+pts:s.name+' が引退。部屋の格 +'+(pts+bonusP)+'（新弟子の成長 +'+Math.round(prestigeBonus()*100)+'%）');
+  if(path==='son')openCreate();else renderTitle();}
 function checkAchStable(){for(const a of ACH){if(roster.ach[a.id])continue;if((a.id==='oyakata'||a.id==='hall3')&&a.c()){roster.ach[a.id]=Date.now();roster.money+=a.r;}}}
 
 /* ---------- daily login bonus ---------- */
 function loginBonus(){const d=new Date(),k=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
   if(roster.lastLogin===k)return;const first=!roster.lastLogin;roster.lastLogin=k;roster.loginDays=(roster.loginDays||0)+1;
-  const bonus=roster.loginDays%7===0?500:100;roster.money=(roster.money||0)+bonus;saveRoster();
+  const bonus=(roster.loginDays%7===0?500:100)+50*(roster.shops||0);roster.money=(roster.money||0)+bonus;saveRoster();
   if(!first||Object.keys(roster.list).length)toast('ログインボーナス　ご祝儀 +'+bonus+(bonus>100?'（7日目の大入り！）':''));}
 
 let toastT=null;
@@ -2289,6 +2384,14 @@ const taniId=T=>T&&(T.id||(TANIS.find(x=>x.name===T.name)||{}).id);
 const TIMG={};for(const id in (window.AI_TANI||{})){const a=window.AI_TANI[id],o={faces:{},looks:{}};for(const k in a.faces)o.faces[k]=IMG(a.faces[k]);for(const k in a.looks)o.looks[k]=IMG(a.looks[k]);o.scene=IMG(a.scene);o.gift=IMG(a.gift);TIMG[id]=o;}
 function tImg(id,kind,key){const o=TIMG[id];if(!o)return null;return okImg(key?o[kind][key]:o[kind]);}
 const LIFE={
+  retire_talk:()=>{const age=ageOf(st),why=st.retireWhy;
+    const T={age:'場所後、親方の部屋に呼ばれた。「'+age+'歳か。体はどうだ。……この先のことを、そろそろ考えてもいい頃だ」',
+      fall:'場所後、親方の部屋に呼ばれた。「十両から落ちたな。関取に戻る力は、まだ残っているか？」',
+      injury:'場所後、親方の部屋に呼ばれた。「けがが続いているな。無理をして体を壊すのが一番いかん」',
+      yoko:'場所後、親方の部屋に呼ばれた。「横綱は、負けが込んだら自分で進退を決めるものだ。……どうする」'}[why]||'場所後、親方の部屋に呼ばれた。「この先のこと、どう考えている」';
+    return{t:'親方との面談',scene:'oyakata',stopAuto:true,text:T,
+    ch:[{l:'「まだやれます」',f:()=>{st.retireAsk=st.b+6;addBuff(st,'power',1,2,'最後の意地');return['親方は黙ってうなずいた。「なら、あと1年。死ぬ気でやれ」','1年間は面談なし・2場所のあいだ取組の力 +1'];}},
+        {l:'「……引退します」',f:()=>{st.retiring=true;return['親方は目を閉じて、長く息をはいた。「そうか。……よう頑張った」','引退会見へ'];}}]};},
   juryo:()=>{const T=st.tani,R=st.rom,pd=R&&['crush','dating','engaged','married'].includes(R.stage)?PARTNERS[R.pid]:null;
     return{t:'十両昇進',scene:'juryo',text:'番付編成会議で、十両昇進が正式に決まった。部屋には記者とカメラが集まり、師匠の隣で会見に臨む。床山が生まれて初めての大銀杏を結い上げ、'+(T?T.name+'から':'後援会から')+'化粧まわしが贈られることになった。'+(pd?pd.name.replace(/^.*[・の]/,'')+'から「おめでとう！」とメッセージが届いている。':'')+'今日から「関取」だ。',
     ch:[{l:'「横綱を目指します」と宣言する',f:()=>{addBuff(st,'growth',.1,6,'関取の誓い');return['フラッシュが一斉にたかれた。翌朝のスポーツ紙に大きく載った。','十両昇進・1年間、稽古の伸び +10%'];}},
@@ -2358,19 +2461,24 @@ const LIFE={
     ch:[{l:'すぐに病院へ駆けつける',f:()=>{rom().kid={b:st.b};addBuff(st,'power',1,999,'父になった');return['小さな手が、指をぎゅっと握った。','取組の力 +1（ずっと）・引退後、この子を新弟子として入門させられる'];}}]}),
 };
 function wed(pid,gift){const R=rom();R.stage='married';R.weddingB=st.b;earn(gift);applySpouse(pid);addLog(firstName(pid)+'と結婚した。');}
-let kScene='home',kMark=null,kW=null,kT=null;
+let kScene='home',kMark=null,kW=null,kT=null,kStop=false;
 function openLife(item){
-  const s=st,ev=LIFE[item.kind](item.pid);kScene=ev.scene||'date';kMark=ev.mark||null;kEv=null;kT=ev.tw?{id:ev.tw.id,show:ev.tw.show}:null;kW=ev.w?{pid:item.pid||(st.rom&&st.rom.pid),e:ev.w.e||'normal',look:ev.w.look||null}:null;
-  $('kWhen').textContent=yearOf(s)+'年目　'+ageOf(s)+'歳';$('kTitle').textContent=ev.scene==='tani'?'後援者':ev.scene==='school'?'相撲教習所':ev.scene==='wedding'?'結婚披露宴':ev.scene==='baby'?'家族':ev.scene==='juryo'?'関取昇進':'恋と土俵';
+  const s=st,ev=LIFE[item.kind](item.pid);kScene=ev.scene||'date';kMark=ev.mark||null;kStop=!!ev.stopAuto;kEv=null;kT=ev.tw?{id:ev.tw.id,show:ev.tw.show}:null;kW=ev.w?{pid:item.pid||(st.rom&&st.rom.pid),e:ev.w.e||'normal',look:ev.w.look||null}:null;
+  $('kWhen').textContent=yearOf(s)+'年目　'+ageOf(s)+'歳';$('kTitle').textContent=ev.scene==='tani'?'後援者':ev.scene==='school'?'相撲教習所':ev.scene==='wedding'?'結婚披露宴':ev.scene==='baby'?'家族':ev.scene==='juryo'?'関取昇進':ev.scene==='oyakata'?'進退':'恋と土俵';
   $('kEvName').textContent=ev.t;$('kText').textContent=ev.text;
   const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;$('kDone').hidden=true;$('kDone').textContent='部屋に戻る';
   for(const c of ev.ch){const b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=c.l;
     b.addEventListener('click',()=>{const a0=st.rom?st.rom.aff:0,[story,fx]=c.f();box.innerHTML='';if(kT&&ev.tw&&ev.tw.after)kT.show=ev.tw.after();if(kW&&ev.w){if(ev.w.after)kW.e=ev.w.after(a0);if(ev.w.afterLook)kW.look=ev.w.afterLook();}$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;
-      if(s.lateReturn){s.used=1;s.lateReturn=false;}addLog(ev.t+'：'+story);checkAch();persist();});box.append(b);}
+      if(s.lateReturn){s.used=1;s.lateReturn=false;}addLog(ev.t+'：'+story);checkAch();persist();if(s.retiring)$('kDone').textContent='引退会見へ';});box.append(b);}
   show('sKikyo');kCv=makeCanvas($('kCv'),220/400);kSnow=[];
 }
-function nextAfterEvent(){if(st&&st.lifeQ&&st.lifeQ.length){openLife(st.lifeQ.shift());persist();}else renderHome();}
+function nextAfterEvent(){if(RT){retireNext();return;}if(st&&st.retiring){st.lifeQ=[];persist();openRetire(st.id);return;}if(st&&st.lifeQ&&st.lifeQ.length){openLife(st.lifeQ.shift());persist();}else renderHome();}
 function drawLifeScene(g,W,H,t,dt){
+  if(kScene==='retire')return drawRetire(g,W,H,t,dt);
+  if(kScene==='oyakata'){const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#3b2a1c');bg.addColorStop(1,'#8a6a44');g.fillStyle=bg;g.fillRect(0,0,W,H);
+    g.fillStyle='rgba(255,240,200,.08)';for(let i=0;i<5;i++)g.fillRect(W*(.06+i*.19),H*.06,W*.15,H*.4);g.fillStyle='#c9b27a';g.fillRect(0,H*.78,W,H*.22);
+    const S2=H*.62;g.save();g.beginPath();g.arc(W*.32,H*.5,S2*.42,0,6.283);g.fillStyle='#f3eadb';g.fill();g.clip();g.drawImage(portrait(st.face,st.retiring?'lose':'normal',st.pos>=JURYO,256),W*.32-S2*.5,H*.5-S2*.45,S2,S2);g.restore();
+    g.fillStyle='#f7ecd8';g.beginPath();g.arc(W*.7,H*.5,S2*.42,0,6.283);g.fill();g.strokeStyle='#c9a24a';g.lineWidth=3;g.stroke();g.fillStyle='#7a1f1f';g.font=Math.round(S2*.45)+'px "Yuji Boku",serif';g.textAlign='center';g.textBaseline='middle';g.fillText('親',W*.7,H*.52);g.textBaseline='alphabetic';return;}
   if(kScene==='school'){const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#3b2a1c');bg.addColorStop(1,'#a07446');g.fillStyle=bg;g.fillRect(0,0,W,H);
     g.fillStyle='rgba(255,255,255,.08)';for(let i=0;i<6;i++)g.fillRect(W*(.05+i*.16),H*.08,W*.12,H*.3);
     g.fillStyle='#1f3a2a';g.fillRect(W*.2,H*.06,W*.6,H*.2);g.fillStyle='#e9e4d0';g.font=Math.round(H*.1)+'px "Yuji Boku",serif';g.textAlign='center';g.fillText('相撲教習所',W/2,H*.2);
@@ -2415,7 +2523,7 @@ function drawLifeScene(g,W,H,t,dt){
 }
 let kCv=null,kSnow=[],kEv=null;
 function openKikyo(){
-  kScene='home';kMark=null;kW=null;kT=null;$('kDone').textContent='新年、部屋に戻る';const s=st;kEv=pickEvent(s);s.seenEv.push(kEv.id);persist();
+  kScene='home';kMark=null;kW=null;kT=null;kStop=false;$('kDone').textContent='新年、部屋に戻る';const s=st;kEv=pickEvent(s);s.seenEv.push(kEv.id);persist();
   $('kWhen').textContent=Math.max(1,yearOf(s)-1)+'年目の年の瀬　'+ageOf(s)+'歳';
   $('kTitle').textContent=s.home+'へ帰省';
   $('kEvName').textContent=kEv.t;$('kText').textContent=kEv.text(s);
@@ -2533,7 +2641,8 @@ function autoStep(){
       if(C.n&&st.b-autoB0>=C.n){autoStop((C.n===6?'1年':C.n+'場所')+'たちました。オート成長を止めました');$('backHome').click();return;}
       if(C.kikyo&&st.pendingKikyo){autoStop('年末の帰省です。オート成長を止めました');$('backHome').click();return;}
       $('backHome').click();},1400/autoSpd());}
-  else if(cur==='sKikyo'){if(autoBusy)return;const bs=[...document.querySelectorAll('#kChoices button')];
+  else if(cur==='sKikyo'){if(autoBusy)return;if(RT){autoStop('引退の場面です。オートを止めました');return;}const bs=[...document.querySelectorAll('#kChoices button')];
+    if(bs.length&&kStop){autoStop('「'+$('kEvName').textContent+'」です。オートを止めました');return;}
     const love=['date','wedding','baby'].includes(kScene)&&kScene!=='home';
     if(bs.length&&(C.event||(C.love&&love&&!kEv))){autoStop('「'+$('kEvName').textContent+'」です。オート成長を止めました');return;}
     if(bs.length){autoBusy=true;setTimeout(()=>{autoBusy=false;if(autoGrow)pick(bs).click();},900/autoSpd());}
