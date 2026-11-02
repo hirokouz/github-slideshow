@@ -1309,7 +1309,7 @@ const SND=(()=>{
   };
   function loop(){if(!ctx||!track||songOn)return;const T=TR[track],sp=60/T.bpm/2;while(nextT<ctx.currentTime+.35){T.fn(step,nextT,bus);step=(step+1)%T.len;nextT+=sp;}}
   /* recorded songs replace a synth track when the file loads; streamed, so they cost nothing until played */
-  const SONG={title:{src:'bgm/title.mp3',vol:.9}};const songEl={};let songOn=null;
+  const SONG={title:{src:'bgm/title.mp3',vol:.9},home:{src:'bgm/home.mp3',vol:.8},basho:{src:'bgm/bout.mp3',vol:.7}};const songEl={};let songOn=null;
   function songFor(name){const S=SONG[name];if(!S)return null;let o=songEl[name];
     if(!o){const a=new Audio();a.src=S.src;a.loop=true;a.preload='none';const g=ctx.createGain();g.gain.value=0;try{ctx.createMediaElementSource(a).connect(g);}catch(e){return null;}g.connect(bgm);
       o=songEl[name]={a,g,vol:S.vol,bad:false};a.addEventListener('error',()=>{o.bad=true;if(songOn===o){songOn=null;track=null;play(name);}});}
