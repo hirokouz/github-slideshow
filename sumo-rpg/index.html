@@ -110,6 +110,23 @@ input[type=text]{width:100%;box-sizing:border-box;background:#fffaf0;color:var(-
 .bar.kg i{background:linear-gradient(90deg,#6c5a8a,#a58bd0)}
 .stat b{text-align:right;font-variant-numeric:tabular-nums;font-size:14px}
 .gain{color:var(--kin);font-size:11px;margin-left:2px}
+.home .stat{position:relative}
+.home .stat .gain{position:absolute;right:4.6em;top:-11px;margin:0;font-weight:800;font-size:13px;color:#ffe08a;text-shadow:0 0 6px rgba(255,200,80,.8);animation:gainUp 1.8s ease-out forwards;pointer-events:none}
+@keyframes gainUp{0%{opacity:0;transform:translateY(6px) scale(.8)}15%{opacity:1;transform:translateY(0) scale(1.15)}70%{opacity:1;transform:translateY(-6px)}100%{opacity:0;transform:translateY(-12px)}}
+.home .stat.got .bar i{animation:barFlash 1s ease-out}@keyframes barFlash{0%{filter:brightness(2.2)}100%{filter:none}}
+.bar{position:relative}.bar .band{position:absolute;top:-3px;bottom:-3px;border:1.5px solid rgba(255,224,138,.9);border-radius:3px;background:rgba(255,224,138,.22);pointer-events:none}
+.stat b.low{color:#ffb36b}
+.acts button{position:relative}
+.acts button.rec{border-color:var(--kin);box-shadow:0 0 0 1px var(--kin),0 0 10px rgba(226,176,74,.35)}
+.acts button .recb{position:absolute;top:-7px;left:50%;transform:translateX(-50%);background:var(--kin);color:#2a1700;font-size:9px;font-weight:800;padding:1px 6px;border-radius:999px;white-space:nowrap}
+.acts button.risky{border-color:#c0392b}.acts button.risky span.d{color:#ff8a80}
+.home .acts span.d{white-space:nowrap}
+.hgoal{display:grid;gap:2px;font-size:11.5px;line-height:1.45;color:var(--shiro);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+.hgoal b{color:var(--kin);font-weight:700;margin-right:6px}.hgoal span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.home #bashoBtn:disabled{padding:8px 14px;font-size:13px;background:transparent;border:1px dashed var(--line);color:var(--nezumi);box-shadow:none;opacity:1}
+.home #bashoBtn:not(:disabled){animation:bashoGlow 1.6s ease-in-out infinite}@keyframes bashoGlow{50%{box-shadow:0 0 0 3px rgba(226,176,74,.35),0 0 18px rgba(226,176,74,.45)}}
+.rinfo .when .nw{white-space:nowrap}
+.tabs button{position:relative}.tabs small{position:absolute;top:-6px;right:-3px;font-size:8.5px;line-height:1;background:#0d1430;border:1px solid var(--line);border-radius:999px;padding:2px 4px;color:var(--nezumi)}
 
 .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .acts button{display:grid;grid-template-columns:auto 1fr;gap:1px 10px;align-items:center;text-align:left;background:var(--ai2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;transition:transform .08s}
@@ -269,12 +286,12 @@ body.autoOn #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 66px)}
 button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:#fff!important;box-shadow:0 4px 0 #5a1f17!important}
 .tie.warn{box-shadow:0 0 0 1.5px #ff6b6b}
 .acts button.tani .k{background:#dbe7f6;color:#1f4a7a}
-.home .acts.four span.d{font-size:8.5px}.home .acts.four b{font-size:12px}
+.home .acts.four span.d{font-size:9px}.home .acts.four b{font-size:12px}
 .acts button.fam .k{background:#f6d6dc;color:#8a2a3c}
 .home .acts button{grid-template-columns:1fr;justify-items:center;text-align:center;padding:7px 4px;gap:1px}
 .home .acts .k{grid-row:auto;width:28px;height:28px;font-size:16px}
 .home .acts b{font-size:13px}.home .acts span.d{font-size:9.5px;line-height:1.35}
-.hlog{margin:0;font-size:12px;line-height:1.5;color:var(--shiro);border-left:2px solid var(--kin);padding-left:8px;min-height:3em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hlog{margin:0;font-size:12px;line-height:1.5;color:var(--shiro);border-left:2px solid var(--kin);padding-left:8px;min-height:1.5em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .home #bashoBtn{padding:12px 16px;font-size:16px}
 .deckbar{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center}
 .deck.mini{gap:6px}
@@ -467,6 +484,7 @@ body:not(.onTitle) #sndBtn{display:none}
     </div>
     <div class="acts" id="hActs"></div>
     <p class="hlog" id="hLog1"></p>
+    <div class="hgoal" id="hGoal"></div>
     <button class="primary" id="bashoBtn">本場所へ</button>
     <div class="deckbar"><span class="label">サポート</span><div class="deck mini" id="hDeck"></div></div>
     <nav class="tabs" aria-label="そのほか">
@@ -1469,16 +1487,16 @@ function enter(){
 
 /* ---------- home ---------- */
 const TURNS=5;
-const TANI_ACT={id:'tani',k:'谷',name:'タニマチ会食',desc:'ご祝儀↑・体重↑・疲れ+5',fat:5,tani:true};
-const DATE_ACT={id:'date',k:'恋',name:'デート',desc:'疲れ−12・親密度↑',fat:-12,date:true};
-const FAMILY_ACT={id:'family',k:'家',name:'家族サービス',desc:'疲れ−20・家族の絆',fat:-20,family:true};
+const TANI_ACT={id:'tani',k:'谷',name:'タニマチ会食',desc:'ご祝儀↑・体重↑・疲れ+5',sd:'祝儀↑体重↑ 疲+5',fat:5,tani:true};
+const DATE_ACT={id:'date',k:'恋',name:'デート',desc:'疲れ−12・親密度↑',sd:'親密度↑ 疲−12',fat:-12,date:true};
+const FAMILY_ACT={id:'family',k:'家',name:'家族サービス',desc:'疲れ−20・家族の絆',sd:'絆↑　疲−20',fat:-20,family:true};
 const ACTS=[
-  {id:'shiko', k:'四',name:'四股',     desc:'力が上がる　疲れ+12',      fat:12,gain:{chikara:1}},
-  {id:'teppo', k:'鉄',name:'てっぽう', desc:'押しが上がる　疲れ+12',    fat:12,gain:{oshi:1}},
-  {id:'suri',  k:'足',name:'すり足',   desc:'速さが上がる　疲れ+10',    fat:10,gain:{hayasa:1}},
-  {id:'moushi',k:'稽',name:'申し合い', desc:'技↑↑ 力↑　疲れ+18',       fat:18,gain:{waza:1.4,chikara:.5}},
-  {id:'chanko',k:'鍋',name:'ちゃんこ', desc:'体重+3kg　疲れ−12',        fat:-12,kg:3},
-  {id:'rest',  k:'休',name:'休む',     desc:'疲れ−35　けがが治る',      fat:-35,rest:true},
+  {id:'shiko', k:'四',name:'四股',     desc:'力が上がる　疲れ+12',sd:'力↑　疲+12',      fat:12,gain:{chikara:1}},
+  {id:'teppo', k:'鉄',name:'てっぽう', desc:'押しが上がる　疲れ+12',sd:'押し↑　疲+12',    fat:12,gain:{oshi:1}},
+  {id:'suri',  k:'足',name:'すり足',   desc:'速さが上がる　疲れ+10',sd:'速さ↑　疲+10',    fat:10,gain:{hayasa:1}},
+  {id:'moushi',k:'稽',name:'申し合い', desc:'技↑↑ 力↑　疲れ+18',sd:'技↑↑力↑ 疲+18',       fat:18,gain:{waza:1.4,chikara:.5}},
+  {id:'chanko',k:'鍋',name:'ちゃんこ', desc:'体重+3kg　疲れ−12',sd:'体重+3kg 疲−12',        fat:-12,kg:3},
+  {id:'rest',  k:'休',name:'休む',     desc:'疲れ−35　けがが治る',sd:'疲−35 けが回復',      fat:-35,rest:true},
 ];
 const STAT_LABEL={oshi:'押し',chikara:'力',waza:'技',hayasa:'速さ'};
 let avatar=null,lastGain={};
@@ -1503,6 +1521,27 @@ function showTut(){const S=tutList[tutI],hole=$('tutHole'),box=$('tutBox');$('tu
     requestAnimationFrame(()=>{const bh=box.offsetHeight,below=r.bottom+pd+12;box.style.top=(below+bh<innerHeight-8?below:Math.max(8,r.top-pd-12-bh))+'px';});}
   else{Object.assign(hole.style,{display:'block',left:'50%',top:'40%',width:'0px',height:'0px'});requestAnimationFrame(()=>{box.style.top=Math.max(8,(innerHeight-box.offsetHeight)/2)+'px';});}}
 function endTut(){$('tut').hidden=true;roster.tutDone=true;saveRoster();}
+/* weight that suits each division (kg) */
+function kgTarget(pos){if(pos>=MAKU)return[150,180];if(pos>=JURYO)return[145,175];const i=divInfo(pos).i;return[[105,130],[115,140],[120,150],[135,165]][i];}
+function recommendAct(){const [lo]=kgTarget(st.maezumo?0:st.pos);
+  if(st.inj>0||st.fat>=70||(st.tiredB||0)>=2)return'rest';
+  if(st.fat>=55)return st.kg<lo+10?'chanko':'rest';
+  if(st.kg<lo-3)return'chanko';
+  const S=st.stats,avg=(S.oshi+S.chikara+S.waza+S.hayasa)/4;if(S.hayasa<avg-12)return'suri';
+  return{oshi:'teppo',yotsu:'shiko',waza:'moushi'}[st.type]||'teppo';}
+function goalText(){if(st.maezumo)return'前相撲：2勝すれば、来場所から序ノ口に名前が載る';
+  if(st.inj>=2)return'ケガで休場すると、全敗あつかいで番付が下がる';
+  const I=st.pos<KOMU?divInfo(st.pos):null,nm=p=>rank(p).name;
+  const est=w=>{const r=[];for(let k=0;k<7;k++)r.push(moveBanzuke(st.pos,w,I.d.b-w).p);r.sort((a,b)=>a-b);return r[3];};
+  if(st.pos>=YOKO)return'横綱：負け越すと進退問題。2場所続けて休むのも危ない';
+  if(st.pos===OZEKI)return st.kadoban?'カド番：負け越すと大関から陥落する':'綱取りの目安：大関で2場所連続優勝（全能力A以上）';
+  if(st.pos===SEKI){const l3=st.hist.slice(-2).reduce((a,h)=>a+h.w,0);return'大関取りの目安：三役で3場所33勝（あと '+Math.max(0,33-l3)+'勝）';}
+  if(st.pos===KOMU)return'勝ち越せば三役を守れる。10勝で関脇も見える';
+  if(I.i===5){const need=I.num<=1?8:I.num<=2?9:I.num<=5?11:12;return'勝ち越しで'+nm(est(8))+'前後へ・三役の目安は'+need+'勝';}
+  if(I.i===4){const need=Math.ceil((15+I.num)/2);return'勝ち越しで'+nm(est(8))+'前後へ・入幕の目安は'+need+'勝';}
+  if(I.i===3){const need=I.num<=1?4:I.num<=3?5:I.num<=5?6:I.num<=15?7:0;return need?'十両昇進：この地位なら'+need+'勝で関取に':'4勝で'+nm(est(4))+'前後・6勝で'+nm(est(6))+'前後へ';}
+  if(I.i===0)return'勝ち越せば序二段へ上がれる';
+  return'4勝で'+nm(est(4))+'前後・6勝で'+nm(est(6))+'前後へ';}
 function renderHome(){
   const r=st.maezumo?{div:'前相撲',name:'前相撲',bouts:3}:rank(st.pos);
   const plate=$('hTate');plate.innerHTML='';const n=document.createElement('span');n.textContent=st.name;plate.append(n);
@@ -1516,33 +1555,39 @@ function renderHome(){
     if(ties.childNodes.length)hs.append(ties);}
   const hr=$('hRank');hr.innerHTML='';const r1=document.createElement('span');r1.textContent=r.div;hr.append(r1);
   if(r.name.length>r.div.length){const r2=document.createElement('span');r2.style.cssText='display:block;font-size:.8em';r2.textContent=r.name.slice(r.div.length);hr.append(r2);}
-  $('hWhen').textContent=ageOf(st)+'歳・入門'+yearOf(st)+'年目'+(st.b<3&&st.school?'・教習所通い':'')+'　'+BASHO[st.b%6]+'（'+MONTH[st.b%6]+'月）まで';
+  {const w=$('hWhen');w.textContent=ageOf(st)+'歳・入門'+yearOf(st)+'年目'+(st.b<3&&st.school?'・教習所通い':'')+'　';const n=document.createElement('span');n.className='nw';n.textContent=BASHO[st.b%6]+'（'+MONTH[st.b%6]+'月）まで';w.append(n);}
   const tu=$('hTurns');tu.innerHTML='';const lab=document.createElement('span');lab.textContent='稽古';tu.append(lab);
   for(let i=0;i<TURNS;i++){const d=document.createElement('i');if(i<st.used)d.className='used';tu.append(d);}
   const sb=$('hStats');sb.innerHTML='';
   const row=(label,val,max,txt,cls,gain)=>{const d=document.createElement('div');d.className='stat';
     d.innerHTML='<span class="n"></span><div class="bar '+(cls||'')+'"><i></i></div><b></b>';d.children[0].textContent=label;
     d.querySelector('i').style.width=clamp(val/max*100,2,100)+'%';d.querySelector('b').textContent=txt;if(/^[SABCDEF] /.test(txt))d.querySelector('b').className='g-'+txt[0];
-    if(gain){const g=document.createElement('span');g.className='gain';g.textContent='+'+gain.toFixed(1);d.children[0].append(g);}sb.append(d);};
+    if(gain){const g=document.createElement('span');g.className='gain';g.textContent=(gain>0?'+':'')+gain.toFixed(1)+(cls==='kg'?'kg':'');d.append(g);d.classList.add('got');}sb.append(d);return d;};
   for(const k of['oshi','chikara','waza','hayasa'])row(STAT_LABEL[k],st.stats[k],100,gradeOf(st.stats[k]),'',lastGain[k]);
-  row('体重',st.kg-60,140,Math.round(st.kg)+'kg','kg',lastGain.kg);
+  {const kd=row('体重',st.kg-60,140,Math.round(st.kg)+'kg','kg',lastGain.kg),[lo,hi]=kgTarget(st.maezumo?0:st.pos),band=document.createElement('span');band.className='band';
+    band.style.left=clamp((lo-60)/140*100,0,100)+'%';band.style.width=clamp((hi-lo)/140*100,0,100)+'%';kd.querySelector('.bar').append(band);kd.title='目安 '+lo+'〜'+hi+'kg';
+    if(st.kg<lo)kd.querySelector('b').classList.add('low');}
   row('疲れ',st.fat,100,Math.round(st.fat),'fat');
   lastGain={};
   if(st.pos===OZEKI){const lack=Object.keys(st.stats).filter(k=>st.stats[k]<85);if(lack.length){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#e2b04a;margin:0';d.textContent='綱取りには全能力A以上が必要（あと：'+lack.map(k=>STAT_LABEL[k]).join('・')+'）';sb.append(d);}}
   if(st.inj>0){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ff8a80;margin:0';d.textContent=(st.injPart||'')+'の'+INJ_SEV[clamp(st.inj,1,3)]+'：'+(st.inj>=2?'稽古も出場もできない（休場）':'稽古・出場はできるが悪化に注意')+'・あと'+(st.injHeal||st.inj*2)+'回休めば治る';sb.append(d);}
   else if((st.tiredB||0)>=1){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ffb36b;margin:0';d.textContent='疲れがたまっている（'+st.tiredB+'場所連続）：休まないとけがをしやすい';sb.append(d);}
-  $('hPower').textContent=growthLabel(ageOf(st))+'（成長×'+ageGrowth(ageOf(st)).toFixed(2)+'）　総合力 '+Math.round((st.stats.oshi+st.stats.chikara+st.stats.waza+st.stats.hayasa)/4+(st.kg-90)*.1);
+  $('hPower').textContent='伸びしろ '+(g=>g>=1.2?'大':g>=1?'ふつう':g>=.85?'やや小':g>=.6?'小':'わずか')(ageGrowth(ageOf(st)))+'・総合力 '+Math.round((st.stats.oshi+st.stats.chikara+st.stats.waza+st.stats.hayasa)/4+(st.kg-90)*.1);
   const ab=$('hActs');ab.innerHTML='';const done=st.used>=TURNS;
   const dating=st.rom&&(st.rom.stage==='dating'||st.rom.stage==='engaged');
   const list=[...ACTS,...(spouse()?[FAMILY_ACT]:dating?[DATE_ACT]:[]),...(st.tani?[TANI_ACT]:[])];ab.classList.toggle('four',list.length>6);
+  const rec=done?null:recommendAct(),risky=st.fat>=75;
   for(const a of list){const b=document.createElement('button');b.type='button';b.disabled=done||(st.inj>=2&&!INJ_OK(a));if(a.family||a.date)b.className='fam';if(a.tani)b.className='tani';
-    b.innerHTML='<span class="k"></span><b></b><span class="d"></span>';b.children[0].textContent=a.k;b.children[1].textContent=a.name;b.children[2].textContent=a.desc;
+    b.innerHTML='<span class="k"></span><b></b><span class="d"></span>';b.children[0].textContent=a.k;b.children[1].textContent=a.name;b.children[2].textContent=risky&&a.gain?'けが注意 疲+'+a.fat:(a.sd||a.desc);
+    if(a.id===rec&&!b.disabled){b.classList.add('rec');const rb=document.createElement('span');rb.className='recb';rb.textContent='おすすめ';b.append(rb);}if(risky&&a.gain&&!b.disabled)b.classList.add('risky');
     b.addEventListener('click',()=>train(a));ab.append(b);}
   const bb=$('bashoBtn');bb.disabled=!done;bb.classList.toggle('kyujo',st.inj>=2&&done);bb.textContent=done?(st.inj>=2?BASHO[st.b%6]+'を休場する（ケガ）':st.inj===1?BASHO[st.b%6]+'へ（ケガをおして出場）':BASHO[st.b%6]+'へ（'+r.bouts+'番）'):'稽古あと'+(TURNS-st.used)+'回で'+BASHO[st.b%6];
   renderDeck();
   $('hAchN').textContent=Object.keys(roster.ach).length+'/'+ACH.length;renderAch($('hAch'));
   const lg=$('hLog');lg.innerHTML='';for(const t of st.log){const p=document.createElement('p');p.textContent=t;lg.append(p);}
   $('hLog1').textContent=st.log[0]||'';
+  {const gb=$('hGoal');gb.innerHTML='';const g1=document.createElement('span');g1.innerHTML='<b>目標</b>';g1.append(goalText());gb.append(g1);
+    if(st.rival){const g2=document.createElement('span');g2.innerHTML='<b>宿敵</b>';g2.append(st.rival.name+'　'+((st.rival.w||0)+(st.rival.l||0)?'通算 '+(st.rival.w||0)+'勝'+(st.rival.l||0)+'敗':'まだ対戦なし（番付が近いと当たる）'));gb.append(g2);}}
   const bf=$('hBuffs');bf.innerHTML='';
   if(st.rom&&st.rom.stage){const q=document.createElement('p');const R=st.rom,P=PARTNERS[R.pid];
     q.textContent=R.stage==='crush'?'気になる人：'+P.name+'（親密度 '+R.aff+'・場所で勝つと告白のチャンス）':R.stage==='married'?'妻：'+firstName(R.pid)+(R.kid?'・長男あり':'')+'（'+P.fx+'）':R.stage==='engaged'?'婚約者：'+firstName(R.pid)+'（年の瀬に披露宴）':'交際中：'+firstName(R.pid)+'（親密度 '+R.aff+(st.pos<JURYO&&R.aff>=60?'・関取になれば結婚できる':'')+'）';bf.append(q);}const ab2=activeBuffs();if(!ab2.length){const q=document.createElement('p');q.textContent='なし';bf.append(q);}
@@ -2121,7 +2166,7 @@ function renderDeck(){
   const box=$('hDeck');box.innerHTML='';
   for(let i=0;i<3;i++){const id=st.deck[i],b=document.createElement('button');b.type='button';b.className='slot'+(pickSlot===i?' on':'');
     if(id&&CARD[id]){const c=CARD[id];b.classList.add('r-'+c.r);b.innerHTML='<span class="kk"></span><span class="sn"></span><span class="ss"></span>';
-      b.querySelector('.kk').textContent=c.k;b.querySelector('.sn').textContent=c.name;b.querySelector('.ss').textContent=c.r+' ★'+cardLv(id);}
+      b.querySelector('.kk').textContent=c.k;b.querySelector('.sn').textContent=c.name.replace(/^.*[ 　]/,'');b.title=c.name;b.querySelector('.ss').textContent=c.r+' ★'+cardLv(id);}
     else b.innerHTML='<span class="empty">＋ 空き</span>';
     b.addEventListener('click',()=>{pickSlot=i;renderDeck();openSheet('deck','サポートカード（'+(i+1)+'枠目）');});box.append(b);}
   const pk=$('hPick');pk.innerHTML='';$('pickHint').textContent='付けたいカードを選ぶ。カードは部屋で共有。ガチャで増やせる。';
