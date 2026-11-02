@@ -284,6 +284,10 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
   background:var(--sumi);color:var(--washi);border:1.5px solid var(--kin);border-radius:999px;padding:6px 8px 6px 14px;font-size:12.5px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.45);max-width:calc(100vw - 32px)}
 #autoBar{white-space:nowrap;gap:6px;padding:5px 6px 5px 12px}
 #autoBar select{max-width:7.5em}
+#sndBtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:8px;z-index:65;width:32px;height:32px;border-radius:50%;border:1px solid var(--kin);background:rgba(13,20,48,.75);color:var(--kin);font-size:16px;line-height:1;padding:0;display:grid;place-items:center}
+body:not(.onTitle) #sndBtn{display:none}
+#sndBtn.off,#sndBtn2.off{color:#7d7360;border-color:#5b5246;text-decoration:line-through}
+.acfg input[type=range]{accent-color:var(--kin);height:24px}
 .tutq{margin-left:6px;border:1px solid var(--kin);background:transparent;color:var(--kin);border-radius:999px;font-size:10.5px;padding:1px 8px;letter-spacing:0;font-weight:700;vertical-align:1px}
 #tut{position:fixed;inset:0;z-index:90}
 #tut .tut-hole{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(3,5,14,.72);border:2px solid var(--kin);transition:all .25s ease;pointer-events:none}
@@ -377,6 +381,7 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
 </style>
 
 <div id="toast" role="status" aria-live="polite"></div>
+<button type="button" id="sndBtn" aria-label="音の設定">♪</button>
 <div id="tut" hidden><div class="tut-hole" id="tutHole"></div><div class="tut-box" id="tutBox" role="dialog" aria-live="polite"><div class="tut-who"><span>親</span>親方</div><p id="tutText"></p><div class="tut-ctl"><span id="tutStep"></span><button type="button" id="tutSkip" class="tut-skip">スキップ</button><button type="button" id="tutNext" class="tut-next">次へ</button></div></div></div>
 <div id="autoBar" hidden><span class="dot" aria-hidden="true"></span><span id="autoTxt">オート中</span>
   <select id="autoSpeed" aria-label="速さ"><option value="1">ふつう</option><option value="3" selected>速い</option></select>
@@ -450,7 +455,7 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
       </div>
     </div>
     <div class="panel hst">
-      <div class="row" style="justify-content:space-between"><p class="label">体と技 <button type="button" id="tutBtn" class="tutq" aria-label="遊び方を見る">？ 遊び方</button></p><span class="muted" style="font-size:10.5px" id="hPower"></span></div>
+      <div class="row" style="justify-content:space-between"><p class="label">体と技 <button type="button" id="tutBtn" class="tutq" aria-label="遊び方を見る">？ 遊び方</button><button type="button" id="sndBtn2" class="tutq" aria-label="音の設定">♪</button></p><span class="muted" style="font-size:10.5px" id="hPower"></span></div>
       <div class="stats" id="hStats"></div>
     </div>
     <div class="acts" id="hActs"></div>
@@ -473,6 +478,11 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
       <div data-p="hist" class="washi"><div class="histbox"><table class="hist" id="hHist"></table></div></div>
       <div data-p="log"><div class="log" id="hLog"></div><p class="label" style="margin-top:12px">いま効いている出来事</p><div class="log" id="hBuffs"></div></div>
       <div data-p="ach"><div class="achs" id="hAch"></div></div>
+      <div data-p="snd" class="acfg">
+        <label><input type="checkbox" id="sndOn"><span>音を鳴らす<small>BGMと効果音（スマホは画面を一度タップすると鳴り始めます）</small></span></label>
+        <p class="label" style="margin-top:4px">BGMの音量</p><input type="range" id="sndBgm" min="0" max="1" step="0.05" style="width:100%">
+        <p class="label" style="margin-top:4px">効果音の音量</p><input type="range" id="sndSfx" min="0" max="1" step="0.05" style="width:100%">
+      </div>
       <div data-p="auto" class="acfg">
         <p class="muted" style="font-size:12.5px">オートで育成を進めます。止めたいタイミングを選んでください（いくつでも）。</p>
         <div class="chk">
@@ -1227,7 +1237,80 @@ function stepCushions(g,dt){
 
 /* ---------- screens ---------- */
 const SCR=['sTitle','sCreate','sHome','sBout','sResult','sGacha','sKikyo'];let cur='sTitle';
-function show(id){for(const s of SCR)$(s).hidden=s!==id;cur=id;closeSheet();window.scrollTo(0,0);}
+/* ---------- sound: Japanese-flavoured BGM and effects, synthesised with Web Audio (no audio files) ---------- */
+const SND=(()=>{
+  let ctx=null,master=null,bgm=null,sfx=null,noiseBuf=null,bus=null,track=null,step=0,nextT=0,timer=null,unlocked=false;
+  const cfg=()=>Object.assign({on:true,bgm:.55,sfx:.8},roster.audio||{});
+  const save=c=>{roster.audio=c;saveRoster();apply();};
+  function init(){if(ctx)return true;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return false;
+    ctx=new AC();master=ctx.createGain();bgm=ctx.createGain();sfx=ctx.createGain();bgm.connect(master);sfx.connect(master);
+    const comp=ctx.createDynamicsCompressor();master.connect(comp);comp.connect(ctx.destination);
+    noiseBuf=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    apply();return true;}
+  function apply(){if(!ctx)return;const c=cfg(),t=ctx.currentTime;master.gain.setTargetAtTime(c.on?1:0,t,.05);bgm.gain.setTargetAtTime(c.bgm*.5,t,.05);sfx.gain.setTargetAtTime(c.sfx,t,.05);}
+  const env=(g,t,a,peak,dec)=>{g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+dec);};
+  function noise(t,dur,{f=1000,q=1,type='bandpass',vol=.3,a=.005,out}={}){const s=ctx.createBufferSource();s.buffer=noiseBuf;const fl=ctx.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q;const g=ctx.createGain();
+    s.connect(fl);fl.connect(g);g.connect(out||sfx);env(g,t,a,vol,dur);s.start(t,Math.random());s.stop(t+a+dur+.05);return{fl,g};}
+  function tone(t,freq,dur,{type='sine',vol=.3,a=.005,out,bend=0,lp=0}={}){const o=ctx.createOscillator();o.type=type;o.frequency.setValueAtTime(freq*(1+bend),t);if(bend)o.frequency.exponentialRampToValueAtTime(freq,t+.06);
+    const g=ctx.createGain();let n=o;if(lp){const fl=ctx.createBiquadFilter();fl.type='lowpass';fl.frequency.setValueAtTime(lp,t);fl.frequency.exponentialRampToValueAtTime(Math.max(200,lp*.25),t+dur);o.connect(fl);n=fl;}
+    n.connect(g);g.connect(out||sfx);env(g,t,a,vol,dur);o.start(t);o.stop(t+a+dur+.05);return o;}
+  // instruments
+  const I={
+    taiko:(t,v=1,out)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(48,t+.25);o.connect(g);g.connect(out||sfx);env(g,t,.004,.9*v,.5);o.start(t);o.stop(t+.6);
+      noise(t,.12,{f:300,q:.8,type:'lowpass',vol:.35*v,out});},
+    shime:(t,v=1,out)=>{tone(t,330,.08,{type:'triangle',vol:.25*v,out,bend:.3});noise(t,.05,{f:2200,q:2,vol:.18*v,out});},
+    hyoshigi:(t,v=1,out)=>{for(const d of [0,.11]){tone(t+d,1850,.05,{type:'square',vol:.12*v,out});noise(t+d,.04,{f:3200,q:6,vol:.4*v,out});}},
+    shamisen:(t,f,v=1,out)=>{tone(t,f,.45,{type:'sawtooth',vol:.16*v,out,bend:.03,lp:3200});tone(t,f*2,.2,{type:'triangle',vol:.05*v,out});noise(t,.02,{f:4000,q:3,vol:.06*v,out});},
+    koto:(t,f,v=1,out)=>{tone(t,f,1.2,{type:'triangle',vol:.2*v,out,lp:2600});tone(t,f*2,.6,{type:'sine',vol:.06*v,out});},
+    fue:(t,f,dur,v=1,out)=>{const o=ctx.createOscillator(),lfo=ctx.createOscillator(),lg=ctx.createGain(),g=ctx.createGain();o.type='sine';o.frequency.value=f;lfo.frequency.value=5.2;lg.gain.value=f*.012;lfo.connect(lg);lg.connect(o.frequency);
+      o.connect(g);g.connect(out||sfx);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.16*v,t+.09);g.gain.setValueAtTime(.16*v,t+Math.max(.1,dur-.15));g.gain.linearRampToValueAtTime(0,t+dur);
+      o.start(t);lfo.start(t);o.stop(t+dur+.05);lfo.stop(t+dur+.05);noise(t,dur*.6,{f:f*2,q:8,vol:.015*v,a:.08,out});},
+    crowd:(t,dur,v=1,f=900)=>{const n=noise(t,dur,{f,q:.6,vol:.22*v,a:.25});n.fl.frequency.setValueAtTime(f*.7,t);n.fl.frequency.linearRampToValueAtTime(f*1.2,t+dur*.4);},
+  };
+  // scales (Hz) — yo (bright) and miyako-bushi (wistful)
+  const YO=[293.66,329.63,392,440,493.88],MIYAKO=[293.66,311.13,392,440,466.16];
+  const nt=(sc,d)=>{const o=Math.floor(d/5),i=((d%5)+5)%5;return sc[i]*Math.pow(2,o);};
+  /* tracks: bpm, steps per loop (8th notes) and a function scheduling one step */
+  const TR={
+    title:{bpm:76,len:32,fn:(i,t,b)=>{const s=i%16;if([0,6,8,11,12,14].includes(s))I.taiko(t,s===0?1:.55,b);if(i===0)I.hyoshigi(t,.8,b);
+      const mel=[4,3,2,4,5,4,2,1,2,3,4,2,1,0,1,0];if(i%2===0)I.fue(t,nt(YO,mel[i/2]+5),60/76*.95,1,b);}},
+    home:{bpm:104,len:32,fn:(i,t,b)=>{const arp=[0,2,4,2,5,4,2,4, 1,3,5,3,6,5,3,1, 0,2,4,5,7,5,4,2, 3,2,1,0,1,2,0,-1];I.shamisen(t,nt(YO,arp[i]+5),.8,b);if(i%4===2)I.shime(t,.6,b);if(i%8===0)I.taiko(t,.35,b);}},
+    basho:{bpm:124,len:16,fn:(i,t,b)=>{if([0,3,6,8,10,12,14].includes(i))I.taiko(t,i%8===0?1:.6,b);if(i>=12)I.shime(t,.5,b);
+      const ost=[0,0,3,0,4,3,0,1,0,0,3,0,4,5,4,3];if(i%2===0)I.shamisen(t,nt(MIYAKO,ost[i]),.7,b);}},
+    event:{bpm:72,len:32,fn:(i,t,b)=>{const ar=[0,2,4,7,4,2, 1,3,5,8,5,3, 0,2,4,7,4,2, 3,4,5,7,5,4];if(i<24)I.koto(t,nt(YO,ar[i]+5),.7,b);
+      if(i%8===0){const m=[7,9,8,6][i/8];I.fue(t,nt(YO,m+5),60/72*3.6,.8,b);}}},
+    sad:{bpm:58,len:32,fn:(i,t,b)=>{if(i%4===0)I.koto(t,nt(MIYAKO,[0,3,1,0,-1,0,2,1][i/4]+5),.5,b);
+      if(i%8===0){const m=[[9,7],[8,6],[7,8],[6,5]][i/8];I.fue(t,nt(MIYAKO,m[0]+5),60/58*1.9,.9,b);I.fue(t+60/58*2,nt(MIYAKO,m[1]+5),60/58*1.9,.9,b);}}},
+  };
+  function loop(){if(!ctx||!track)return;const T=TR[track],sp=60/T.bpm/2;while(nextT<ctx.currentTime+.35){T.fn(step,nextT,bus);step=(step+1)%T.len;nextT+=sp;}}
+  function play(name){if(!ctx||name===track)return;const t=ctx.currentTime;
+    if(bus){const old=bus;old.gain.setTargetAtTime(0,t,.25);setTimeout(()=>old.disconnect(),1500);}
+    track=name||null;bus=null;if(!track)return;bus=ctx.createGain();bus.gain.setValueAtTime(0,t);bus.gain.linearRampToValueAtTime(1,t+.8);bus.connect(bgm);step=0;nextT=t+.08;}
+  function want(){if(cur==='sTitle'||cur==='sCreate')return'title';if(cur==='sHome'||cur==='sGacha')return'home';if(cur==='sBout')return'basho';if(cur==='sResult')return null;
+    if(cur==='sKikyo')return['retire','oyakata'].includes(kScene)?'sad':kScene==='juryo'?'title':['school','tani'].includes(kScene)?'home':'event';return'home';}
+  function sync(){if(!ctx||!unlocked)return;play(want());}
+  function unlock(){if(!init())return;if(ctx.state==='suspended')ctx.resume();if(!unlocked){unlocked=true;timer=setInterval(loop,90);sync();}}
+  addEventListener('pointerdown',unlock,{passive:true});addEventListener('keydown',unlock);
+  document.addEventListener('visibilitychange',()=>{if(!ctx)return;if(document.hidden)ctx.suspend();else if(unlocked)ctx.resume();});
+  // one-shot effects
+  const fx={
+    hit:()=>{const t=ctx.currentTime;I.taiko(t,1);noise(t,.18,{f:180,q:.7,type:'lowpass',vol:.6});},
+    land:()=>{const t=ctx.currentTime;I.taiko(t,.8);noise(t,.3,{f:400,q:.5,type:'lowpass',vol:.35});},
+    win:()=>{const t=ctx.currentTime;I.crowd(t,2.2,1.1,1000);[0,2,4,5].forEach((d,k)=>I.shamisen(t+k*.09,nt(YO,d+5),1));},
+    lose:()=>{const t=ctx.currentTime;I.crowd(t,1.6,.7,500);},
+    upset:()=>{const t=ctx.currentTime;I.crowd(t,3,1.6,1100);I.hyoshigi(t+.2,1);},
+    hyoshigi:()=>I.hyoshigi(ctx.currentTime,1),
+    fanfare:big=>{const t=ctx.currentTime;[0,.18,.36].forEach(d=>I.taiko(t+d,.9));[0,2,4,5,7,9].forEach((d,k)=>I.shamisen(t+.4+k*.1,nt(YO,d+5),1));I.fue(t+1,nt(YO,big?10:9),1.4,1);if(big)I.crowd(t+.3,3,1.4,1000);},
+    pluck:()=>I.koto(ctx.currentTime,nt(YO,7),.6),
+    snip:()=>{const t=ctx.currentTime;for(const d of [0,.07])noise(t+d,.03,{f:5200,q:8,vol:.5});tone(t+.07,2600,.04,{type:'square',vol:.05});},
+    gacha:ssr=>{const t=ctx.currentTime;[0,2,4,7,9,12].forEach((d,k)=>I.koto(t+k*.07,nt(YO,d+5),ssr?1:.6));if(ssr)I.crowd(t+.3,1.5,.6,1400);},
+    act:id=>{const t=ctx.currentTime;if(id==='shiko'){I.taiko(t,.7);}else if(id==='teppo'){I.shime(t,1);I.shime(t+.18,1);}else if(id==='suri'){noise(t,.35,{f:1500,q:.5,vol:.15,a:.08});}
+      else if(id==='moushi'){I.taiko(t,.6);I.shime(t+.12,.9);}else if(id==='chanko'){for(let k=0;k<4;k++)tone(t+k*.09,500+Math.random()*300,.06,{vol:.08,bend:.4});}
+      else if(id==='rest'){I.koto(t,nt(YO,7),.5);I.koto(t+.2,nt(YO,9),.4);}else I.koto(t,nt(YO,7),.5);},
+  };
+  return{state:()=>ctx?ctx.state+':'+(track||'-'):'none',sync,play:(n,...a)=>{if(ctx&&unlocked&&fx[n])try{fx[n](...a);}catch(e){}},cfg,save,unlock};
+})();
+function show(id){for(const s of SCR)$(s).hidden=s!==id;cur=id;closeSheet();window.scrollTo(0,0);document.body.classList.toggle('onTitle',id==='sTitle');SND.sync();}
 function openSheet(k,title){const sh=$('sheet');sh.hidden=false;$('sheetT').textContent=title||'';for(const el of sh.querySelectorAll('[data-p]'))el.hidden=el.dataset.p!==k;}
 function closeSheet(){const sh=$('sheet');if(sh)sh.hidden=true;}
 
@@ -1241,7 +1324,7 @@ function refreshTitleFaces(){
   document.querySelectorAll('#roster img[data-rk]').forEach(im=>{const s=roster.list[im.dataset.rk];if(s&&s.b<6&&s.pos<JURYO&&s.face)ZAN_F.add(s.face);if(s)try{im.src=portrait(s.face,'normal',s.pos>=JURYO,160).toDataURL();}catch(e){}});
   document.querySelectorAll('img[data-hall]').forEach(im=>{const h=roster.hall[+im.dataset.hall];if(h)try{im.src=portrait(h.face,'normal',h.oicho,96).toDataURL();}catch(e){}});}
 function renderTitle(){
-  setTimeout(refreshTitleFaces,0);loadRoster();const box=$('roster');box.innerHTML='';
+  setTimeout(refreshTitleFaces,0);loadRoster();sndUI();const box=$('roster');box.innerHTML='';
   const ids=Object.keys(roster.list).sort((a,b)=>(roster.list[b].touched||0)-(roster.list[a].touched||0));
   $('rosterLabel').hidden=!ids.length;
   for(const id of ids){const s=roster.list[id],card=document.createElement('div');card.className='washi rk-card'+(id===roster.active?' active':'');
@@ -1523,7 +1606,7 @@ function injure(sev,cause){sev=clamp(sev,1,3);const part=pick(INJ_PARTS);
   if(sev>=2)st.injN=(st.injN||0)+1;st.inj=Math.max(st.inj||0,sev);st.injHeal=Math.max(st.injHeal||0,[0,2,5,9][sev]);st.injPart=part.n;st.injSev=Math.max(st.injSev||0,sev);
   const txt=cause+part.n+'を痛めた（'+INJ_SEV[sev]+'）。'+lost.join('　');addLog(txt);toast(part.n+'の'+INJ_SEV[sev]+'……　'+lost.slice(0,2).join(' '));return txt;}
 const INJ_OK=a=>a.rest||a.kg||a.family||a.date;
-function train(a){
+function train(a){SND.play('act',a.id);
   if(st.used>=TURNS)return;if(st.inj>=2&&!INJ_OK(a)){toast('中傷以上は稽古できない。休んで治そう');return;}
   if(st.inj===1&&!INJ_OK(a)&&Math.random()<.15){addLog('痛みをこらえて稽古したが、'+(st.injPart||'けが')+'が悪化した。');st.inj=2;st.injHeal=(st.injHeal||2)+3;}st.used++;st.trainN=(st.trainN||0)+1;if(a.id==='chanko')st.chankoN=(st.chankoN||0)+1;let msg='';const D=deckFx(),AG=ageGrowth(ageOf(st));
   if(a.tani){const T=st.tani;T.this=true;T.miss=0;T.bond=(T.bond||0)+1;st.fat=Math.min(100,st.fat+5);const kg=kgGain(1.5);st.kg+=kg;
@@ -1607,7 +1690,7 @@ function drawProfFace(t){if(!faceCv||!st)return;const{g,W,H,d}=faceCv;g.clearRec
   if(img.isAi)g.drawImage(img,-W*.18,-H*.1,W*1.36,H*1.36);else g.drawImage(img,-W*.3,-H*.12,W*1.6,H*1.6);g.restore();}
 function dayLabel(){if(B.n===3)return '前相撲 '+KAN[B.day]+'番';return B.n===15?(B.day===0?'初日':B.day===14?'千秋楽':KAN[B.day]+'日目'):KAN[B.day]+'番相撲';}
 const counterOf=s=>Object.keys(BEATS).find(k=>BEATS[k]===s);
-function nextBout(){
+function nextBout(){if(!autoMode)SND.play('hyoshigi');
   if(B.withdraw&&B.day<B.n){const rest=B.n-B.day;B.kyu=(B.kyu||0)+rest;B.l+=rest;B.marks+='や'.repeat(rest);B.day=B.n;toast('ケガのため途中休場');}
   if(B.day>=B.n){endBasho();return;}
   B.opp=(st.rival&&B.day===Math.floor(B.n/2))?rivalOpp():genOpp(st.pos,B.used);B.used.push(B.opp.name);renderProfile();
@@ -1756,10 +1839,10 @@ function updateBout(dt){
     if(!autoMode&&!REDUCED&&a.t>L.edge-.08&&a.t<L.land)sc*=.5;   // slow motion at the decisive moment
     const prev=a.t;a.t+=dt*sc;
     const {W,H}=ring,cx=W/2,fy=H*.76;
-    if(prev<L.imp&&a.t>=L.imp){const c=choreo(a,L.imp,W,cx,W*.37);a.freeze=autoMode?0:.075;cam.shake=REDUCED?0:7;
+    if(prev<L.imp&&a.t>=L.imp){const c=choreo(a,L.imp,W,cx,W*.37);a.freeze=autoMode?0:.075;cam.shake=REDUCED?0:7;SND.play('hit');
       flash((c.wX+c.lX)/2,fy-H*.17*1.1,W*.05);dust(c.wX,fy,7,70);dust(c.lX,fy,7,70);a.jtW=a.t;a.jtL=a.t;}
     if(prev<L.land&&a.t>=L.land){const c=choreo(a,L.land,W,cx,W*.37),soft=a.kind==='out';a.freeze=autoMode||soft?0:.06;cam.shake=REDUCED?0:soft?3:9;
-      dust(c.lX,fy+(soft?H*.06:H*.02),soft?8:16,soft?70:120);a.jtL=a.t;if(a.upset&&!REDUCED)cushions(W,H);}
+      dust(c.lX,fy+(soft?H*.06:H*.02),soft?8:16,soft?70:120);a.jtL=a.t;if(a.upset&&!REDUCED)cushions(W,H);SND.play('land');SND.play(a.win?(a.upset?'upset':'win'):'lose');}
     if(a.t>=L.end&&!a.reported){a.reported=true;a.phase='done';afterBout();}
   }
   else if(a.phase==='done'){a.t+=dt;}
@@ -1895,7 +1978,7 @@ function endBasho(){
   const vp=(el,pos)=>{el.innerHTML='';const s=document.createElement('small');s.textContent=side(pos);const n=document.createElement('span');n.textContent=rank(pos).name;el.append(s,n);};
   vp($('rOld'),old);vp($('rNew'),p);if(wasMae){$('rOld').innerHTML='';const n=document.createElement('span');n.textContent='前相撲';$('rOld').append(n);}
   addLog(when+'は'+w+'勝'+l+'敗。'+msg);
-  persist();B=null;anim=null;fx=[];show('sResult');rc=makeCanvas($('rCv'),4/3);rcData={win:w>l,yusho,promo:p>old,body:pickBody(st),t0:performance.now()/1000};
+  persist();B=null;anim=null;fx=[];show('sResult');rc=makeCanvas($('rCv'),4/3);rcData={win:w>l,yusho,promo:p>old,body:pickBody(st),t0:performance.now()/1000};if(yusho)SND.play('fanfare',true);else if(p>old&&(old<JURYO)!==(p<JURYO)||p>=MAKU&&old<MAKU)SND.play('fanfare',false);else SND.play(w>l?'win':'lose');
 }
 /* full-body illustrations for the banzuke announcement and the yusho screen */
 const BODY={};for(const b of (window.AI_BODIES||[])){const im=new Image();im.src=b.src;BODY[b.id]={meta:b,img:im};}
@@ -2003,7 +2086,7 @@ function drawOne(guarantee){let r=Math.random(),rar='N';for(const[k,p]of RATES){
   const c=pick(CARDS.filter(x=>x.r===rar));const isNew=!roster.cards[c.id];roster.cards[c.id]=(roster.cards[c.id]||0)+1;return{c,isNew};}
 function pull(n){const cost=n===10?PULL10:PULL1;if((roster.money||0)<cost)return;roster.money-=cost;const res=[];
   for(let i=0;i<n;i++){const last=n===10&&i===9&&!res.some(x=>x.c.r==='SR'||x.c.r==='SSR');res.push(drawOne(last));}
-  saveRoster();renderGacha(res);}
+  saveRoster();renderGacha(res);SND.play('gacha',res.some(x=>x.c.r==='SSR'));}
 function cardEl(c,opts={}){
   const lv=opts.lv!==undefined?opts.lv:cardLv(c.id),own=lv>0||opts.force;
   const el=document.createElement('div');el.className='scard r-'+c.r+(own?'':' locked');
@@ -2173,7 +2256,7 @@ function flag2(s,k){return !!(s.flags&&s.flags[k]);}
 function openRetire(id){const s=roster.list[id];if(!s)return;if(autoGrow)autoStop();st=s;roster.active=id;s.retiring=true;saveRoster();
   RT={id,s,steps:retireSteps(s),i:0,t:0,face2:null};showRetireStep();}
 function retireNext(){if(!RT)return;if(RT.i<RT.steps.length-1){RT.i++;showRetireStep();}}
-function showRetireStep(){const S=RT.steps[RT.i],s=RT.s;kScene='retire';kStop=false;RT.t=0;RT.snip=false;RT.hair=[];
+function showRetireStep(){const S=RT.steps[RT.i],s=RT.s;kScene='retire';kStop=false;RT.t=0;RT.snip=false;RT.hair=[];SND.sync();
   $('kTitle').textContent=S.title;$('kWhen').textContent=ageOf(s)+'歳　'+(S.n?S.n+' / '+S.of:'');$('kEvName').textContent=S.name;$('kText').textContent=S.text;
   const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;
   if(S.choices){$('kDone').hidden=true;for(const c of S.choices){const b=document.createElement('button');b.type='button';b.className='ghost';b.innerHTML='<b></b><br><small style="opacity:.75"></small>';b.querySelector('b').textContent=c.l;b.querySelector('small').textContent=c.d;
@@ -2208,7 +2291,7 @@ function drawRetire(g,W,H,t,dt){if(!RT)return;const S=RT.steps[RT.i],s=RT.s;RT.t
     // scissors at the topknot
     const sx=cx+S2*.06,sy=cy-S2*.42,open=T<.9?.35+.15*Math.sin(T*10):.05;
     if(T<1.6){g.save();g.translate(sx,sy);g.rotate(-.5);g.strokeStyle='#dcdcdc';g.lineWidth=3;for(const d of [-1,1]){g.save();g.rotate(d*open);g.beginPath();g.moveTo(0,0);g.lineTo(H*.13,0);g.stroke();g.beginPath();g.arc(-H*.03,0,H*.02,0,6.283);g.stroke();g.restore();}g.restore();}
-    if(T>.9&&!RT.snip){RT.snip=true;for(let i=0;i<14;i++)RT.hair.push({x:sx+rnd(-6,6),y:sy,vx:rnd(-20,20),vy:rnd(-10,10),r:rnd(-3,3)});}
+    if(T>.9&&!RT.snip){RT.snip=true;SND.play('snip');for(let i=0;i<14;i++)RT.hair.push({x:sx+rnd(-6,6),y:sy,vx:rnd(-20,20),vy:rnd(-10,10),r:rnd(-3,3)});}
     g.strokeStyle='#1a1410';g.lineWidth=1.4;RT.hair=RT.hair.filter(h=>{h.vy+=60*dt;h.x+=h.vx*dt;h.y+=h.vy*dt;h.r+=dt*3;g.beginPath();g.moveTo(h.x,h.y);g.lineTo(h.x+Math.cos(h.r)*5,h.y+Math.sin(h.r)*5);g.stroke();return h.y<H;});
     if(S.scene==='tome'&&T>1.3){const k=Math.min(1,(T-1.3)/.8),mx=sx+k*W*.25,my=sy-H*.04*Math.sin(k*3.14)+k*k*(H*.9-sy);g.save();g.translate(mx,my);g.rotate(k*2.2);
       g.fillStyle='#14100c';g.beginPath();g.ellipse(0,0,H*.07,H*.035,0,0,6.283);g.fill();g.fillStyle='#f2efe6';g.fillRect(-H*.012,-H*.03,H*.024,H*.06);g.restore();
@@ -2461,7 +2544,7 @@ function openLife(item){
   $('kEvName').textContent=ev.t;$('kText').textContent=ev.text;
   const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;$('kDone').hidden=true;$('kDone').textContent='部屋に戻る';
   for(const c of ev.ch){const b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=c.l;
-    b.addEventListener('click',()=>{const a0=st.rom?st.rom.aff:0,[story,fx]=c.f();box.innerHTML='';if(kT&&ev.tw&&ev.tw.after)kT.show=ev.tw.after();if(kW&&ev.w){if(ev.w.after)kW.e=ev.w.after(a0);if(ev.w.afterLook)kW.look=ev.w.afterLook();}$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;
+    b.addEventListener('click',()=>{SND.play('pluck');const a0=st.rom?st.rom.aff:0,[story,fx]=c.f();box.innerHTML='';if(kT&&ev.tw&&ev.tw.after)kT.show=ev.tw.after();if(kW&&ev.w){if(ev.w.after)kW.e=ev.w.after(a0);if(ev.w.afterLook)kW.look=ev.w.afterLook();}$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;
       if(s.lateReturn){s.used=1;s.lateReturn=false;}addLog(ev.t+'：'+story);checkAch();persist();if(s.retiring)$('kDone').textContent='引退会見へ';});box.append(b);}
   show('sKikyo');kCv=makeCanvas($('kCv'),220/400);kSnow=[];
 }
@@ -2644,6 +2727,10 @@ function autoStep(){
 }
 $('autoBtn').addEventListener('click',()=>{if(autoGrow)autoStop('オート成長を止めました');else openAutoCfg();});
 $('autoGo').addEventListener('click',startAutoFromCfg);
+function sndUI(){const c=SND.cfg();$('sndBtn').classList.toggle('off',!c.on);$('sndBtn2').classList.toggle('off',!c.on);$('sndOn').checked=c.on;$('sndBgm').value=c.bgm;$('sndSfx').value=c.sfx;}
+for(const id of ['sndBtn','sndBtn2'])$(id).addEventListener('click',()=>{sndUI();openSheet('snd','音の設定');});
+$('sndOn').addEventListener('change',e=>{const c=SND.cfg();c.on=e.target.checked;SND.save(c);sndUI();});
+for(const [id,k] of [['sndBgm','bgm'],['sndSfx','sfx']])$(id).addEventListener('input',e=>{const c=SND.cfg();c[k]=+e.target.value;SND.save(c);if(k==='sfx')SND.play('pluck');});
 $('tutNext').addEventListener('click',()=>{if(tutI<tutList.length-1){tutI++;showTut();}else endTut();});
 $('tutSkip').addEventListener('click',endTut);$('tutBtn').addEventListener('click',startTut);
 addEventListener('resize',()=>{if(!$('tut').hidden)showTut();});
