@@ -117,7 +117,7 @@ input[type=text]{width:100%;box-sizing:border-box;background:#fffaf0;color:var(-
 .acts button.risky{border-color:#c0392b}.acts button.risky span.d{color:#ff8a80}
 .home .acts span.d{white-space:nowrap}
 .hgoal{display:grid;gap:2px;font-size:11.5px;line-height:1.45;color:var(--shiro);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
-.hgoal b{color:var(--kin);font-weight:700;margin-right:6px}.hgoal span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hgoal b{color:var(--kin);font-weight:700;margin-right:6px}.hgoal span{display:block;white-space:normal;word-break:break-word}
 .home #bashoBtn:disabled{padding:8px 14px;font-size:13px;background:transparent;border:1px dashed var(--line);color:var(--nezumi);box-shadow:none;opacity:1}
 .home #bashoBtn:not(:disabled){animation:bashoGlow 1.6s ease-in-out infinite}@keyframes bashoGlow{50%{box-shadow:0 0 0 3px rgba(226,176,74,.35),0 0 18px rgba(226,176,74,.45)}}
 .rinfo .when .nw{white-space:nowrap}
@@ -286,7 +286,9 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
 .home .acts button{grid-template-columns:1fr;justify-items:center;text-align:center;padding:7px 4px;gap:1px}
 .home .acts .k{grid-row:auto;width:28px;height:28px;font-size:16px}
 .home .acts b{font-size:13px}.home .acts span.d{font-size:9.5px;line-height:1.35}
-.hlog{margin:0;font-size:12px;line-height:1.5;color:var(--shiro);border-left:2px solid var(--kin);padding-left:8px;min-height:1.5em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hlog.more{-webkit-mask-image:linear-gradient(#000 60%,transparent);mask-image:linear-gradient(#000 60%,transparent)}.hlog.more.end{-webkit-mask-image:none;mask-image:none}
+.hlogw{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;align-items:start}.spk{width:30px;height:30px;border-radius:50%;box-shadow:0 0 0 1.5px var(--kin);background:#f3eadb}
+.hlog{margin:0;font-size:12px;line-height:1.45;color:var(--shiro);border-left:2px solid var(--kin);padding-left:8px;min-height:1.45em;max-height:2.9em;overflow-y:auto;overscroll-behavior:contain;white-space:normal;word-break:break-word}
 .home #bashoBtn{padding:12px 16px;font-size:16px}
 .deckbar{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center}
 .deck.mini{gap:6px}
@@ -515,7 +517,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
       <div class="stats" id="hStats"></div>
     </div>
     <div class="acts" id="hActs"></div>
-    <p class="hlog" id="hLog1"></p>
+    <div class="hlogw"><canvas id="hSpk" class="spk" aria-hidden="true"></canvas><p class="hlog" id="hLog1"></p></div>
     <div class="hgoal" id="hGoal"></div>
     <button class="primary" id="bashoBtn">本場所へ</button>
     <div class="deckbar"><span class="label">サポート</span><div class="deck mini" id="hDeck"></div></div>
@@ -1627,6 +1629,18 @@ function goalText(){if(st.maezumo)return'前相撲：2勝すれば、来場所�
   if(I.i===3){const need=I.num<=1?4:I.num<=3?5:I.num<=5?6:I.num<=15?7:0;return need?'十両昇進：この地位なら'+need+'勝で関取に':'4勝で'+nm(est(4))+'前後・6勝で'+nm(est(6))+'前後へ';}
   if(I.i===0)return'勝ち越せば序二段へ上がれる';
   return'4勝で'+nm(est(4))+'前後・6勝で'+nm(est(6))+'前後へ';}
+/* the face of whoever speaks in a log line (stablemaster, patron, partner, rival), else the rikishi himself */
+function speakerOf(t){const R=st.rom,pn=R&&R.pid?firstName(R.pid):null;
+  if(/親方/.test(t))return{k:'親'};
+  if(st.tani&&(t.includes(st.tani.name)||/タニマチ/.test(t))){const im=tImg(taniId(st.tani),'faces',/会食|乾杯|ごちそう|宴会|ゴルフ|鏡開き/.test(t)?'kanpai':'smile');if(im)return{img:im};return{k:'谷'};}
+  if(pn&&t.includes(pn)){const im=wImg(R.pid,'exprs',/会えない|さみし|別れ/.test(t)?'sad':/結婚|うれし|誕生/.test(t)?'joycry':'smile');if(im)return{img:im};return{k:PARTNERS[R.pid].k};}
+  if(st.rival&&t.includes(st.rival.name)&&aiReady(st.rival.face))return{img:portrait(st.rival.face,'normal',st.rival.pos>=JURYO,128)};
+  if(/父/.test(t))return{k:'父'};if(/母/.test(t))return{k:'母'};
+  return{img:portrait(st.face,/けが|痛め|負け|悔し|陥落/.test(t)?'lose':/勝ち越し|昇進|優勝|上がった/.test(t)?'happy':'normal',st.pos>=JURYO,128)};}
+function drawSpeaker(t){const cv=$('hSpk');if(!cv)return;const d=Math.min(3,devicePixelRatio||1),N=30*d;cv.width=cv.height=N;const g=cv.getContext('2d'),sp=speakerOf(t||'');
+  g.clearRect(0,0,N,N);g.save();g.beginPath();g.arc(N/2,N/2,N/2,0,6.283);g.clip();g.fillStyle='#f3eadb';g.fillRect(0,0,N,N);
+  if(sp.img){const im=sp.img,w=im.naturalWidth||im.width,h=im.naturalHeight||im.height;if(w===h)g.drawImage(im,0,0,N,N);else{const bw=N*1.15,bh=bw*h/w;g.drawImage(im,(N-bw)/2,N*1.05-bh,bw,bh);}}
+  else{g.fillStyle='#7a1f1f';g.font=Math.round(N*.6)+'px "Yuji Boku",serif';g.textAlign='center';g.textBaseline='middle';g.fillText(sp.k,N/2,N/2+N*.03);}g.restore();}
 function renderHome(){
   const r=st.maezumo?{div:'前相撲',name:'前相撲',bouts:3}:rank(st.pos);
   const plate=$('hTate');plate.innerHTML='';const n=document.createElement('span');n.textContent=st.name;plate.append(n);
@@ -1669,7 +1683,7 @@ function renderHome(){
   renderDeck();
   $('hAchN').textContent=Object.keys(roster.ach).length+'/'+ACH.length;renderAch($('hAch'));
   const lg=$('hLog');lg.innerHTML='';for(const t of st.log){const p=document.createElement('p');p.textContent=t;lg.append(p);}
-  $('hLog1').textContent=st.log[0]||'';
+  {const hl=$('hLog1');hl.textContent=st.log[0]||'';hl.scrollTop=0;hl.classList.remove('end');requestAnimationFrame(()=>hl.classList.toggle('more',hl.scrollHeight>hl.clientHeight+2));}drawSpeaker(st.log[0]);
   {const ib=$('itemBtn'),n=itemCount();ib.hidden=!n;ib.textContent='道具 '+n;}
   {const gb=$('hGoal');gb.innerHTML='';const g1=document.createElement('span');g1.innerHTML='<b>目標</b>';g1.append(goalText());gb.append(g1);
     if(st.rival){const g2=document.createElement('span');g2.innerHTML='<b>宿敵</b>';g2.append(st.rival.name+'（'+rivalRank()+'）　'+((st.rival.w||0)+(st.rival.l||0)?'通算 '+(st.rival.w||0)+'勝'+(st.rival.l||0)+'敗':'まだ対戦なし（同じ段にいると当たる）'));gb.append(g2);}}
@@ -3008,6 +3022,7 @@ function autoStep(){
 }
 $('autoBtn').addEventListener('click',()=>{if(autoGrow)autoStop('オート成長を止めました');else openAutoCfg();});
 $('autoGo').addEventListener('click',startAutoFromCfg);
+$('hLog1').addEventListener('scroll',e=>{const el=e.target;el.classList.toggle('end',el.scrollTop+el.clientHeight>=el.scrollHeight-2);});
 $('itemBtn').addEventListener('click',()=>{renderItems();openSheet('items','道具');});
 function sndUI(){const c=SND.cfg();$('sndBtn').classList.toggle('off',!c.on);$('sndBtn2').classList.toggle('off',!c.on);$('sndOn').checked=c.on;$('sndBgm').value=c.bgm;$('sndSfx').value=c.sfx;}
 for(const id of ['sndBtn','sndBtn2'])$(id).addEventListener('click',()=>{sndUI();openSheet('snd','音の設定');});
