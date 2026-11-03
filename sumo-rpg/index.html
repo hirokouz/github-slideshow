@@ -374,6 +374,10 @@ body:not(.onTitle) #sndBtn{display:none}
 .strats .mu.adv{background:#2f8a4a;color:#fff}.strats .mu.dis{background:#9a2b25;color:#fff}.strats .mu.even{background:#3a4468;color:#cfd6f0}
 .strats .pw{font-style:normal;color:var(--kin);font-size:10px;margin-left:3px;letter-spacing:-.05em}
 .strats button.rec{border-color:var(--kin);box-shadow:0 0 0 1px var(--kin),0 0 10px rgba(226,176,74,.35)}
+.locked{opacity:.45;filter:saturate(.4);pointer-events:none;position:relative}
+body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
+#nextBtn.locked.wait::after{display:none}
+#nextBtn.locked::after{content:'';position:absolute;left:0;bottom:0;height:4px;background:#2a1700;border-radius:2px;animation:unlockBar .9s linear forwards}@keyframes unlockBar{from{width:0}to{width:100%}}
 .fixrow{display:flex;gap:4px 14px;justify-content:center;flex-wrap:wrap;margin-top:6px}.fixrow .fixs{margin-top:0}
 #bMini{display:grid;gap:6px}.minitxt{margin:0;text-align:center;font-size:13px;font-weight:700;color:var(--kin)}
 .minibtns{display:grid;gap:8px;grid-template-columns:1fr}.minibtns.two{grid-template-columns:1fr 1fr}
@@ -1848,7 +1852,7 @@ function nextBout(){if(!autoMode)SND.play('hyoshigi');
   $('bOp').textContent=B.opp.name;{const e=$('bOpRank');e.innerHTML='';e.append(divBadge(B.opp.pos),side(B.opp.pos+1)+' '+rankRest(B.opp.pos));}$('bOpSt').textContent=(B.opp.rival?'宿敵（'+(st.rival.w||0)+'勝'+(st.rival.l||0)+'敗）・':'')+STYLE[B.opp.style]+'・'+B.opp.age+'歳・'+B.opp.height+'cm・'+B.opp.kg+'kg';
   $('bOp').parentElement.classList.toggle('rival',!!B.opp.rival);$('bMySt').textContent=st.height+'cm・'+Math.round(st.kg)+'kg';
   anim={phase:'intro',t:0,salted:false};fx=[];cam={z:1,fx:0,shake:0};gyX=null;
-  $('bPick').hidden=false;$('bTachi').hidden=true;$('bNext').hidden=true;$('bMini').hidden=true;
+  $('bPick').hidden=false;$('bTachi').hidden=true;$('bNext').hidden=true;$('bMini').hidden=true;$('nextBtn').classList.remove('wait');if(B.mashed&&Date.now()-B.mashed<6000)lockBtns([...document.querySelectorAll('.strats button')],600);B.mashed=0;
   if(autoMode)setTimeout(()=>{if(anim&&(anim.phase==='ready'||anim.phase==='intro'))choose(Math.random()<.55?counterOf(B.opp.style):pick(['oshi','yotsu','waza']));},250);
   else if(roster.autoStrat){const S=stratScores(),k=Object.keys(S).sort((a,b)=>S[b].score-S[a].score)[0];setTimeout(()=>{if(anim&&(anim.phase==='ready'||anim.phase==='intro')&&!autoMode)choose(k);},350);}
 }
@@ -1895,7 +1899,7 @@ function updateMini(a,dt){a.t+=dt;if(a.pop)a.pop=Math.max(0,a.pop-dt);if(a.flash
       else if(a.t-a.cue.t>a.win){a.cue.done=true;a.flash={ok:false,t:.4};a.next=a.t+rnd(.45,.9);}}
     else done=true;a.score=clamp(a.pts/a.rounds,0,1);a.c0=(a.score-.4)*.08;}
   if(a.g==='edge'){a.score=clamp(a.taps/a.need,0,1);a.c0=-.05+(a.score)*.05;if(a.t>=a.dur)done=true;}
-  if(done){$('bMini').hidden=true;if(a.g==='edge'){const ok=a.taps>=a.need;resolve(a.q,a.mini,ok?'win':'lose');}else resolve(a.q,a.score);}}
+  if(done){$('bMini').hidden=true;B.mashed=Date.now();$('bNext').hidden=false;$('nextBtn').textContent='取組中…';$('nextBtn').disabled=true;$('nextBtn').classList.add('locked','wait');document.body.classList.add('mashlock');if(a.g==='edge'){const ok=a.taps>=a.need;resolve(a.q,a.mini,ok?'win':'lose');}else resolve(a.q,a.score);}}
 function drawMini(g,W,H,t,a,text){
   const bx=W*.18,bw=W*.64,by=H*.1,bh=H*.045;
   const bar=(fill,col)=>{g.fillStyle='rgba(0,0,0,.45)';g.fillRect(bx-3,by-3,bw+6,bh+6);g.fillStyle=col;g.fillRect(bx,by,bw*clamp(fill,0,1),bh);g.strokeStyle='#f3eee2';g.lineWidth=1.5;g.strokeRect(bx,by,bw,bh);};
@@ -2053,11 +2057,13 @@ function updateBout(dt){
   }
   else if(a.phase==='done'){a.t+=dt;}
 }
+/* stray taps from a mash must not press whatever button appears next in the same spot */
+function lockBtns(els,ms){document.body.classList.add('mashlock');for(const el of els){el.disabled=true;el.classList.add('locked');el.classList.remove('wait');}setTimeout(()=>{document.body.classList.remove('mashlock');for(const el of els){el.disabled=false;el.classList.remove('locked');}},ms);}
 function afterBout(){
   renderProfile();
   setHoshi();setBoutInfo();renderBLog();
-  if(autoMode){setTimeout(nextBout,450/autoSpd());return;}
-  $('bNext').hidden=false;$('nextBtn').textContent=B.day>=B.n?'場所を終える':'次の一番へ';
+  if(autoMode){document.body.classList.remove('mashlock');setTimeout(nextBout,450/autoSpd());return;}
+  $('bNext').hidden=false;$('nextBtn').textContent=B.day>=B.n?'場所を終える':'次の一番へ';if(B.mashed)lockBtns([$('nextBtn')],900);
 }
 function drawBout(t,dt){
   if(!ring||!B||!B.opp)return;const{g,W,H}=ring;const u=H*.17,cx=W/2,fy=H*.76+H*.01;
