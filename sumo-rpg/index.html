@@ -267,7 +267,7 @@ body.autoOn #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 66px)}
 /* ---- compact one-screen layout ---- */
 .wrap{gap:10px;padding-block:calc(env(safe-area-inset-top,0px) + 10px) calc(env(safe-area-inset-bottom,0px) + 14px)}
 .scr{gap:10px}
-.home .hhead{padding:10px 12px}
+.home .hhead{padding:9px 12px}
 .home #avatar{width:84px;height:102px}
 .home .plate{font-size:26px}
 .home .rinfo .rank{font-size:21px}
@@ -302,13 +302,17 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
 .deck.mini .slot .sn{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .deck.mini .slot .ss{font-size:9.5px}
 .deck.mini .slot .empty{grid-column:1 / -1;justify-self:center;font-size:11px}
-.tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px}
+.tabs .itemtab{background:linear-gradient(#f3d27a,#c9932c);color:#2a1700;border-color:#f6e2a4}.tabs .itemtab .ti{color:#5a3410}
+.tabs .itemtab b{position:absolute;top:-6px;right:-3px;min-width:16px;height:16px;border-radius:8px;background:#7a1f1f;color:#fff;font-size:10px;line-height:16px;padding:0 4px}
+.tabs .itemtab.new{animation:itemGlow 1.4s ease-in-out infinite}.tabs .itemtab.new::after{content:'NEW';position:absolute;top:-7px;left:-3px;font-size:8px;background:#d0473a;color:#fff;border-radius:6px;padding:0 3px;line-height:12px}
 .tabs button.on{background:var(--kin);color:#2a1700}.tabs button.on .ti{color:#2a1700}
 #autoBar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);z-index:60;display:flex;gap:10px;align-items:center;
   background:var(--sumi);color:var(--washi);border:1.5px solid var(--kin);border-radius:999px;padding:6px 8px 6px 14px;font-size:12.5px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.45);max-width:calc(100vw - 32px)}
 #autoBar{white-space:nowrap;gap:6px;padding:5px 6px 5px 12px}
 #autoBar select{max-width:7.5em}
-#sndBtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:8px;z-index:65;width:32px;height:32px;border-radius:50%;border:1px solid var(--kin);background:rgba(13,20,48,.75);color:var(--kin);font-size:16px;line-height:1;padding:0;display:grid;place-items:center}
+#sndBtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:8px;z-index:65;height:34px;border-radius:999px;border:1.5px solid var(--kin);background:rgba(13,20,48,.85);color:var(--kin);font-size:12px;font-weight:800;line-height:1;padding:0 12px 0 8px;display:flex;align-items:center;gap:5px}
+#sndBtn .si{font-size:16px}#sndBtn.wait{animation:sndPulse 1.4s ease-in-out infinite}@keyframes sndPulse{50%{box-shadow:0 0 0 4px rgba(226,176,74,.35)}}
 body:not(.onTitle) #sndBtn{display:none}
 #sndBtn.off,#sndBtn2.off{color:#7d7360;border-color:#5b5246;text-decoration:line-through}
 .acfg input[type=range]{accent-color:var(--kin);height:24px}
@@ -331,7 +335,7 @@ body:not(.onTitle) #sndBtn{display:none}
 @keyframes pulse{50%{opacity:.25}}
 #autoBar select{font:inherit;font-size:12px;background:#2a2620;color:var(--washi);border:1px solid var(--line);border-radius:6px;padding:2px 4px}
 #autoBar button{border:0;border-radius:999px;background:var(--kin);color:#2a1700;font-weight:700;padding:5px 12px;font-size:12.5px}
-.tabs button{display:grid;justify-items:center;gap:1px;background:var(--ai2);border:1px solid var(--line);border-radius:10px;padding:6px 2px;font-size:10.5px;font-weight:700}
+.tabs button{white-space:nowrap;letter-spacing:-.06em;display:grid;justify-items:center;gap:1px;background:var(--ai2);border:1px solid var(--line);border-radius:10px;padding:6px 1px;font-size:10px;font-weight:700}
 .tabs .ti{font-family:var(--f-brush);font-size:17px;color:var(--kin);line-height:1.1}
 .tabs small{font-size:9px;color:var(--nezumi);font-weight:500}
 .sheet{position:fixed;inset:0;z-index:40;background:rgba(4,7,18,.62);display:flex;align-items:flex-end;justify-content:center}
@@ -385,11 +389,13 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 .scard.itemcard .kk{background:linear-gradient(#8a5a1e,#5a3410);color:#ffe9b0}.scard.itemcard{background:#fbf1dc}
 .tutbz{display:grid;gap:3px;margin:6px 0 4px}.tutbz div{display:grid;grid-template-columns:4.6em 1fr;gap:6px;align-items:center;font-size:12px;line-height:1.35}.tutbz .dvb{text-align:center;margin:0}#tut p.tutft,#tutText p{margin:4px 0 0;font-size:13px}
 .heirnote{margin:0;font-size:12.5px;font-weight:700;color:#7a1f1f;background:linear-gradient(90deg,rgba(226,176,74,.35),rgba(226,176,74,0));padding:4px 8px;border-left:3px solid #c9932c;border-radius:2px}
-.turns .itembtn{margin-left:auto;margin-block:-3px}
+.resetbtn{font-size:12px;padding:8px;color:#d98a7f;border-color:rgba(217,138,127,.5)}.resetbtn.armed{background:#9a2b25;color:#fff;border-color:#9a2b25}
+.tbars{display:inline-flex;gap:2px}.tbars i{width:9px;height:12px;border-radius:2px;border:1.5px solid #8a6d3b;background:transparent}.tbars i.used{background:linear-gradient(#e2b04a,#b07d22);border-color:#b07d22}
+.turns{row-gap:6px;padding-bottom:2px}.turns .itembtn{margin-left:auto}
 .itembtn{display:inline-flex;align-items:center;gap:4px;margin-left:6px;vertical-align:middle;border:0;border-radius:999px;padding:0 8px 0 2px;line-height:1;background:linear-gradient(#f3d27a,#c9932c);color:#2a1700;font-weight:800;font-size:12px;letter-spacing:0;box-shadow:0 0 0 1px #f6e2a4,0 2px 6px rgba(0,0,0,.35);position:relative}
 .itembtn .ik{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#5a3410;color:#ffe9b0;font-family:var(--f-brush);font-size:12px}
 .itembtn b{min-width:16px;height:16px;border-radius:8px;background:#7a1f1f;color:#fff;font-size:10.5px;line-height:16px;text-align:center;padding:0 3px}
-.itembtn.new{animation:itemGlow 1.4s ease-in-out infinite}.itembtn.new::after{content:'NEW';position:absolute;top:-8px;right:-6px;font-size:8.5px;background:#d0473a;color:#fff;border-radius:6px;padding:0 4px;line-height:13px}
+.itembtn.new{animation:itemGlow 1.4s ease-in-out infinite}.itembtn.new::after{content:'NEW';position:absolute;top:-7px;right:2px;font-size:8.5px;background:#d0473a;color:#fff;border-radius:6px;padding:0 4px;line-height:13px}
 @keyframes itemGlow{50%{box-shadow:0 0 0 2px #fff3c4,0 0 14px rgba(255,214,110,.9)}}
 .fixrow{display:flex;gap:4px 14px;justify-content:center;flex-wrap:wrap;margin-top:6px}.fixrow .fixs{margin-top:0}
 #bMini{display:grid;gap:6px}.minitxt{margin:0;text-align:center;font-size:13px;font-weight:700;color:var(--kin)}
@@ -455,7 +461,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 <body>
 
 <div id="toast" role="status" aria-live="polite"></div>
-<button type="button" id="sndBtn" aria-label="音の設定">♪</button>
+<button type="button" id="sndBtn" aria-label="音のオンオフ"><span class="si"></span><span class="st"></span></button>
 <div id="tut" hidden><div class="tut-hole" id="tutHole"></div><div class="tut-box" id="tutBox" role="dialog" aria-live="polite"><div class="tut-who"><span>親</span>親方</div><p id="tutText"></p><div class="tut-ctl"><span id="tutStep"></span><button type="button" id="tutSkip" class="tut-skip">スキップ</button><button type="button" id="tutNext" class="tut-next">次へ</button></div></div></div>
 <div id="autoBar" hidden><span class="dot" aria-hidden="true"></span><span id="autoTxt">オート中</span>
   <select id="autoSpeed" aria-label="速さ"><option value="1">ふつう</option><option value="3" selected>速い</option></select>
@@ -473,8 +479,9 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
     <div class="roster" id="roster"></div>
     <button class="primary" id="newBtn">新弟子として入門する</button>
     <div class="row" style="justify-content:space-between"><span class="purse">ご祝儀<b id="tMoney">0</b></span><button class="ghost" id="tGacha" style="width:auto">ご祝儀ガチャ</button></div>
-    <div class="panel"><details class="more"><summary><span class="label">殿堂（引退した親方たち）</span><span class="muted" style="font-size:12px" id="tPrestige"></span></summary><div class="hall" id="tHall" style="margin-top:10px"></div></details></div>
-    <div class="panel"><details class="more"><summary><span class="label">実績</span><span class="muted" style="font-size:12px" id="tAchN"></span></summary><div class="achs" id="tAch" style="margin-top:10px"></div></details></div>
+    <div class="panel"><details class="more"><summary><span class="label">殿堂（引退した力士たち）</span><span class="muted" style="font-size:12px" id="tPrestige"></span></summary><div class="hall" id="tHall" style="margin-top:10px"></div></details></div>
+    <div class="panel"><details class="more"><summary><span class="label">実績（部屋の歴代）</span><span class="muted" style="font-size:12px" id="tAchN"></span></summary><div class="achs" id="tAch" style="margin-top:10px"></div></details></div>
+    <button type="button" class="ghost resetbtn" id="resetBtn">データをすべて消して最初から</button>
     <p class="muted" style="font-size:12.5px;text-align:center">稽古は1場所ごとに5回。幕下以下は7番、十両から上は15番。勝ち越せば番付が上がる。</p>
   </section>
 
@@ -530,7 +537,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
       </div>
     </div>
     <div class="panel hst">
-      <div class="row" style="justify-content:space-between"><p class="label">体と技 <button type="button" id="tutBtn" class="tutq" aria-label="遊び方を見る">？ 遊び方</button><button type="button" id="sndBtn2" class="tutq" aria-label="音の設定">♪</button><button type="button" id="itemBtn" class="itembtn" aria-label="道具を使う" hidden><span class="ik">巻</span><span class="il">道具</span><b id="itemN">0</b></button></p><span class="muted" style="font-size:10.5px" id="hPower"></span></div>
+      <div class="row" style="justify-content:space-between"><p class="label">体と技 <button type="button" id="tutBtn" class="tutq" aria-label="遊び方を見る">？ 遊び方</button><button type="button" id="sndBtn2" class="tutq" aria-label="音の設定">🔊</button></p><span class="muted" style="font-size:10.5px" id="hPower"></span></div>
       <div class="stats" id="hStats"></div>
     </div>
     <div class="acts" id="hActs"></div>
@@ -540,10 +547,11 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
     <div class="deckbar"><span class="label">サポート</span><div class="deck mini" id="hDeck"></div></div>
     <nav class="tabs" aria-label="そのほか">
       <button type="button" data-sheet="hist"><span class="ti">星</span>星取表</button>
-      <button type="button" data-sheet="log"><span class="ti">話</span>部屋の話</button>
+      <button type="button" data-sheet="log"><span class="ti">話</span>部屋話</button>
       <button type="button" data-sheet="ach"><span class="ti">績</span>実績<small id="hAchN"></small></button>
       <button type="button" id="hGacha"><span class="ti">祝</span>ガチャ</button>
-      <button type="button" id="toTitle"><span class="ti">替</span>力士切替</button>
+      <button type="button" id="toTitle"><span class="ti">替</span>力士替</button>
+      <button type="button" id="itemBtn" class="itemtab" hidden><span class="ti">巻</span>道具<b id="itemN">0</b></button>
       <button type="button" id="autoBtn"><span class="ti">自</span>オート</button>
     </nav>
   </section>
@@ -785,6 +793,8 @@ function migrate(s){if(!s)return s;if(s.cap)for(const k in s.cap)s.cap[k]=Math.m
   if(s.age0===undefined)Object.assign(s,profileSeed(s.type));
   if(!s.v2){s.pos=mapOldPos(s.pos);for(const h of s.hist||[])h.pos=mapOldPos(h.pos);if(s.basho)s.basho=null,s.used=5;s.v2=1;s.v3=1;s.best=Math.max(s.pos,...(s.hist||[]).map(h=>h.pos));}
   if(!s.v3){const f=x=>mapV2(x);s.pos=f(s.pos);if(s.best!==undefined)s.best=f(s.best);for(const h of s.hist||[])h.pos=f(h.pos);if(s.basho&&s.basho.opp)s.basho.opp.pos=f(s.basho.opp.pos);s.v3=1;}
+  if(!s.ach){s.ach={};try{for(const a of ACH)if(!ACH_STABLE.has(a.id)&&roster.ach[a.id]&&a.c(s))s.ach[a.id]=1;}catch(e){}}
+  if(s.tutDone===undefined&&(s.b>0||s.used>0))s.tutDone=true;   // rikishi from before per-rikishi tutorials
   if(!s.rival)s.rival=makeRival(s);if(s.rival.pos===undefined)s.rival.pos=s.pos;if(s.best===undefined)s.best=s.pos;if(!s.deck)s.deck=[];if(!s.id)s.id='r'+Date.now().toString(36)+Math.floor(Math.random()*1e4);if(!s.touched)s.touched=Date.now();return s;}
 function loadRoster(){
   try{const r=JSON.parse(localStorage.getItem(ROSTER_KEY)||'null');if(r&&r.list){roster=r;}}catch(e){}
@@ -1419,7 +1429,7 @@ const SND=(()=>{
   function want(){if(cur==='sTitle'||cur==='sCreate')return'title';if(cur==='sHome'||cur==='sGacha')return'home';if(cur==='sBout')return'basho';if(cur==='sResult')return null;
     if(cur==='sKikyo')return['retire','oyakata'].includes(kScene)?'sad':kScene==='juryo'?'title':['school','tani'].includes(kScene)?'home':'event';return'home';}
   function sync(){if(!ctx||!unlocked)return;play(want());}
-  function unlock(){if(!init())return;if(ctx.state==='suspended')ctx.resume();if(!unlocked){unlocked=true;timer=setInterval(loop,90);sync();}}
+  function unlock(){try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}if(!init())return;if(ctx.state==='suspended')ctx.resume();if(!unlocked){unlocked=true;timer=setInterval(loop,90);sync();}}
   addEventListener('pointerdown',unlock,{passive:true});addEventListener('keydown',unlock);
   document.addEventListener('visibilitychange',()=>{if(!ctx)return;if(document.hidden){ctx.suspend();if(songOn)songOn.a.pause();}else if(unlocked){ctx.resume();if(songOn){const pr=songOn.a.play();if(pr&&pr.catch)pr.catch(()=>{});}}});
   // one-shot effects
@@ -1438,7 +1448,7 @@ const SND=(()=>{
       else if(id==='moushi'){I.taiko(t,.6);I.shime(t+.12,.9);}else if(id==='chanko'){for(let k=0;k<4;k++)tone(t+k*.09,500+Math.random()*300,.06,{vol:.08,bend:.4});}
       else if(id==='rest'){I.koto(t,nt(YO,7),.5);I.koto(t+.2,nt(YO,9),.4);}else I.koto(t,nt(YO,7),.5);},
   };
-  return{state:()=>ctx?ctx.state+':'+(track||'-')+(songOn?'(song '+(songOn.a.paused?'paused':'playing')+')':''):'none',sync,play:(n,...a)=>{if(ctx&&unlocked&&fx[n])try{fx[n](...a);}catch(e){}},cfg,save,unlock};
+  return{ready:()=>unlocked,state:()=>ctx?ctx.state+':'+(track||'-')+(songOn?'(song '+(songOn.a.paused?'paused':'playing')+')':''):'none',sync,play:(n,...a)=>{if(ctx&&unlocked&&fx[n])try{fx[n](...a);}catch(e){}},cfg,save,unlock};
 })();
 function show(id){for(const s of SCR)$(s).hidden=s!==id;cur=id;closeSheet();window.scrollTo(0,0);document.body.classList.toggle('onTitle',id==='sTitle');SND.sync();}
 function openSheet(k,title){const sh=$('sheet');sh.hidden=false;$('sheetT').textContent=title||'';for(const el of sh.querySelectorAll('[data-p]'))el.hidden=el.dataset.p!==k;}
@@ -1474,7 +1484,7 @@ function renderTitle(){
   loginBonus();$('tMoney').textContent=roster.money||0;
   $('tAchN').textContent=Object.keys(roster.ach).length+' / '+ACH.length;renderAch($('tAch'));
   $('tPrestige').textContent='部屋の格 '+(roster.prestige||0)+'（新弟子の成長 +'+Math.round(prestigeBonus()*100)+'%）';
-  const hb=$('tHall');hb.innerHTML='';if(!roster.hall.length){const pp=document.createElement('p');pp.className='muted';pp.style.fontSize='12.5px';pp.textContent='まだいない。力士を引退させると親方になり、部屋の格が上がる。';hb.append(pp);}
+  const hb=$('tHall');hb.innerHTML='';if(!roster.hall.length){const pp=document.createElement('p');pp.className='muted';pp.style.fontSize='12.5px';pp.textContent='まだいない。幕内まで上がった力士は、引退すると親方になって部屋の格が上がる。';hb.append(pp);}
   for(const h of roster.hall.slice().reverse()){const row=document.createElement('div');row.className='h';const im=document.createElement('img');im.alt='';im.dataset.hall=roster.hall.indexOf(h);try{im.src=portrait(h.face,'normal',h.oicho,96).toDataURL();}catch(e){}
     const a=document.createElement('div');a.innerHTML='<div class="hn"></div><div class="muted"></div>';a.children[0].textContent=h.name;a.children[1].append(badgeLabel(h.best),h.w+'勝'+h.l+'敗・'+h.years+'年'+(h.path?'・'+h.path:''));
     const y=document.createElement('div');y.style.cssText='color:var(--kin);font-weight:700;text-align:right';y.textContent=h.makuYusho?'幕内優勝'+h.makuYusho+'回':'';row.append(im,a,y);hb.append(row);}
@@ -1643,7 +1653,7 @@ function showTut(){const S=tutList[tutI],hole=$('tutHole'),box=$('tutBox');$('tu
   if(el){el.scrollIntoView({block:'center'});const r=el.getBoundingClientRect(),pd=6;Object.assign(hole.style,{display:'block',left:(r.left-pd)+'px',top:(r.top-pd)+'px',width:(r.width+pd*2)+'px',height:(r.height+pd*2)+'px'});
     requestAnimationFrame(()=>{const bh=box.offsetHeight,below=r.bottom+pd+12;box.style.top=(below+bh<innerHeight-8?below:Math.max(8,r.top-pd-12-bh))+'px';});}
   else{Object.assign(hole.style,{display:'block',left:'50%',top:'40%',width:'0px',height:'0px'});requestAnimationFrame(()=>{box.style.top=Math.max(8,(innerHeight-box.offsetHeight)/2)+'px';});}}
-function endTut(){$('tut').hidden=true;roster.tutDone=true;saveRoster();}
+function endTut(){$('tut').hidden=true;st.tutDone=true;persist();}
 /* weight that suits each division (kg) */
 function kgTarget(pos){if(pos>=MAKU)return[150,180];if(pos>=JURYO)return[145,175];const i=divInfo(pos).i;return[[105,130],[115,140],[120,150],[135,165]][i];}
 function recommendAct(){const [lo]=kgTarget(st.maezumo?0:st.pos);
@@ -1687,14 +1697,14 @@ function renderHome(){
     const add=(cls,txt,warn,title)=>{const t=document.createElement('span');t.className='tie '+cls+(warn?' warn':'');t.textContent=txt;t.title=title;ties.append(t);};
     const Rm=st.rom;if(Rm&&(Rm.stage==='dating'||Rm.stage==='engaged'))add('love','♥'+PARTNERS[Rm.pid].name.replace(/^.*[・の]/,'')+' '+Rm.aff,(Rm.dateMiss||0)>=2,Rm.stage==='engaged'?'婚約中':'交際中');
     if(spouse())add('fam','家 '+PARTNERS[Rm.pid].name.replace(/^.*[・の]/,'')+(Rm.kid?'・長男':''),(Rm.famMiss||0)>=2,'家族');
-    if(st.inj>0)add('inj','負傷 '+(st.injPart||''),false,'ケガ：'+INJ_SEV[clamp(st.inj,1,3)]);
+    if(st.inj>0)add('inj',(st.inj>=2?'休場':'負傷')+' あと'+(st.injHeal||st.inj*2)+'休',false,(st.injPart||'')+'のケガ：'+INJ_SEV[clamp(st.inj,1,3)]+'・あと'+(st.injHeal||st.inj*2)+'回休めば治る');
     if(!st.maezumo&&st.hist.length>1&&st.pos>=(st.best||0))add('best','最高位',false,'自己最高位');
     if(st.tani)add('tani','谷 '+st.tani.short,(st.tani.miss||0)>=2,'タニマチ：'+st.tani.name);
     if(ties.childNodes.length)hs.append(ties);}
   const hr=$('hRank');hr.innerHTML='';hr.append(divBadge(st.pos,st.maezumo,true));{const rest=st.maezumo?'':rankRest(st.pos);if(rest){const r2=document.createElement('span');r2.style.cssText='display:block';r2.textContent=rest;hr.append(r2);}}
   {const w=$('hWhen');w.textContent=ageOf(st)+'歳・入門'+yearOf(st)+'年目'+(st.b<3&&st.school?'・教習所通い':'')+'　';const n=document.createElement('span');n.className='nw';n.textContent=BASHO[st.b%6]+'（'+MONTH[st.b%6]+'月）まで';w.append(n);}
-  const tu=$('hTurns');itemBtnEl().remove();tu.innerHTML='';const lab=document.createElement('span');lab.textContent='稽古';tu.append(lab);
-  for(let i=0;i<TURNS;i++){const d=document.createElement('i');if(i<st.used)d.className='used';tu.append(d);}tu.append(itemBtnEl());
+  const tu=$('hTurns');tu.innerHTML='';const lab=document.createElement('span');lab.textContent='稽古 '+st.used+'/'+TURNS;tu.append(lab);
+  {const g=document.createElement('span');g.className='tbars';for(let i=0;i<TURNS;i++){const d=document.createElement('i');if(i<st.used)d.className='used';g.append(d);}tu.append(g);}
   const sb=$('hStats');sb.innerHTML='';
   const row=(label,val,max,txt,cls,gain)=>{const d=document.createElement('div');d.className='stat';
     d.innerHTML='<span class="n"></span><div class="bar '+(cls||'')+'"><i></i></div><b></b>';d.children[0].textContent=label;
@@ -1706,7 +1716,7 @@ function renderHome(){
     if(st.kg<lo)kd.querySelector('b').classList.add('low');}
   row('疲れ',st.fat,100,Math.round(st.fat),'fat');
   lastGain={};
-  if(st.inj>0){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ff8a80;margin:0';d.textContent=(st.injPart||'')+'の'+INJ_SEV[clamp(st.inj,1,3)]+'：'+(st.inj>=2?'稽古も出場もできない（休場）':'稽古・出場はできるが悪化に注意')+'・あと'+(st.injHeal||st.inj*2)+'回休めば治る';sb.append(d);}
+  if(st.inj>=2){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ff8a80;margin:0;white-space:nowrap';d.textContent='ケガで休場中：稽古も出場もできない。休んで治そう';sb.append(d);}
   else if((st.tiredB||0)>=1){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ffb36b;margin:0';d.textContent='疲れがたまっている（'+st.tiredB+'場所連続）：休まないとけがをしやすい';sb.append(d);}
   $('hPower').textContent='伸びしろ '+(g=>g>=1.2?'大':g>=1?'ふつう':g>=.85?'やや小':g>=.6?'小':'わずか')(ageGrowth(ageOf(st)))+'・総合力 '+Math.round((st.stats.oshi+st.stats.chikara+st.stats.waza+st.stats.hayasa)/4+(st.kg-90)*.1);
   const ab=$('hActs');ab.innerHTML='';const done=st.used>=TURNS;
@@ -1719,12 +1729,12 @@ function renderHome(){
     b.addEventListener('click',()=>train(a));ab.append(b);}
   const bb=$('bashoBtn');bb.disabled=!done;bb.classList.toggle('kyujo',st.inj>=2&&done);bb.textContent=done?(st.inj>=2?BASHO[st.b%6]+'を休場する（ケガ）':st.inj===1?BASHO[st.b%6]+'へ（ケガをおして出場）':BASHO[st.b%6]+'へ（'+r.bouts+'番）'):'稽古あと'+(TURNS-st.used)+'回で'+BASHO[st.b%6];
   renderDeck();
-  $('hAchN').textContent=Object.keys(roster.ach).length+'/'+ACH.length;renderAch($('hAch'));
+  $('hAchN').textContent=ACH.filter(a=>achOf(st,a.id)).length+'/'+ACH.length;renderAch($('hAch'),st);
   const lg=$('hLog');lg.innerHTML='';for(const t of st.log){const p=document.createElement('p');p.textContent=t;lg.append(p);}
   {const hl=$('hLog1');hl.textContent=st.log[0]||'';hl.scrollTop=0;hl.classList.remove('end');requestAnimationFrame(()=>hl.classList.toggle('more',hl.scrollHeight>hl.clientHeight+2));}drawSpeaker(st.log[0]);
   {const ib=itemBtnEl(),n=itemCount();ib.hidden=!n;$('itemN').textContent=n;ib.classList.toggle('new',!!st.itemNew&&n>0);}
   {const gb=$('hGoal');gb.innerHTML='';const g1=document.createElement('span');g1.innerHTML='<b>目標</b>';g1.append(goalText());gb.append(g1);
-    if(st.rival){const g2=document.createElement('span');g2.innerHTML='<b>宿敵</b>';g2.append(st.rival.name+'（'+rivalRank()+'）　'+((st.rival.w||0)+(st.rival.l||0)?'通算 '+(st.rival.w||0)+'勝'+(st.rival.l||0)+'敗':'まだ対戦なし（同じ段にいると当たる）'));gb.append(g2);}}
+    if(st.rival){const g2=document.createElement('span');g2.innerHTML='<b>宿敵</b>';g2.append(st.rival.name+'（'+rivalRank()+'）　'+((st.rival.w||0)+(st.rival.l||0)?'通算 '+(st.rival.w||0)+'勝'+(st.rival.l||0)+'敗':'まだ対戦なし'));gb.append(g2);}}
   const bf=$('hBuffs');bf.innerHTML='';
   if(st.rom&&st.rom.stage){const q=document.createElement('p');const R=st.rom,P=PARTNERS[R.pid];
     q.textContent=R.stage==='crush'?'気になる人：'+P.name+'（親密度 '+R.aff+'・場所で勝つと告白のチャンス）':R.stage==='married'?'妻：'+firstName(R.pid)+(R.kid?'・長男あり':'')+'（'+P.fx+'）':R.stage==='engaged'?'婚約者：'+firstName(R.pid)+'（年の瀬に披露宴）':'交際中：'+firstName(R.pid)+'（親密度 '+R.aff+(st.pos<JURYO&&R.aff>=60?'・関取になれば結婚できる':'')+'）';bf.append(q);}const ab2=activeBuffs();if(!ab2.length){const q=document.createElement('p');q.textContent='なし';bf.append(q);}
@@ -1739,7 +1749,7 @@ function renderHome(){
   const keepAct=avatar&&avatar.act;
   if(cur!=='sHome')show('sHome');
   avatar=makeCanvas($('avatar'),102/84);avatar.act=keepAct||null;avatar.fx=[];
-  if(!roster.tutDone&&!autoGrow&&$('tut').hidden)setTimeout(()=>{if(cur==='sHome'&&!roster.tutDone&&$('tut').hidden)startTut();},350);
+  if(!st.tutDone&&!autoGrow&&$('tut').hidden)setTimeout(()=>{if(cur==='sHome'&&!st.tutDone&&$('tut').hidden)startTut();},350);
 }
 /* home avatar: idle breathing + a short animation for each kind of training */
 function drawAvatar(t,dt){
@@ -2532,16 +2542,22 @@ const ACH=[
   {id:'fuchigoe',n:'父超え',     d:'二代目で父の最高位を超える', r:500, c:s=>!!s.fatherPassed},
   {id:'oyakoYoko',n:'親子横綱',  d:'父も子も横綱になる',       r:2000,c:s=>!!(s.nisei&&s.heir&&s.heir.fatherBest>=YOKO&&(s.best||0)>=YOKO)},
   {id:'rival10',n:'宿命の対決', d:'宿敵に通算10勝',          r:300, c:s=>(s.rival&&s.rival.w||0)>=10},
-  {id:'oyakata',n:'親方',       d:'力士を引退させて親方にする',r:300,c:()=>roster.hall.length>=1},
+  {id:'oyakata',n:'親方',       d:'幕内経験のある力士を引退させて親方にする',r:300,c:()=>roster.hall.some(h=>h.path==='親方'||h.path==='二代目を送り出す'&&h.bestPos>=MAKU)},
   {id:'hall3',  n:'名門部屋',   d:'殿堂入りの力士3人',        r:800, c:()=>roster.hall.length>=3},
 ];
-function checkAch(){const got=[];if(!st)return got;
-  for(const a of ACH){if(roster.ach[a.id])continue;if(a.c(st)){roster.ach[a.id]=Date.now();roster.money=(roster.money||0)+a.r;got.push(a.n);toast('実績「'+a.n+'」達成！ ご祝儀 +'+a.r);}}
+/* achievements are per rikishi, except the stable-wide ones (oyakata, hall, kimarite book).
+   The first rikishi in the stable to reach one gets the full reward; later rikishi get a third. */
+const ACH_STABLE=new Set(['oyakata','hall3','km15','km30','kmRare']);
+const achOf=(s,id)=>ACH_STABLE.has(id)?roster.ach[id]:s&&s.ach&&s.ach[id];
+function checkAch(){const got=[];if(!st)return got;if(!st.ach)st.ach={};
+  for(const a of ACH){const stable=ACH_STABLE.has(a.id);if(stable?roster.ach[a.id]:st.ach[a.id])continue;if(!a.c(st))continue;
+    const first=!roster.ach[a.id],r=stable||first?a.r:Math.round(a.r/3);if(!stable)st.ach[a.id]=Date.now();if(first)roster.ach[a.id]=Date.now();
+    roster.money=(roster.money||0)+r;got.push(a.n);toast('実績「'+a.n+'」達成！ ご祝儀 +'+r);}
   return got;}
-function renderAch(box){box.innerHTML='';const bk=roster.kmBook||{},kb=document.createElement('div');kb.className='kmbook';kb.innerHTML='<p class="label"></p><div></div>';kb.querySelector('p').textContent='決まり手図鑑　'+Object.keys(bk).length+' / '+KM_NAMES.length+'種';
+function renderAch(box,who){box.innerHTML='';const has=id=>who?achOf(who,id):roster.ach[id];const bk=roster.kmBook||{},kb=document.createElement('div');kb.className='kmbook';kb.innerHTML='<p class="label"></p><div></div>';kb.querySelector('p').textContent='決まり手図鑑　'+Object.keys(bk).length+' / '+KM_NAMES.length+'種';
   for(const n of KM_NAMES){const c=document.createElement('span');c.className=bk[n]?'got'+(KM_RARE.has(n)?' rare':''):'';c.textContent=bk[n]?n+(bk[n]>1?' ×'+bk[n]:''):'？？？';kb.lastChild.append(c);}
-  for(const a of ACH){const d=document.createElement('div');d.className='ach'+(roster.ach[a.id]?' got':'');
-  d.innerHTML='<b></b><span></span><i></i>';d.querySelector('b').textContent=a.n;d.querySelector('span').textContent=a.d;d.querySelector('i').textContent=roster.ach[a.id]?'達成':'+'+a.r;box.append(d);}box.append(kb);}
+  for(const a of ACH){const d=document.createElement('div');d.className='ach'+(has(a.id)?' got':'');
+  d.innerHTML='<b></b><span></span><i></i>';d.querySelector('b').textContent=a.n;d.querySelector('span').textContent=a.d;d.querySelector('i').textContent=has(a.id)?'達成':'+'+(who&&!ACH_STABLE.has(a.id)&&roster.ach[a.id]?Math.round(a.r/3):a.r);if(who&&ACH_STABLE.has(a.id))d.querySelector('span').textContent=a.d+'（部屋）';box.append(d);}box.append(kb);}
 
 /* ---------- retirement, hall of fame, stable prestige ---------- */
 function bestRankName(s){return rank(Math.max(s.best||0,s.pos)).div==='前頭'?'前頭':rank(Math.max(s.best||0,s.pos)).div;}
@@ -2584,7 +2600,10 @@ function retireSteps(s){const best=Math.max(s.best||0,s.pos),seki=best>=JURYO,R=
     '三賞 '+(s.sanshoN||0)+'回・金星 '+(s.kinboshi||0)+'個',
     R2?'宿敵 '+R2.name+' とは '+(R2.w||0)+'勝'+(R2.l||0)+'敗':'',
     (s.age0)+'歳で入門 → '+age+'歳で引退（土俵生活'+Math.max(1,Math.round(s.b/6))+'年）'].filter(Boolean).join('\n')});
-  const ch=[{l:'親方として部屋に残る',d:'部屋の格が上がり、次の新弟子が育ちやすくなる',path:'oyakata'}];
+  // only rikishi who reached makuuchi may take a toshiyori name and stay on as oyakata
+  const ch=best>=MAKU?[{l:'親方として部屋に残る',d:'部屋の格が上がり、次の新弟子が育ちやすくなる',path:'oyakata'}]
+    :[{l:'世話人として部屋に残る',d:'幕内に届かなかったので親方にはなれない。裏方として部屋を支える（部屋の格は半分）',path:'sewanin'},
+      {l:'故郷に帰る',d:'まわしを置いて、地元で第二の人生。ご祝儀 +300（部屋の格は上がらない）',path:'kokyo'}];
   if(R.stage==='married'&&R.kid)ch.push({l:'息子を入門させる（二代目）',d:'父の血を引く新弟子が入門。能力と成長に父のボーナス',path:'son'});
   if(s.tani)ch.push({l:'ちゃんこ屋を開く',d:'タニマチの後押しで開店。毎日のログインご祝儀 +50（部屋の格は半分）',path:'chanko'});
   steps.push({title:'これからの道',name:'第二の人生',scene:'sum',text:'まげを落とした頭が、少し涼しい。\nこれから、どの道を歩こう。',choices:ch});
@@ -2639,12 +2658,12 @@ function drawRetire(g,W,H,t,dt){if(!RT)return;const S=RT.steps[RT.i],s=RT.s;RT.t
   g.fillStyle='rgba(239,226,196,.92)';g.fillRect(W*.62,H*.12,W*.33,H*.76);g.fillStyle='#2a2118';g.textAlign='center';
   g.font=Math.round(H*.13)+'px "Yuji Boku",serif';const nm=s.name;for(let i=0;i<nm.length;i++)g.fillText(nm[i],W*.785,H*(.28+i*.15));
   g.fillStyle='#7a1f1f';g.font='700 '+Math.round(H*.07)+'px "Zen Kaku Gothic New",sans-serif';g.fillText(rank(best).name.replace(/枚目$/,''),W*.785,H*.84);}
-function retire(id,path){const s=roster.list[id];if(!s)return;path=path||'oyakata';const pts=Math.round(prestigeOf(s)*(path==='chanko'?.5:1));
-  roster.hall.push({name:s.name,face:s.face,best:bestRankName(s),bestPos:Math.max(s.best||0,s.pos),makuYusho:s.makuYusho,yusho:s.yusho,w:totalWins(s),l:s.hist.reduce((a,h)=>a+h.l-(h.kyu||0),0),age:ageOf(s),years:yearOf(s),oicho:Math.max(s.best||0,s.pos)>=JURYO,path:{oyakata:'親方',son:'二代目を送り出す',chanko:'ちゃんこ屋の店主'}[path]});
+function retire(id,path){const s=roster.list[id];if(!s)return;path=path||(Math.max(s.best||0,s.pos)>=MAKU?'oyakata':'sewanin');if(path==='oyakata'&&Math.max(s.best||0,s.pos)<MAKU)path='sewanin';const pts=Math.round(prestigeOf(s)*(path==='chanko'||path==='sewanin'?.5:path==='kokyo'?0:1));if(path==='kokyo')earn(300);
+  roster.hall.push({name:s.name,face:s.face,best:bestRankName(s),bestPos:Math.max(s.best||0,s.pos),makuYusho:s.makuYusho,yusho:s.yusho,w:totalWins(s),l:s.hist.reduce((a,h)=>a+h.l-(h.kyu||0),0),age:ageOf(s),years:yearOf(s),oicho:Math.max(s.best||0,s.pos)>=JURYO,path:{oyakata:'親方',son:'二代目を送り出す',chanko:'ちゃんこ屋の店主',sewanin:'世話人',kokyo:'故郷へ'}[path]});
   const married=s.rom&&s.rom.stage==='married';if(path==='son'){const fb=Math.max(s.best||0,s.pos),top=Object.keys(s.stats).sort((a,b)=>s.stats[b]-s.stats[a])[0];
     roster.heir={items:s.items||{},name:s.name,best:fb,bestName:rank(fb).name,stat:top,height:s.height,mom:s.rom&&s.rom.pid,home:s.home,makuYusho:s.makuYusho||0};}if(path==='chanko')roster.shops=(roster.shops||0)+1;
-  const bonusP=(s.flags&&s.flags.oyakoko?3:0)+(married?3:0)+(s.weddingPrestige||0);roster.prestige=(roster.prestige||0)+pts+bonusP;delete roster.list[id];if(roster.active===id)roster.active=null;if(st&&st.id===id)st=null;
-  checkAchStable();saveRoster();toast(path==='chanko'?s.name+' がちゃんこ屋を開いた。毎日のご祝儀 +50・部屋の格 +'+pts:s.name+' が引退。部屋の格 +'+(pts+bonusP)+'（新弟子の成長 +'+Math.round(prestigeBonus()*100)+'%）');
+  const bonusP=path==='kokyo'?0:(s.flags&&s.flags.oyakoko?3:0)+(married?3:0)+(s.weddingPrestige||0);roster.prestige=(roster.prestige||0)+pts+bonusP;delete roster.list[id];if(roster.active===id)roster.active=null;if(st&&st.id===id)st=null;
+  checkAchStable();saveRoster();toast(path==='chanko'?s.name+' がちゃんこ屋を開いた。毎日のご祝儀 +50・部屋の格 +'+pts:path==='kokyo'?s.name+' は故郷に帰った。ご祝儀 +300':s.name+(path==='oyakata'?' が親方に。':path==='sewanin'?' が世話人に。':' が引退。')+'部屋の格 +'+(pts+bonusP)+'（新弟子の成長 +'+Math.round(prestigeBonus()*100)+'%）');
   if(path==='son')openCreate();else renderTitle();}
 function checkAchStable(){for(const a of ACH){if(roster.ach[a.id])continue;if((a.id==='oyakata'||a.id==='hall3')&&a.c()){roster.ach[a.id]=Date.now();roster.money+=a.r;}}}
 
@@ -3086,10 +3105,17 @@ function autoStep(){
 }
 $('autoBtn').addEventListener('click',()=>{if(autoGrow)autoStop('オート成長を止めました');else openAutoCfg();});
 $('autoGo').addEventListener('click',startAutoFromCfg);
+{const rb=$('resetBtn');let step=0,tm=null;rb.addEventListener('click',()=>{clearTimeout(tm);step++;
+  if(step===1){rb.classList.add('armed');rb.textContent='本当に消す？ 力士・ご祝儀・カード・実績がすべて消える（もう一度押す）';tm=setTimeout(()=>{step=0;rb.classList.remove('armed');rb.textContent='データをすべて消して最初から';},5000);return;}
+  try{localStorage.removeItem(ROSTER_KEY);localStorage.removeItem(KEY);}catch(e){}location.reload();});}
 $('hLog1').addEventListener('scroll',e=>{const el=e.target;el.classList.toggle('end',el.scrollTop+el.clientHeight>=el.scrollHeight-2);});
 itemBtnEl().addEventListener('click',()=>{if(st){st.itemNew=false;persist();itemBtnEl().classList.remove('new');}renderItems();openSheet('items','道具');});
-function sndUI(){const c=SND.cfg();$('sndBtn').classList.toggle('off',!c.on);$('sndBtn2').classList.toggle('off',!c.on);$('sndOn').checked=c.on;$('sndBgm').value=c.bgm;$('sndSfx').value=c.sfx;}
-for(const id of ['sndBtn','sndBtn2'])$(id).addEventListener('click',()=>{sndUI();openSheet('snd','音の設定');});
+function sndUI(){const c=SND.cfg(),b=$('sndBtn'),wait=c.on&&!SND.ready();b.classList.toggle('off',!c.on);b.classList.toggle('wait',wait);b.querySelector('.si').textContent=c.on?'🔊':'🔇';b.querySelector('.st').textContent=wait?'タップで音が鳴る':c.on?'音 ON':'音 OFF';
+  $('sndBtn2').textContent=c.on?'🔊':'🔇';$('sndBtn2').classList.toggle('off',!c.on);$('sndOn').checked=c.on;$('sndBgm').value=c.bgm;$('sndSfx').value=c.sfx;}
+let sndWasReady=false;$('sndBtn').addEventListener('pointerdown',()=>{sndWasReady=SND.ready();},true);
+$('sndBtn').addEventListener('click',()=>{const c=SND.cfg();if(c.on&&!sndWasReady){sndUI();return;}c.on=!c.on;SND.save(c);if(c.on)SND.unlock();sndUI();toast(c.on?'音をオンにしました':'音をオフにしました');});
+$('sndBtn2').addEventListener('click',()=>{sndUI();openSheet('snd','音の設定');});
+addEventListener('pointerup',()=>setTimeout(sndUI,50),{passive:true});
 $('sndOn').addEventListener('change',e=>{const c=SND.cfg();c.on=e.target.checked;SND.save(c);sndUI();});
 for(const [id,k] of [['sndBgm','bgm'],['sndSfx','sfx']])$(id).addEventListener('input',e=>{const c=SND.cfg();c[k]=+e.target.value;SND.save(c);if(k==='sfx')SND.play('pluck');});
 $('tutNext').addEventListener('click',()=>{if(tutI<tutList.length-1){tutI++;showTut();}else endTut();});
