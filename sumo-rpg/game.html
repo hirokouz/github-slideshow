@@ -1619,7 +1619,7 @@ function goalText(){if(st.maezumo)return'前相撲：2勝すれば、来場所�
   const I=st.pos<KOMU?divInfo(st.pos):null,nm=p=>rank(p).name;
   const est=w=>{const r=[];for(let k=0;k<7;k++)r.push(moveBanzuke(st.pos,w,I.d.b-w).p);r.sort((a,b)=>a-b);return r[3];};
   if(st.pos>=YOKO)return'横綱：負け越すと進退問題。2場所続けて休むのも危ない';
-  if(st.pos===OZEKI){if(st.kadoban)return'カド番：負け越すと大関から陥落する';const lack=tsunaLack(st);return lack.length?'綱取りの条件：全能力A以上（不足：'+lack.map(k=>STAT_LABEL[k]+gradeOf(st.stats[k])[0]).join('・')+'）':tsunaTori(st)?'綱取りの場所！ 優勝すれば横綱昇進':'綱取り：優勝か13勝のあと、次の場所で優勝すれば横綱';}
+  if(st.pos===OZEKI){if(st.kadoban)return'カド番：負け越すと大関から陥落する';return tsunaTori(st)?'綱取りの場所！ 優勝をめざせ':'綱取り：優勝か13勝のあと、次の場所で優勝すれば横綱';}
   if(st.pos===SEKI){const l3=st.hist.slice(-2).reduce((a,h)=>a+h.w,0);return'大関取りの目安：三役で3場所33勝（あと '+Math.max(0,33-l3)+'勝）';}
   if(st.pos===KOMU)return'勝ち越せば三役を守れる。10勝で関脇も見える';
   if(I.i===5){const need=I.num<=1?8:I.num<=2?9:I.num<=5?11:12;return'勝ち越しで'+nm(est(8))+'前後へ・三役の目安は'+need+'勝';}
@@ -1654,7 +1654,6 @@ function renderHome(){
     if(st.kg<lo)kd.querySelector('b').classList.add('low');}
   row('疲れ',st.fat,100,Math.round(st.fat),'fat');
   lastGain={};
-  if(st.pos===OZEKI&&!tsunaOK(st)&&!st.inj){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#e2b04a;margin:0';d.textContent='横綱には全能力A以上が必要（不足：'+tsunaLack(st).map(k=>STAT_LABEL[k]).join('・')+'）。稽古や秘伝書で上げよう'+(tsunaTori(st)?'。今のままだと綱取りの重圧で力 −3':'');sb.append(d);}
   if(st.inj>0){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ff8a80;margin:0';d.textContent=(st.injPart||'')+'の'+INJ_SEV[clamp(st.inj,1,3)]+'：'+(st.inj>=2?'稽古も出場もできない（休場）':'稽古・出場はできるが悪化に注意')+'・あと'+(st.injHeal||st.inj*2)+'回休めば治る';sb.append(d);}
   else if((st.tiredB||0)>=1){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ffb36b;margin:0';d.textContent='疲れがたまっている（'+st.tiredB+'場所連続）：休まないとけがをしやすい';sb.append(d);}
   $('hPower').textContent='伸びしろ '+(g=>g>=1.2?'大':g>=1?'ふつう':g>=.85?'やや小':g>=.6?'小':'わずか')(ageGrowth(ageOf(st)))+'・総合力 '+Math.round((st.stats.oshi+st.stats.chikara+st.stats.waza+st.stats.hayasa)/4+(st.kg-90)*.1);
@@ -2158,8 +2157,11 @@ function endBasho(){
       // yokozuna: every stat A or better, and as ozeki a yusho right after a yusho or a 13+ win basho.
       // without the strength the second yusho never comes (lost in a play-off), so results are never "wasted"
       if(yusho&&prevGood&&tsunaOK(st)){p=YOKO;msg='横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。';}
-      else if(tsunaBlocked)msg='千秋楽、優勝決定戦で敗れて賜杯を逃した。横審「綱を張るには、まだ力量が足りない」（不足：'+tsunaLack(st).map(k=>STAT_LABEL[k]+gradeOf(st.stats[k])[0]).join('・')+'）';
-      else if(good)msg=tsunaOK(st)?'来場所は綱取りの場所だ。優勝すれば横綱！':'来場所は綱取りの場所。ただし横綱には全能力A以上が必要（不足：'+tsunaLack(st).map(k=>STAT_LABEL[k]+gradeOf(st.stats[k])[0]).join('・')+'）';}}
+      else if(tsunaBlocked)msg='千秋楽、優勝決定戦で敗れて賜杯を逃した……。綱は、あと一歩で遠のいた。';
+      else if(good)msg='来場所は綱取りの場所だ。';}
+    st.ozekiN=(st.ozekiN||0)+1;
+    // stalled at ozeki without the all-round strength: someone close tells him what is missing
+    if(p===OZEKI&&!tsunaOK(st)&&(tsunaBlocked||(st.ozekiN>=3&&!((st.tsunaAdvB||-99)>st.b-6)))){st.tsunaAdvB=st.b;st.tsunaAdvWhy=tsunaBlocked?'blocked':'stall';queueLife('tsuna_advice');}}
   if(yusho){st.yusho++;if(old>=MAKU)st.makuYusho++;}
   const when=(Math.floor(st.b/6)+1)+'年目 '+BASHO[st.b%6];
   st.hist.push({when,rank:r.name,pos:old,w,l,yusho,mae:wasMae||undefined,kyu:B.kyu||undefined});
@@ -2727,6 +2729,16 @@ const taniId=T=>T&&(T.id||(TANIS.find(x=>x.name===T.name)||{}).id);
 const TIMG={};for(const id in (window.AI_TANI||{})){const a=window.AI_TANI[id],o={faces:{},looks:{}};for(const k in a.faces)o.faces[k]=IMG(a.faces[k]);for(const k in a.looks)o.looks[k]=IMG(a.looks[k]);o.scene=IMG(a.scene);o.gift=IMG(a.gift);TIMG[id]=o;}
 function tImg(id,kind,key){const o=TIMG[id];if(!o)return null;return okImg(key?o[kind][key]:o[kind]);}
 const LIFE={
+  tsuna_advice:()=>{const lack=tsunaLack(st),names=lack.map(k=>STAT_LABEL[k]),list=names.join('と'),blocked=st.tsunaAdvWhy==='blocked';
+    const opts=[['oyakata',3]];if(st.tani)opts.push(['tani',1]);if(spouse())opts.push(['wife',1]);
+    let r=Math.random()*opts.reduce((a,o)=>a+o[1],0),who='oyakata';for(const [k,w] of opts){if((r-=w)<=0){who=k;break;}}
+    const head=blocked?'優勝決定戦に敗れた夜。':'大関の座について'+(st.ozekiN||3)+'場所。綱にはまだ手が届かない。';
+    const T={oyakata:()=>({t:'親方の助言',scene:'oyakata',text:head+'親方の部屋に呼ばれた。\n「成績は横綱に近い。だが綱は、星の数だけでは張れん。押し・力・技・速さ、すべてがA以上の地力が要る。今のおまえは'+list+'が足りん。足りんまま綱取りの場所に出ても、重圧に負けるだけだ」'}),
+      tani:()=>({t:'タニマチの助言',scene:'tani',tw:{id:taniId(st.tani),show:'normal'},text:head+st.tani.name+'と食事をした。\n「横綱になる人はな、どこにも穴がないんや。押し・力・技・速さ、全部A以上。あんたは'+list+'がまだやろ。そこを埋めたら、綱は向こうから来るで」'}),
+      wife:()=>({t:'妻のひとこと',scene:'date',w:{e:'serious',after:()=>'smile'},text:head+'家に帰ると、'+firstName(st.rom.pid)+'がノートを広げていた。\n「ずっと取組を見てて思ったの。横綱の人たちって、押しも力も技も速さも、全部すごいでしょ。あなたは'+list+'がまだ少し弱いと思う」'})}[who]();
+    return{...T,kt:'綱への道',stopAuto:true,ch:[
+      {l:list+'を徹底的に鍛える',f:()=>{addBuff(st,'growth',.15,6,'綱への稽古');return['翌朝から、いちばん苦手な稽古を真っ先にやることにした。','横綱には全能力A以上が必要（足りないのは '+names.join('・')+'）・1年間、稽古の伸び +15%'];}},
+      {l:'秘伝書を探してみる',f:()=>{const v=earn(300);return['ガチャの「秘伝書」「極意書」でも、能力のランクを上げられるらしい。','横綱には全能力A以上が必要（足りないのは '+names.join('・')+'）・ご祝儀 +'+v];}}]};},
   retire_talk:()=>{const age=ageOf(st),why=st.retireWhy;
     const T={age:'場所後、親方の部屋に呼ばれた。「'+age+'歳か。体はどうだ。……この先のことを、そろそろ考えてもいい頃だ」',
       fall:'場所後、親方の部屋に呼ばれた。「十両から落ちたな。関取に戻る力は、まだ残っているか？」',
@@ -2807,7 +2819,7 @@ function wed(pid,gift){const R=rom();R.stage='married';R.weddingB=st.b;earn(gift
 let kScene='home',kMark=null,kW=null,kT=null,kStop=false;
 function openLife(item){
   const s=st,ev=LIFE[item.kind](item.pid);kScene=ev.scene||'date';kMark=ev.mark||null;kStop=!!ev.stopAuto;kEv=null;kT=ev.tw?{id:ev.tw.id,show:ev.tw.show}:null;kW=ev.w?{pid:item.pid||(st.rom&&st.rom.pid),e:ev.w.e||'normal',look:ev.w.look||null}:null;
-  $('kWhen').textContent=yearOf(s)+'年目　'+ageOf(s)+'歳';$('kTitle').textContent=ev.scene==='tani'?'後援者':ev.scene==='school'?'相撲教習所':ev.scene==='wedding'?'結婚披露宴':ev.scene==='baby'?'家族':ev.scene==='juryo'?'関取昇進':ev.scene==='oyakata'?'進退':'恋と土俵';
+  $('kWhen').textContent=yearOf(s)+'年目　'+ageOf(s)+'歳';$('kTitle').textContent=ev.kt?ev.kt:ev.scene==='tani'?'後援者':ev.scene==='school'?'相撲教習所':ev.scene==='wedding'?'結婚披露宴':ev.scene==='baby'?'家族':ev.scene==='juryo'?'関取昇進':ev.scene==='oyakata'?'進退':'恋と土俵';
   $('kEvName').textContent=ev.t;$('kText').textContent=ev.text;
   const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;$('kDone').hidden=true;$('kDone').textContent='部屋に戻る';
   for(const c of ev.ch){const b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=c.l;
