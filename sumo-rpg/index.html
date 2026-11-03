@@ -359,6 +359,12 @@ body:not(.onTitle) #sndBtn{display:none}
 @keyframes bandIn{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
 .mv{margin:6px 0 0;text-align:center;font-weight:800;font-size:15px;letter-spacing:.04em}.mv.up{color:#b3261e}.mv.down{color:#2a4f8a}.mv.same{color:#6b6250}.mv.big{font-size:17px}
 .change .arrow.up{color:#b3261e}.change .arrow.down{color:#2a4f8a;transform:rotate(25deg)}.change .arrow.up{transform:rotate(-25deg)}
+.dvb{display:inline-block;font-family:"Zen Kaku Gothic New",sans-serif;font-size:11px;font-weight:800;line-height:1.55;padding:0 7px;border-radius:999px;margin-right:5px;vertical-align:.12em;letter-spacing:.06em;white-space:nowrap;color:#fff;writing-mode:horizontal-tb}
+.dvb.big{font-size:14px;padding:1px 10px;vertical-align:.15em}
+.dv-mz{background:#6b6250}.dv-jk{background:#7c8496}.dv-jn{background:#8c6a4a}.dv-sd{background:#3f7a4f}.dv-mk{background:#2f5f9e}.dv-jr{background:#6a3fa0}
+.dv-mu{background:#b3261e}.dv-sy{background:linear-gradient(#9c1f2b,#7a1520);box-shadow:inset 0 0 0 1.5px #e2b04a}.dv-oz{background:linear-gradient(#f3d27a,#c9932c);color:#2a1700}
+.dv-yk{background:#fffaf0;color:#1a1612;box-shadow:inset 0 0 0 2px #e2b04a,0 0 6px rgba(226,176,74,.6)}
+.vplate .dvb{font-size:10px;padding:0 5px;margin:0 0 4px;align-self:center}
 .bbasho{margin:0 0 -8px;font-size:12px;letter-spacing:.08em;color:var(--kin);font-family:var(--f-mincho);font-weight:800}.bbasho small{color:var(--nezumi);font-weight:500;letter-spacing:0;margin-left:6px}
 .binfo{margin:-4px 0 0;font-size:12px;color:var(--shiro);display:flex;flex-wrap:wrap;gap:2px 12px}.binfo b{color:var(--kin)}
 .hoshi .mk{display:inline-block;width:.78em;height:.78em;border-radius:50%;margin-right:3px;vertical-align:-.05em}
@@ -700,6 +706,14 @@ function rank(pos){
   if(pos>=KOMU)return{div:SAN[pos-KOMU],name:SAN[pos-KOMU],bouts:15};
   let s=0;for(const d of DIVS){if(pos<s+d.c){const num=Math.ceil((d.c-(pos-s))/2);return{div:d.n,name:d.n+(num===1&&d.n!=='序ノ口'&&d.n!=='序二段'&&d.n!=='三段目'?'筆頭':kanNum(num)+'枚目'),bouts:d.b,step:d.step};}s+=d.c;}
 }
+/* division badge: one colour per division, getting grander toward yokozuna */
+const DV={'前相撲':'mz','序ノ口':'jk','序二段':'jn','三段目':'sd','幕下':'mk','十両':'jr','幕内':'mu','三役':'sy','大関':'oz','横綱':'yk'};
+const divName=(pos,mae)=>mae?'前相撲':pos>=YOKO?'横綱':pos>=OZEKI?'大関':pos>=KOMU?'三役':pos>=MAKU?'幕内':divInfo(pos).d.n;
+const divNameByLabel=n=>n==='前頭'?'幕内':n==='小結'||n==='関脇'?'三役':n;
+function divBadge(pos,mae,big){const n=divName(pos,mae),b=document.createElement('span');b.className='dvb dv-'+DV[n]+(big?' big':'');b.textContent=n;return b;}
+function badgeLabel(n){const b=document.createElement('span');const d=divNameByLabel(n);b.className='dvb dv-'+(DV[d]||'mz');b.textContent=d;return b;}
+// rank text without the division word when a badge already says it (幕下十二枚目 -> 十二枚目, 前頭三枚目 stays)
+const rankRest=pos=>{const r=rank(pos);if(pos>=KOMU)return pos>=OZEKI?'':r.name;if(r.div==='前頭')return r.name;return r.name.slice(r.div.length);};
 const side=pos=>{if(pos<KOMU){const I=divInfo(pos);return I&&I.east?'東':'西';}return pos%2?'西':'東';};
 
 /* ---------- face ---------- */
@@ -1413,7 +1427,7 @@ function renderTitle(){
     const img=document.createElement('img');img.alt=s.name+'の顔';img.dataset.rk=id;try{img.src=portrait(listFace(s),'normal',s.pos>=JURYO,160).toDataURL();}catch(e){}
     const info=document.createElement('div');info.style.minWidth='0';
     const nm=document.createElement('div');nm.className='nm';nm.textContent=s.name;
-    const rk=document.createElement('div');rk.className='rk';rk.textContent=s.maezumo?'前相撲':side(s.pos)+' '+rank(s.pos).name+(s.pos===YOKO?'':'');
+    const rk=document.createElement('div');rk.className='rk';rk.append(divBadge(s.pos,s.maezumo),s.maezumo?'':side(s.pos)+' '+(rankRest(s.pos)||rank(s.pos).name));
     const mt=document.createElement('div');mt.className='mt';
     mt.textContent=(s.inj>0?'負傷中・':'')+ageOf(s)+'歳・入門'+yearOf(s)+'年目・'+s.hist.reduce((a,h)=>a+h.w,0)+'勝'+s.hist.reduce((a,h)=>a+h.l-(h.kyu||0),0)+'敗'+(s.hist.some(h=>h.kyu)?s.hist.reduce((a,h)=>a+(h.kyu||0),0)+'休':'')+(s.makuYusho?'・幕内優勝'+s.makuYusho+'回':'')+(s.basho?'・場所中':'');
     info.append(nm,rk,mt);
@@ -1428,7 +1442,7 @@ function renderTitle(){
   $('tPrestige').textContent='部屋の格 '+(roster.prestige||0)+'（新弟子の成長 +'+Math.round(prestigeBonus()*100)+'%）';
   const hb=$('tHall');hb.innerHTML='';if(!roster.hall.length){const pp=document.createElement('p');pp.className='muted';pp.style.fontSize='12.5px';pp.textContent='まだいない。力士を引退させると親方になり、部屋の格が上がる。';hb.append(pp);}
   for(const h of roster.hall.slice().reverse()){const row=document.createElement('div');row.className='h';const im=document.createElement('img');im.alt='';im.dataset.hall=roster.hall.indexOf(h);try{im.src=portrait(h.face,'normal',h.oicho,96).toDataURL();}catch(e){}
-    const a=document.createElement('div');a.innerHTML='<div class="hn"></div><div class="muted"></div>';a.children[0].textContent=h.name;a.children[1].textContent='最高位 '+h.best+'・'+h.w+'勝'+h.l+'敗・'+h.years+'年'+(h.path?'・'+h.path:'');
+    const a=document.createElement('div');a.innerHTML='<div class="hn"></div><div class="muted"></div>';a.children[0].textContent=h.name;a.children[1].append(badgeLabel(h.best),h.w+'勝'+h.l+'敗・'+h.years+'年'+(h.path?'・'+h.path:''));
     const y=document.createElement('div');y.style.cssText='color:var(--kin);font-weight:700;text-align:right';y.textContent=h.makuYusho?'幕内優勝'+h.makuYusho+'回':'';row.append(im,a,y);hb.append(row);}
   $('newBtn').textContent=ids.length?'新しい力士を入門させる':'新弟子として入門する';$('newBtn').className=ids.length?'ghost':'primary';
   show('sTitle');hero=makeCanvas($('heroCv'),2/3);
@@ -1611,8 +1625,7 @@ function renderHome(){
     if(!st.maezumo&&st.hist.length>1&&st.pos>=(st.best||0))add('best','最高位',false,'自己最高位');
     if(st.tani)add('tani','谷 '+st.tani.short,(st.tani.miss||0)>=2,'タニマチ：'+st.tani.name);
     if(ties.childNodes.length)hs.append(ties);}
-  const hr=$('hRank');hr.innerHTML='';const r1=document.createElement('span');r1.textContent=r.div;hr.append(r1);
-  if(r.name.length>r.div.length){const r2=document.createElement('span');r2.style.cssText='display:block;font-size:.8em';r2.textContent=r.name.slice(r.div.length);hr.append(r2);}
+  const hr=$('hRank');hr.innerHTML='';hr.append(divBadge(st.pos,st.maezumo,true));{const rest=st.maezumo?'前相撲':rankRest(st.pos)||rank(st.pos).name;const r2=document.createElement('span');r2.style.cssText='display:block';r2.textContent=rest;hr.append(r2);}
   {const w=$('hWhen');w.textContent=ageOf(st)+'歳・入門'+yearOf(st)+'年目'+(st.b<3&&st.school?'・教習所通い':'')+'　';const n=document.createElement('span');n.className='nw';n.textContent=BASHO[st.b%6]+'（'+MONTH[st.b%6]+'月）まで';w.append(n);}
   const tu=$('hTurns');tu.innerHTML='';const lab=document.createElement('span');lab.textContent='稽古';tu.append(lab);
   for(let i=0;i<TURNS;i++){const d=document.createElement('i');if(i<st.used)d.className='used';tu.append(d);}
@@ -1789,7 +1802,7 @@ function startBasho(){
 let faceCv=null;
 function renderProfile(){
   const r=rank(st.pos),cw=st.hist.reduce((a,h)=>a+h.w,0)+(B?B.w:0),ck=st.hist.reduce((a,h)=>a+(h.kyu||0),0)+(B?B.kyu||0:0),cl=st.hist.reduce((a,h)=>a+h.l,0)+(B?B.l:0)-ck;
-  $('pName').textContent=st.name;$('pRank').textContent=st.maezumo?'前相撲':side(st.pos)+' '+r.name+(st.kadoban&&st.pos===OZEKI?'（カド番）':'');
+  $('pName').textContent=st.name;{const pr=$('pRank');pr.innerHTML='';pr.append(divBadge(st.pos,st.maezumo),st.maezumo?'':side(st.pos)+' '+(rankRest(st.pos)||r.name)+(st.kadoban&&st.pos===OZEKI?'（カド番）':''));}
   $('pAge').textContent=ageOf(st)+'歳';$('pYear').textContent='入門'+yearOf(st)+'年目';$('pYear').title=(st.b+1)+'場所目';$('pHome').textContent=st.home;
   $('pBody').textContent=st.height+'cm・'+Math.round(st.kg)+'kg';$('pCareer').textContent=cw+'勝'+cl+'敗'+(ck?ck+'休':'');
   $('pYusho').textContent=st.makuYusho?'・幕内優勝 '+st.makuYusho+'回':'';
@@ -1825,8 +1838,8 @@ function nextBout(){if(!autoMode)SND.play('hyoshigi');
   {const bb=$('bBasho');bb.textContent=yearOf(st)+'年目 '+BASHO[st.b%6];const sm=document.createElement('small');sm.textContent=MONTH[st.b%6]+'月・'+VENUE[st.b%6]+(st.maezumo?'・前相撲':'');bb.append(sm);}
   $('bDay').textContent=dayLabel();
   setHoshi();setBoutInfo();renderBLog();renderStrats();
-  $('bMy').textContent=st.name;$('bMyRank').textContent=st.maezumo?'前相撲':side(st.pos)+' '+rank(st.pos).name;$('bMySt').textContent=Math.round(st.kg)+'kg';
-  $('bOp').textContent=B.opp.name;$('bOpRank').textContent=side(B.opp.pos+1)+' '+rank(B.opp.pos).name;$('bOpSt').textContent=(B.opp.rival?'宿敵（'+(st.rival.w||0)+'勝'+(st.rival.l||0)+'敗）・':'')+STYLE[B.opp.style]+'・'+B.opp.age+'歳・'+B.opp.height+'cm・'+B.opp.kg+'kg';
+  $('bMy').textContent=st.name;{const e=$('bMyRank');e.innerHTML='';e.append(divBadge(st.pos,st.maezumo),st.maezumo?'':side(st.pos)+' '+(rankRest(st.pos)||rank(st.pos).name));}$('bMySt').textContent=Math.round(st.kg)+'kg';
+  $('bOp').textContent=B.opp.name;{const e=$('bOpRank');e.innerHTML='';e.append(divBadge(B.opp.pos),side(B.opp.pos+1)+' '+(rankRest(B.opp.pos)||rank(B.opp.pos).name));}$('bOpSt').textContent=(B.opp.rival?'宿敵（'+(st.rival.w||0)+'勝'+(st.rival.l||0)+'敗）・':'')+STYLE[B.opp.style]+'・'+B.opp.age+'歳・'+B.opp.height+'cm・'+B.opp.kg+'kg';
   $('bOp').parentElement.classList.toggle('rival',!!B.opp.rival);$('bMySt').textContent=st.height+'cm・'+Math.round(st.kg)+'kg';
   anim={phase:'intro',t:0,salted:false};fx=[];cam={z:1,fx:0,shake:0};gyX=null;
   $('bPick').hidden=false;$('bTachi').hidden=true;$('bNext').hidden=true;
@@ -2117,7 +2130,7 @@ function endBasho(){
     else if(old<KOMU&&p>=KOMU)msg='新三役！ 小結に昇進した。';else msg=w>l?pick(['この調子で上を目指そう。','親方「まずまずだな」']):pick(['悔しさを稽古にぶつけよう。','親方「下を向くな、四股を踏め」']);}
   $('rBz').classList.toggle('best',!!st.newBest);
   {const mvEl=$('rMove'),ar=document.querySelector('.change .arrow'),m=moveText(wasMae?-1:old,p);mvEl.textContent=m.t;mvEl.className='mv '+m.c+(m.big?' big':'');ar.className='arrow '+m.c;}$('rMsg').textContent=(st.newBest?'★自己最高位を更新！　':'')+msg+(sansho.length?'　'+sansho.join('・')+'受賞！':'')+(B.earn?'　ご祝儀 +'+B.earn:'')+(newAch.length?'　実績「'+newAch.join('」「')+'」達成':'')+(ex.length?'　'+ex.join('　'):'');
-  const vp=(el,pos)=>{el.innerHTML='';const s=document.createElement('small');s.textContent=side(pos);const n=document.createElement('span');n.textContent=rank(pos).name;el.append(s,n);};
+  const vp=(el,pos)=>{el.innerHTML='';const s=document.createElement('small');s.textContent=side(pos);const n=document.createElement('span');n.textContent=rank(pos).name;el.append(divBadge(pos),s,n);};
   vp($('rOld'),old);vp($('rNew'),p);if(wasMae){$('rOld').innerHTML='';const n=document.createElement('span');n.textContent='前相撲';$('rOld').append(n);}
   addLog(when+'は'+w+'勝'+l+'敗。'+msg);
   persist();B=null;anim=null;fx=[];show('sResult');rc=makeCanvas($('rCv'),4/3);rcData={win:w>l,yusho,promo:p>old,body:pickBody(st),t0:performance.now()/1000};if(yusho)SND.play('fanfare',true);else if(p>old&&(old<JURYO)!==(p<JURYO)||p>=MAKU&&old<MAKU)SND.play('fanfare',false);else SND.play(w>l?'win':'lose');
