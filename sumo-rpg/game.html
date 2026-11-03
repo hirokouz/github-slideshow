@@ -384,6 +384,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 .scard.itemcard .kk{background:linear-gradient(#8a5a1e,#5a3410);color:#ffe9b0}.scard.itemcard{background:#fbf1dc}
 .tutbz{display:grid;gap:3px;margin:6px 0 4px}.tutbz div{display:grid;grid-template-columns:4.6em 1fr;gap:6px;align-items:center;font-size:12px;line-height:1.35}.tutbz .dvb{text-align:center;margin:0}#tut p.tutft,#tutText p{margin:4px 0 0;font-size:13px}
 .home .rinfo .rank{display:flex;align-items:center;flex-wrap:wrap;gap:2px 6px}.home .rinfo .rank .dvb{margin:0}.home .rinfo .rank .rnum{white-space:nowrap}
+.bestb.renpa{background:linear-gradient(#ff8a5b,#d0473a);color:#fff}
 .bestb{font-size:10.5px;font-weight:800;color:#2a1700;background:var(--kin);border-radius:999px;padding:1px 7px;font-family:"Zen Kaku Gothic New",sans-serif;letter-spacing:0}
 .home .acts button{min-width:0}.home .acts.four span.d{font-size:10px;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .hbox{display:grid;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.04);overflow:hidden}.hbox .hgoal{border:0;border-radius:0;background:none;padding:5px 10px 3px}
@@ -1671,7 +1672,7 @@ function goalText(){if(st.maezumo)return'前相撲：2勝すれば、来場所�
   if(st.inj>=2)return'ケガで休場すると、全敗あつかいで番付が下がる';
   const I=st.pos<KOMU?divInfo(st.pos):null,nm=p=>rank(p).name;
   const est=w=>{const r=[];for(let k=0;k<7;k++)r.push(moveBanzuke(st.pos,w,I.d.b-w).p);r.sort((a,b)=>a-b);return r[3];};
-  if(st.pos>=YOKO)return'横綱：負け越すと進退問題。2場所続けて休むのも危ない';
+  if(st.pos>=YOKO){const rp=renpa(st);return rp>=2?rp+'連覇中！ 優勝すれば'+(rp+1)+'連覇':rp===1?'前の場所で優勝。優勝すれば2連覇':'横綱：負け越すと進退問題。2場所続けて休むのも危ない';}
   if(st.pos===OZEKI){if(st.kadoban)return'カド番：負け越すと大関から陥落する';return tsunaTori(st)?'綱取りの場所！ 優勝をめざせ':'綱取り：優勝か13勝のあと、次の場所で優勝すれば横綱';}
   if(st.pos===SEKI&&st.ozekiBack===st.b)return'大関復帰の場所：10勝すれば大関に戻れる';
   if(st.pos===SEKI){const l3=st.hist.slice(-2).reduce((a,h)=>a+h.w,0);return'大関取りの目安：三役で3場所33勝（あと '+Math.max(0,33-l3)+'勝）';}
@@ -1698,7 +1699,8 @@ function renderHome(){
   const r=st.maezumo?{div:'前相撲',name:'前相撲',bouts:3}:rank(st.pos);
   const plate=$('hTate');plate.innerHTML='';const n=document.createElement('span');n.textContent=st.name;plate.append(n);
   if(st.pos===YOKO){const sm=document.createElement('small');sm.textContent='横綱';plate.append(sm);}
-  {const hs=$('hSide');hs.textContent=side(st.pos)+(st.kadoban&&st.pos===OZEKI?'　カド番':'');if(!st.maezumo&&st.hist.length>1&&st.pos>=(st.best||0)){const bb=document.createElement('span');bb.className='bestb';bb.textContent='最高位';bb.style.marginLeft='6px';hs.append(bb);}const ties=document.createElement('span');ties.className='ties';
+  {const hs=$('hSide');hs.textContent=side(st.pos)+(st.kadoban&&st.pos===OZEKI?'　カド番':'');if(!st.maezumo&&st.hist.length>1&&st.pos>=(st.best||0)&&st.pos<YOKO){const bb=document.createElement('span');bb.className='bestb';bb.textContent='最高位';bb.style.marginLeft='6px';hs.append(bb);}
+    {const rp=renpa(st);if(rp>=2&&st.pos>=OZEKI){const bb=document.createElement('span');bb.className='bestb renpa';bb.textContent=rp+'連覇中';bb.style.marginLeft='6px';hs.append(bb);}}const ties=document.createElement('span');ties.className='ties';
     const add=(cls,txt,warn,title)=>{const t=document.createElement('span');t.className='tie '+cls+(warn?' warn':'');t.textContent=txt;t.title=title;ties.append(t);};
     const Rm=st.rom;if(Rm&&(Rm.stage==='dating'||Rm.stage==='engaged'))add('love','♥'+PARTNERS[Rm.pid].name.replace(/^.*[・の]/,'')+' '+Rm.aff,(Rm.dateMiss||0)>=2,Rm.stage==='engaged'?'婚約中':'交際中');
     if(spouse())add('fam','家 '+PARTNERS[Rm.pid].name.replace(/^.*[・の]/,'')+(Rm.kid?'・長男':''),(Rm.famMiss||0)>=2,'家族');
@@ -1907,8 +1909,11 @@ function moveText(old,p){if(old<0)return{t:'▲ 序ノ口に名前が載る',c:'
   const n1=old>=KOMU?0:divInfo(old).num,n2=p>=KOMU?0:divInfo(p).num,d=Math.abs(n1-n2);
   return d===0?{t:up?'▲ 西から東へ（半枚上昇）':'▼ 東から西へ（半枚下降）',c:up?'up':'down'}:{t:(up?'▲ ':'▼ ')+d+'枚'+(up?'上昇':'下降'),c:up?'up':'down'};}
 function setHoshi(){hoshiInto($('bHoshi'),B.marks,B.w+'勝'+B.l+'敗');}
+/* consecutive makuuchi yusho counting back from the last basho */
+const renpa=s=>{let n=0;for(let i=s.hist.length-1;i>=0;i--){const h=s.hist[i];if(h.yusho&&h.pos>=MAKU)n++;else break;}return n;};
 const kachiBout=()=>!!(B&&!st.maezumo&&flag('heirImouto')&&B.day===B.n-1&&B.w===B.l);
 function setBoutInfo(){const need=Math.floor(B.n/2)+1,left=B.n-B.day,el=$('bInfo');el.innerHTML='';const a=document.createElement('span');
+  {const rp=renpa(st);if(rp>=2&&st.pos>=OZEKI&&!st.maezumo){const c=document.createElement('span');c.innerHTML='<b class="kachi">'+rp+'連覇中</b>';el.append(c);}}
   a.innerHTML=kachiBout()?'<b class="kachi">勝ち越しをかけた'+(B.n===15?'千秋楽':'最後の一番')+'！ 母ゆずりの負けん気で力 +5</b>':B.w>=need?'<b>勝ち越し決定！</b>':B.l>=need?'負け越し…残り'+left+'番、番付を守ろう':'勝ち越しまで <b>あと'+(need-B.w)+'勝</b>';el.append(a);
   if(B.opp){const h=(st.h2h||{})[B.opp.name],b=document.createElement('span');b.textContent=B.opp.rival?'宿敵との対戦':h?'この相手とは '+h.w+'勝'+h.l+'敗':'この相手とは初対戦';el.append(b);}}
 function renderBLog(){const el=$('bLog');el.innerHTML='';for(const r of (B.rec||[])){const s2=document.createElement('span');s2.className='hoshi '+(r.w?'w':'l');const mk=document.createElement('span');mk.className='mk '+(r.w?'w':'l');s2.append(mk,r.opp+'　'+r.km);el.append(s2);}el.scrollLeft=el.scrollWidth;}
@@ -2255,6 +2260,9 @@ function endBasho(){
     else if(endedIdx+1>=st.vowUntil){addBuff(st,'money',-.2,6,'地元の落胆');ex.push('テレビで語った目標に届かなかった…（1年間ご祝儀 −20%）');st.vowUntil=null;}}
   if(endedIdx%6===5){st.pendingKikyo=true;ex.push('年の瀬だ。地元に帰ろう。');}
   if(old<JURYO&&p>=JURYO&&(st.best||0)<JURYO)queueLife('juryo');
+  if(old<MAKU&&p>=MAKU&&(st.best||0)<MAKU)queueLife('nyumaku');
+  if(old<OZEKI&&p>=OZEKI&&p<YOKO&&(st.best||0)<OZEKI)queueLife('ozeki_up');
+  if(old<YOKO&&p>=YOKO&&(st.best||0)<YOKO)queueLife('yokozuna_up');
   retireCheck(old,p,w,l);
   if(st.rom&&st.rom.waitYoko&&p>=YOKO&&st.rom.stage==='dating'){st.rom.waitYoko=false;queueLife('propose',st.rom.pid);}
   else checkLife(w,l,yusho,endedIdx);
@@ -2278,7 +2286,8 @@ function endBasho(){
   else if(st.b%6===0)addLog(ageOf(st)+'歳になった。');
   if(st.b===6)addLog('入門して1年、髪が伸び、初めてちょんまげを結った。床山さんに「似合うぞ」と言われた。');
   $('rBasho').textContent=when;
-  const big=$('rBig');big.textContent=yusho?(old>=MAKU?'幕内優勝':r.div+'優勝'):w>l?'勝ち越し':'負け越し';
+  const big=$('rBig');big.textContent=yusho?(old>=MAKU?'幕内優勝'+(renpa(st)>=2?' '+renpa(st)+'連覇':''):r.div+'優勝'):w>l?'勝ち越し':'負け越し';
+  if(yusho&&old>=MAKU&&renpa(st)>=2)ex.unshift(renpa(st)+'場所連続の幕内優勝！');
   if(wasMae)big.textContent=w>=2?'新序出世':'前相撲';
   if(B.kyu)big.textContent=B.kyu>=B.n?'全休':'途中休場';
   big.className='result-big '+(yusho||p>old?'gold':w>l?'':'down');
@@ -2550,6 +2559,7 @@ const ACH=[
   {id:'kmRare', n:'珍手',       d:'珍しい決まり手で勝つ',     r:200, c:()=>Object.keys(roster.kmBook||{}).some(k=>KM_RARE.has(k))},
   {id:'fuchigoe',n:'父超え',     d:'二代目で父の最高位を超える', r:500, c:s=>!!s.fatherPassed},
   {id:'oyakoYoko',n:'親子横綱',  d:'父も子も横綱になる',       r:2000,c:s=>!!(s.nisei&&s.heir&&s.heir.fatherBest>=YOKO&&(s.best||0)>=YOKO)},
+  {id:'renpa3', n:'三連覇',     d:'幕内優勝3連覇',            r:1000,c:s=>renpa(s)>=3},
   {id:'rival10',n:'宿命の対決', d:'宿敵に通算10勝',          r:300, c:s=>(s.rival&&s.rival.w||0)>=10},
   {id:'oyakata',n:'親方',       d:'幕内経験のある力士を引退させて親方にする',r:300,c:()=>roster.hall.some(h=>h.path==='親方'||h.path==='二代目を送り出す'&&h.bestPos>=MAKU)},
   {id:'hall3',  n:'名門部屋',   d:'殿堂入りの力士3人',        r:800, c:()=>roster.hall.length>=3},
@@ -2826,6 +2836,17 @@ const taniId=T=>T&&(T.id||(TANIS.find(x=>x.name===T.name)||{}).id);
 const TIMG={};for(const id in (window.AI_TANI||{})){const a=window.AI_TANI[id],o={faces:{},looks:{}};for(const k in a.faces)o.faces[k]=IMG(a.faces[k]);for(const k in a.looks)o.looks[k]=IMG(a.looks[k]);o.scene=IMG(a.scene);o.gift=IMG(a.gift);TIMG[id]=o;}
 function tImg(id,kind,key){const o=TIMG[id];if(!o)return null;return okImg(key?o[kind][key]:o[kind]);}
 const LIFE={
+  nyumaku:()=>{const T=st.tani,R=st.rom,pd=R&&['crush','dating','engaged','married'].includes(R.stage)?firstName(R.pid):null;
+    return{t:'新入幕',scene:'juryo',banner:'新入幕',kt:'幕内昇進',text:'新しい番付で、ついに幕内に名前が載った。テレビ中継の時間に、幕内土俵入りで化粧まわしを締めて土俵に上がる。'+(T?T.name+'が懸賞金を出してくれることになった。':'')+(pd?pd+'から「テレビで見られるね！」と連絡が来た。':'')+'地元では早くも祝賀会の準備が始まっている。',
+    ch:[{l:'「三役を目指します」',f:()=>{addBuff(st,'growth',.1,6,'三役への誓い');return['会見で言い切った。もう幕内の土俵は、遠い世界ではない。','新入幕・1年間、稽古の伸び +10%'];}},
+        {l:'地元の祝賀会に顔を出す',f:()=>{const v=earn(600);addBuff(st,'power',1,1,'地元の声援');return['公民館に入りきらないほどの人が集まった。小学校の恩師も来てくれた。','新入幕・ご祝儀 +'+v+'・次の場所で取組の力 +1'];}}]};},
+  ozeki_up:()=>{return{t:'大関昇進 伝達式',scene:'juryo',banner:'大関昇進',kt:'大関昇進',text:'番付編成会議で大関昇進が決まった。部屋に協会の使者が到着し、紋付き袴で正座して迎える。「'+st.name+'関の大関昇進が決まりました」\n昇進を受ける口上に、どの言葉を入れよう。',
+    ch:[{l:'「一意専心、相撲道に精進いたします」',f:()=>{addBuff(st,'growth',.12,6,'一意専心');return['ひとつのことに心を集中する。自分らしい言葉だと、親方がうなずいた。','大関昇進・1年間、稽古の伸び +12%'];}},
+        {l:'「不撓不屈の精神で、精進いたします」',f:()=>{addBuff(st,'inj',-.3,6,'不撓不屈');addBuff(st,'power',1,3,'不撓不屈');return['どんな困難にも屈しない。翌日のスポーツ紙の見出しを飾った。','大関昇進・1年間けがをしにくい（−30%）・半年間 取組の力 +1'];}},
+        {l:'「感謝の気持ちを忘れず、精進いたします」',f:()=>{const v=earn(1000);return['支えてくれた人たちの顔が浮かんだ。祝いの電話が鳴りやまない。','大関昇進・ご祝儀 +'+v];}}]};},
+  yokozuna_up:()=>{return{t:'横綱昇進',scene:'juryo',banner:'横綱昇進',kt:'横綱昇進',text:'横綱審議委員会の推薦を受け、ついに横綱昇進が決まった。伝達式のあと、部屋では一門の力士が総出で真新しい綱を打つ。\n数日後、明治神宮で奉納土俵入りが行われる。土俵入りの型を決めなければならない。',
+    ch:[{l:'雲龍型（攻めと守りの型）',f:()=>{addBuff(st,'power',2,6,'雲龍型');return['せり上がりで左手を胸に当て、右手を伸ばす。攻めと守りを併せ持つ型だ。','横綱昇進・1年間、取組の力 +2'];}},
+        {l:'不知火型（攻めの型）',f:()=>{addBuff(st,'growth',.15,6,'不知火型');return['両手を大きく広げてせり上がる。華やかな型に、参拝客から大きな歓声が上がった。','横綱昇進・1年間、稽古の伸び +15%'];}}]};},
   nisei_press:()=>{const H=st.heir;return{t:'二世の入門会見',scene:'juryo',kt:'二代目',banner:'二代目入門',text:'入門の日、記者が部屋に押しかけた。「'+H.fatherBestName+'・'+H.father+'の息子が入門」と、スポーツ紙が一面で書いた。カメラの前で、父の名前ばかりが呼ばれる。',
     ch:[{l:'「父を超える力士になります」',f:()=>{addBuff(st,'growth',.08,6,'父超えの誓い');st.niseiBold=true;return['記者たちがどよめいた。もう後には引けない。','1年間、稽古の伸び +8%・ただし序盤に負けが込むと二世のプレッシャー'];}},
         {l:'「自分の相撲を取るだけです」',f:()=>{addBuff(st,'power',1,3,'平常心');return['父が、記者の後ろで小さくうなずいた。','半年間、取組の力 +1'];}}]};},
@@ -3103,7 +3124,7 @@ function autoStep(){
   else if(cur==='sResult'){if(autoBusy)return;autoBusy=true;const txt=$('rBig').textContent,promo=$('rBig').classList.contains('gold')&&!/勝ち越し/.test(txt);
     setTimeout(()=>{autoBusy=false;if(!autoGrow)return;
       if(C.promo&&promo){autoStop('昇進！ オート成長を止めました');return;}
-      if(C.yusho&&txt==='幕内優勝'){autoStop('幕内優勝！ オート成長を止めました');return;}
+      if(C.yusho&&txt.startsWith('幕内優勝')){autoStop('幕内優勝！ オート成長を止めました');return;}
       if(C.n&&st.b-autoB0>=C.n){autoStop((C.n===6?'1年':C.n+'場所')+'たちました。オート成長を止めました');$('backHome').click();return;}
       if(C.kikyo&&st.pendingKikyo){autoStop('年末の帰省です。オート成長を止めました');$('backHome').click();return;}
       $('backHome').click();},1400/autoSpd());}
