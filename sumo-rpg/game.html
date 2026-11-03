@@ -288,8 +288,13 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
 .home .acts b{font-size:15px}.home .acts span.d{font-size:11px;line-height:1.35}
 .hlog.more{-webkit-mask-image:linear-gradient(#000 60%,transparent);mask-image:linear-gradient(#000 60%,transparent)}.hlog.more.end{-webkit-mask-image:none;mask-image:none}
 .spk.tap{cursor:pointer;box-shadow:0 0 0 2px var(--kin),0 0 8px rgba(226,176,74,.6)}
-.who{display:grid;grid-template-columns:118px minmax(0,1fr);gap:12px;align-items:start}.who .pic{background:#f3eadb;border-radius:12px;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;height:220px}.who .pic img{max-width:100%;max-height:100%;object-fit:contain}.who .pic.face{height:118px;border-radius:50%}
-.who h3{margin:0 0 2px;font-family:var(--f-mincho);font-size:18px}.who .rel{font-size:12px;color:var(--kin);margin-bottom:8px}.who dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 8px;font-size:13px}.who dt{color:var(--nezumi);white-space:nowrap}.who dd{margin:0}.who .bar{height:7px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:4px}.who .bar i{display:block;height:100%;background:linear-gradient(90deg,#e58aa0,#c9707f)}
+.who{display:grid;gap:12px}.wgal{display:grid;gap:6px}.wfr{position:relative;height:min(48dvh,400px);background:#faf6ec;border-radius:14px;box-shadow:inset 0 0 0 2px rgba(226,176,74,.85),inset 0 0 0 5px #faf6ec,inset 0 0 0 6px rgba(226,176,74,.4);display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:pan-y}
+.wfr img{max-width:92%;max-height:94%;object-fit:contain}.wfr.face img{max-height:80%;border-radius:50%;aspect-ratio:1/1;object-fit:cover;object-position:top;width:auto;height:80%;background:#f3eadb}
+.wnav{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;border:0;background:rgba(20,22,40,.55);color:#fff;font-size:26px;line-height:1;cursor:pointer}.wnav.l{left:8px}.wnav.r{right:8px}
+.wcap{text-align:center;font-size:13px;color:var(--kin)}.wdots{display:flex;justify-content:center;gap:7px}.wdots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.25);cursor:pointer}.wdots i.on{background:var(--kin)}
+.who h3{margin:0 0 2px;font-family:var(--f-mincho);font-size:22px}.who .rel{font-size:13.5px;color:var(--kin);margin-bottom:10px}.who dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px 10px;font-size:14.5px;line-height:1.5}.who dt{color:var(--nezumi);white-space:nowrap}.who dd{margin:0}.who .bar{height:8px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:4px}.who .bar i{display:block;height:100%;background:linear-gradient(90deg,#e58aa0,#c9707f)}
+.sheet-in.big{max-height:94dvh}
+.tie.tapw{cursor:pointer}.tie.tapw::after{content:'›';margin-left:3px;font-size:11px}
 .hlogw{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;align-items:start}.spk{width:30px;height:30px;border-radius:50%;box-shadow:0 0 0 1.5px var(--kin);background:#f3eadb}
 .hlog{margin:0;font-size:13.5px;line-height:1.45;color:var(--shiro);border-left:2px solid var(--kin);padding-left:8px;min-height:1.45em;max-height:2.9em;overflow-y:auto;overscroll-behavior:contain;white-space:normal;word-break:break-word}
 .home #bashoBtn{padding:12px 16px;font-size:16px}
@@ -1464,7 +1469,7 @@ const SND=(()=>{
 })();
 let navBack=false;
 function show(id){if(!navBack&&id!==cur){try{history.pushState({scr:id},'');}catch(e){}}for(const s of SCR)$(s).hidden=s!==id;cur=id;closeSheet();window.scrollTo(0,0);document.body.classList.toggle('onTitle',id==='sTitle');SND.sync();}
-function openSheet(k,title){const sh=$('sheet');sh.hidden=false;$('sheetT').textContent=title||'';for(const el of sh.querySelectorAll('[data-p]'))el.hidden=el.dataset.p!==k;
+function openSheet(k,title){const sh=$('sheet');sh.hidden=false;sh.querySelector('.sheet-in').classList.toggle('big',k==='who');$('sheetT').textContent=title||'';for(const el of sh.querySelectorAll('[data-p]'))el.hidden=el.dataset.p!==k;
   const rs=$('recSeg');rs.hidden=!['log','ach'].includes(k);for(const b of rs.children)b.classList.toggle('on',b.dataset.r===k);}
 function closeSheet(){const sh=$('sheet');if(sh)sh.hidden=true;}
 
@@ -1700,18 +1705,30 @@ function speakerOf(t){const R=st.rom,pn=R&&R.pid?firstName(R.pid):null;
   return{img:portrait(st.face,/けが|痛め|負け|悔し|陥落/.test(t)?'lose':/勝ち越し|昇進|優勝|上がった/.test(t)?'happy':'normal',st.pos>=JURYO,128)};}
 const PERSONA={osana:'明るくて世話焼き。泣き虫だったころから、ずっと励ましてくれる',reijo:'おっとりしたお嬢さま。芯が強く、後援会の人たちにも好かれている',eiyo:'食事の管理はおまかせ。体のことになると、ちょっとこわい',imouto:'兄ゆずりの負けず嫌い。兄との取組の日は、どっちを応援するか悩む',deshi:'朝稽古のあと、いつも黙々と手伝っている。笑うと目が細くなる'};
 function openWho(who){const box=$('hWho');if(!box||!who)return;box.innerHTML='';const src=im=>im?(im.src||(im.toDataURL?im.toDataURL():'')):'';
-  const pic=(im,face)=>{const d=document.createElement('div');d.className='pic'+(face?' face':'');const s2=src(im);if(s2){const i=document.createElement('img');i.src=s2;i.alt='';d.append(i);}return d;};
-  const info=(name,rel,rows,bar)=>{const d=document.createElement('div');const h=document.createElement('h3');h.textContent=name;const r=document.createElement('div');r.className='rel';r.textContent=rel;d.append(h,r);
-    if(bar!=null){const b=document.createElement('div');b.className='bar';b.innerHTML='<i></i>';b.firstChild.style.width=bar+'%';const l=document.createElement('div');l.className='muted';l.style.fontSize='11.5px';l.textContent='仲のよさ';d.append(l,b);b.style.marginBottom='8px';}
+  /* a paged gallery: face close-up, full body, wedding pictures... swipe or tap the arrows */
+  const gallery=pages=>{pages=pages.filter(p=>p[1]);const g=document.createElement('div');g.className='wgal';if(!pages.length)return g;let at=0;
+    const fr=document.createElement('div');fr.className='wfr';const img=document.createElement('img');img.alt='';fr.append(img);
+    const cap=document.createElement('div');cap.className='wcap';const dots=document.createElement('div');dots.className='wdots';
+    const prev=document.createElement('button'),next=document.createElement('button');prev.type=next.type='button';prev.className='wnav l';next.className='wnav r';prev.textContent='‹';next.textContent='›';prev.setAttribute('aria-label','前の絵');next.setAttribute('aria-label','次の絵');
+    for(let k=0;k<pages.length;k++){const d=document.createElement('i');d.addEventListener('click',()=>go(k));dots.append(d);}
+    const go=k=>{at=(k+pages.length)%pages.length;const [lab,im,face]=pages[at];img.src=src(im);fr.classList.toggle('face',!!face);cap.textContent=lab+'（'+(at+1)+'/'+pages.length+'）';[...dots.children].forEach((d,n)=>d.classList.toggle('on',n===at));};
+    prev.addEventListener('click',()=>go(at-1));next.addEventListener('click',()=>go(at+1));
+    let x0=null;fr.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;},{passive:true});fr.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>40)go(at+(dx<0?1:-1));});
+    if(pages.length>1)fr.append(prev,next);g.append(fr,cap);if(pages.length>1)g.append(dots);go(0);return g;};
+  const info=(name,rel,rows,bar)=>{const d=document.createElement('div');d.className='winfo';const h=document.createElement('h3');h.textContent=name;const r=document.createElement('div');r.className='rel';r.textContent=rel;d.append(h,r);
+    if(bar!=null){const l=document.createElement('div');l.className='muted';l.style.fontSize='12.5px';l.textContent='仲のよさ '+bar;const b=document.createElement('div');b.className='bar';b.innerHTML='<i></i>';b.firstChild.style.width=bar+'%';b.style.marginBottom='10px';d.append(l,b);}
     const dl=document.createElement('dl');for(const [k,v] of rows){if(!v)continue;const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=v;dl.append(dt,dd);}d.append(dl);return d;};
   let title='';
-  if(who==='partner'&&st.rom&&st.rom.pid){const R=st.rom,P=PARTNERS[R.pid],m=R.stage==='married';title=firstName(R.pid);
+  if(who==='partner'&&st.rom&&st.rom.pid){const R=st.rom,P=PARTNERS[R.pid],m=R.stage==='married',pid=R.pid;title=firstName(pid);
     const rel={crush:'気になる人',dating:'恋人',engaged:'婚約者',married:'妻'}[R.stage]||'知り合い';
-    box.append(pic(wImg(R.pid,'looks',m?'casual':'date')||wImg(R.pid,'exprs','smile')),info(P.name.replace(/^.*[・の]/,''),rel+'・'+P.name,[['人柄',PERSONA[R.pid]],['出会い',P.how],[m?'妻の支え':'結婚すると',P.fx],m&&R.kid?['子ども','ひとり（すくすく育っている）']:null,m?['住まい',st.livesOut?'部屋を出て一緒に暮らしている':'力士は部屋暮らし（関取になったら一緒に暮らせる）']:null].filter(Boolean),m?null:Math.round(R.aff||0)));}
+    const pg=[['顔',wImg(pid,'exprs','smile'),true],['全身',wImg(pid,'looks','date')]];
+    if(m)pg.push(['ふだん',wImg(pid,'looks','casual')],['結婚式（白無垢）',wImg(pid,'looks','shiromuku')],['披露宴（ドレス）',wImg(pid,'looks','dress')]);
+    if(m&&R.kid)pg.push(['子どもと',wImg(pid,'looks','baby')]);
+    box.append(gallery(pg),info(P.name.replace(/^.*[・の]/,''),rel+'・'+P.name,[['人柄',PERSONA[pid]],['出会い',P.how],[m?'妻の支え':'結婚すると',P.fx],m&&R.kid?['子ども','ひとり（すくすく育っている）']:null,m?['住まい',st.livesOut?'部屋を出て一緒に暮らしている':'力士は部屋暮らし（関取になったら一緒に暮らせる）']:null].filter(Boolean),m?null:Math.round(R.aff||0)));}
   else if(who==='tani'&&st.tani){const T=st.tani,id=taniId(T),yrs=Math.floor((st.b-(T.b||st.b))/6);title=T.short||'タニマチ';
-    box.append(pic(tImg(id,'looks','casual')||tImg(id,'faces','smile')),info(T.name,'タニマチ（後援者）',[['付き合い',yrs>=1?yrs+'年':'1年たらず'],['支え','毎場所ご祝儀をくれる（勝ち越すと満額）'],['会食',(T.miss||0)===0?'よく顔を出している':T.miss===1?'しばらく会っていない':'「顔を見せんな」と言われている。会食に行こう']]));}
+    box.append(gallery([['顔',tImg(id,'faces','smile'),true],['全身',tImg(id,'looks','casual')],['正装',tImg(id,'looks','formal')]]),info(T.name,'タニマチ（後援者）',[['付き合い',yrs>=1?yrs+'年':'1年たらず'],['支え','毎場所ご祝儀をくれる（勝ち越すと満額）'],['会食',(T.miss||0)===0?'よく顔を出している':T.miss===1?'しばらく会っていない':'「顔を見せんな」と言われている。会食に行こう']]));}
   else if(who==='rival'&&st.rival){const Rv=st.rival;rivalFace();title='宿敵';
-    box.append(pic(aiReady(Rv.face)?portrait(Rv.face,'normal',(Rv.pos||0)>=JURYO,256):null,true),info(Rv.name,'宿敵（同じ日に入門）',[['番付',rivalRank()],['出身',Rv.home],['取り口',{oshi:'押し相撲',yotsu:'四つ相撲',waza:'技の相撲'}[Rv.style]],['対戦成績',(Rv.w||0)+'勝'+(Rv.l||0)+'敗'],Rv.yushoN?['優勝',Rv.yushoN+'回']:null].filter(Boolean)));}
+    box.append(gallery([['顔',aiReady(Rv.face)?portrait(Rv.face,'normal',(Rv.pos||0)>=JURYO,256):null,true]]),info(Rv.name,'宿敵（同じ日に入門）',[['番付',rivalRank()],['出身',Rv.home],['取り口',{oshi:'押し相撲',yotsu:'四つ相撲',waza:'技の相撲'}[Rv.style]],['対戦成績',(Rv.w||0)+'勝'+(Rv.l||0)+'敗'],Rv.yushoN?['優勝',Rv.yushoN+'回']:null].filter(Boolean)));}
   else return;
   openSheet('who',title);}
 function drawSpeaker(t){const cv=$('hSpk');if(!cv)return;const d=Math.min(3,devicePixelRatio||1),N=30*d;cv.width=cv.height=N;const g=cv.getContext('2d'),sp=speakerOf(t||'');cv.dataset.who=sp.who||'';cv.classList.toggle('tap',!!sp.who);
@@ -1725,11 +1742,11 @@ function renderHome(){
   if(st.pos===YOKO){const sm=document.createElement('small');sm.textContent='横綱';plate.append(sm);}
   {const hs=$('hSide');hs.textContent=side(st.pos)+(st.kadoban&&st.pos===OZEKI?'　カド番':'');if(!st.maezumo&&st.hist.length>1&&st.pos>=(st.best||0)&&st.pos<YOKO){const bb=document.createElement('span');bb.className='bestb';bb.textContent='最高位';bb.style.marginLeft='6px';hs.append(bb);}
     {const rp=renpa(st);if(rp>=2&&st.pos>=OZEKI){const bb=document.createElement('span');bb.className='bestb renpa';bb.textContent=rp+'連覇中';bb.style.marginLeft='6px';hs.append(bb);}}const ties=document.createElement('span');ties.className='ties';
-    const add=(cls,txt,warn,title)=>{const t=document.createElement('span');t.className='tie '+cls+(warn?' warn':'');t.textContent=txt;t.title=title;ties.append(t);};
-    const Rm=st.rom;if(Rm&&(Rm.stage==='dating'||Rm.stage==='engaged'))add('love','♥'+PARTNERS[Rm.pid].name.replace(/^.*[・の]/,'')+' '+Rm.aff,(Rm.dateMiss||0)>=2,Rm.stage==='engaged'?'婚約中':'交際中');
-    if(spouse())add('fam','家 '+PARTNERS[Rm.pid].name.replace(/^.*[・の]/,'')+(Rm.kid?'・長男':''),(Rm.famMiss||0)>=2,'家族');
+    const add=(cls,txt,warn,title,who)=>{const t=document.createElement('span');t.className='tie '+cls+(warn?' warn':'')+(who?' tapw':'');t.textContent=txt;t.title=title;if(who){t.setAttribute('role','button');t.addEventListener('click',e=>{e.stopPropagation();openWho(who);});}ties.append(t);};
+    const Rm=st.rom;if(Rm&&(Rm.stage==='dating'||Rm.stage==='engaged'))add('love','♥'+PARTNERS[Rm.pid].name.replace(/^.*[・の]/,'')+' '+Rm.aff,(Rm.dateMiss||0)>=2,Rm.stage==='engaged'?'婚約中':'交際中','partner');
+    if(spouse())add('fam','家 '+PARTNERS[Rm.pid].name.replace(/^.*[・の]/,'')+(Rm.kid?'・長男':''),(Rm.famMiss||0)>=2,'家族','partner');
     if(st.inj>0)add('inj',(st.inj>=2?'休場':'負傷')+' あと'+(st.injHeal||st.inj*2)+'休',false,(st.injPart||'')+'のケガ：'+INJ_SEV[clamp(st.inj,1,3)]+'・あと'+(st.injHeal||st.inj*2)+'回休めば治る');
-    if(st.tani)add('tani','谷 '+st.tani.short,(st.tani.miss||0)>=2,'タニマチ：'+st.tani.name);
+    if(st.tani)add('tani','谷 '+st.tani.short,(st.tani.miss||0)>=2,'タニマチ：'+st.tani.name,'tani');
     if(ties.childNodes.length)hs.append(ties);}
   const hr=$('hRank');hr.innerHTML='';hr.append(divBadge(st.pos,st.maezumo,true));{const rest=st.maezumo?'':rankRest(st.pos);if(rest){const r2=document.createElement('span');r2.className='rnum';r2.textContent=rest;hr.append(r2);}
 }
