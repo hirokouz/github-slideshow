@@ -750,6 +750,12 @@ function rollPotential(s){const base=CAPS[s.type]||CAPS.oshi,c={};for(const k in
   const bias={oshi:{teppo:.15},yotsu:{shiko:.15},waza:{moushi:.12,suri:.1}}[s.type]||{};s.affin={};
   for(const a of ['shiko','teppo','suri','moushi'])s.affin[a]=+clamp(rnd(.72,1.32)+(bias[a]||0),.6,1.5).toFixed(2);
   s.cap=c;s.kgMax=Math.round(clamp((ck||KGMAX[s.type]||160)+(s.height-182)*1.1+rnd(-10,14),115,215));s.kgRate=+rnd(.7,1.35).toFixed(2);}
+/* yokozuna needs real all-round strength (every stat A or better) as well as results */
+const TSUNA_MIN=85;
+const tsunaLack=s=>Object.keys(s.stats).filter(k=>s.stats[k]<TSUNA_MIN);
+const tsunaOK=s=>tsunaLack(s).length===0;
+// a tsuna-tori basho: ozeki coming off a yusho or 13+ wins
+const tsunaTori=s=>{const h=s.hist[s.hist.length-1];return s.pos===OZEKI&&!!h&&h.pos===OZEKI&&(h.yusho||h.w>=13);};
 function gradeOf(v){const G=[[100,'S'],[85,'A'],[70,'B'],[55,'C'],[40,'D'],[25,'E'],[0,'F']];const g=G.find(x=>v>=x[0])[1];return g+' '+Math.floor(v);}
 const capOf=k=>(st&&st.cap&&st.cap[k])||120;
 function kgGain(g){const room=clamp((st.kgMax-st.kg)/25,0,1);return g*(st.kgRate||1)*room;}
@@ -1613,7 +1619,7 @@ function goalText(){if(st.maezumo)return'前相撲：2勝すれば、来場所�
   const I=st.pos<KOMU?divInfo(st.pos):null,nm=p=>rank(p).name;
   const est=w=>{const r=[];for(let k=0;k<7;k++)r.push(moveBanzuke(st.pos,w,I.d.b-w).p);r.sort((a,b)=>a-b);return r[3];};
   if(st.pos>=YOKO)return'横綱：負け越すと進退問題。2場所続けて休むのも危ない';
-  if(st.pos===OZEKI)return st.kadoban?'カド番：負け越すと大関から陥落する':'綱取りの目安：大関で2場所連続優勝（優勝と13勝以上でも可）';
+  if(st.pos===OZEKI){if(st.kadoban)return'カド番：負け越すと大関から陥落する';const lack=tsunaLack(st);return lack.length?'綱取りの条件：全能力A以上（不足：'+lack.map(k=>STAT_LABEL[k]+gradeOf(st.stats[k])[0]).join('・')+'）':tsunaTori(st)?'綱取りの場所！ 優勝すれば横綱昇進':'綱取り：優勝か13勝のあと、次の場所で優勝すれば横綱';}
   if(st.pos===SEKI){const l3=st.hist.slice(-2).reduce((a,h)=>a+h.w,0);return'大関取りの目安：三役で3場所33勝（あと '+Math.max(0,33-l3)+'勝）';}
   if(st.pos===KOMU)return'勝ち越せば三役を守れる。10勝で関脇も見える';
   if(I.i===5){const need=I.num<=1?8:I.num<=2?9:I.num<=5?11:12;return'勝ち越しで'+nm(est(8))+'前後へ・三役の目安は'+need+'勝';}
@@ -1648,6 +1654,7 @@ function renderHome(){
     if(st.kg<lo)kd.querySelector('b').classList.add('low');}
   row('疲れ',st.fat,100,Math.round(st.fat),'fat');
   lastGain={};
+  if(st.pos===OZEKI&&!tsunaOK(st)&&!st.inj){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#e2b04a;margin:0';d.textContent='横綱には全能力A以上が必要（不足：'+tsunaLack(st).map(k=>STAT_LABEL[k]).join('・')+'）。稽古や秘伝書で上げよう'+(tsunaTori(st)?'。今のままだと綱取りの重圧で力 −3':'');sb.append(d);}
   if(st.inj>0){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ff8a80;margin:0';d.textContent=(st.injPart||'')+'の'+INJ_SEV[clamp(st.inj,1,3)]+'：'+(st.inj>=2?'稽古も出場もできない（休場）':'稽古・出場はできるが悪化に注意')+'・あと'+(st.injHeal||st.inj*2)+'回休めば治る';sb.append(d);}
   else if((st.tiredB||0)>=1){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ffb36b;margin:0';d.textContent='疲れがたまっている（'+st.tiredB+'場所連続）：休まないとけがをしやすい';sb.append(d);}
   $('hPower').textContent='伸びしろ '+(g=>g>=1.2?'大':g>=1?'ふつう':g>=.85?'やや小':g>=.6?'小':'わずか')(ageGrowth(ageOf(st)))+'・総合力 '+Math.round((st.stats.oshi+st.stats.chikara+st.stats.waza+st.stats.hayasa)/4+(st.kg-90)*.1);
@@ -1915,7 +1922,7 @@ const TL={out:{imp:.16,drive:1.0,edge:1.45,land:1.8,end:2.5},down:{imp:.16,drive
 function resolve(q,mini,force){
   const o=B.opp,s=B.strat,pa=anim;
   const ostrat=Math.random()<.65?o.style:pick(['oshi','yotsu','waza']);
-  const D=deckFx();let me=(o.rival&&spouse()==='imouto'?2:0)+power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q])+D.power+(q!=='late'?D.tachi+(flag('senseiTachi')?1:0):0)+buff('power');
+  const D=deckFx();let me=(tsunaTori(st)&&!tsunaOK(st)?-3:0)+(o.rival&&spouse()==='imouto'?2:0)+power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q])+D.power+(q!=='late'?D.tachi+(flag('senseiTachi')?1:0):0)+buff('power');
   const op=power(o.stats,o.kg,ostrat,0,0);
   if(BEATS[s]===ostrat)me+=7;else if(BEATS[ostrat]===s)me-=7;
   if(mini!=null)me+=(mini-.5)*14;
@@ -2137,6 +2144,7 @@ let rc=null,rcData=null;
 function endBasho(){
   const wasMae=!!st.maezumo,w=B.w,l=B.l,old=st.pos,r=wasMae?{div:'前相撲',name:'前相撲',bouts:3}:rank(old),endedIdx=st.b;let p=old,msg='';const ex=[];
   const top=old>=JURYO;let yusho=!top?w===7:(w>=14||(w===13&&Math.random()<.4)||(w===12&&Math.random()<.1));
+  let tsunaBlocked=false;if(yusho&&!wasMae&&tsunaTori(st)&&!tsunaOK(st)){yusho=false;tsunaBlocked=true;}
   const prev=st.hist[st.hist.length-1];
   if(wasMae){p=w>=3?posOf(0,17,Math.random()<.5):w>=2?posOf(0,20):w>=1?posOf(0,23):posOf(0,25,false);yusho=false;st.maezumo=false;msg=w>=2?'新序出世！ 来場所から序ノ口に名前が載る。':'前相撲を終えた。来場所は序ノ口の下位から。';}
   else if(old<KOMU){const mv=moveBanzuke(old,w,l);p=mv.p;if(mv.msg)msg=mv.msg;}
@@ -2147,8 +2155,11 @@ function endBasho(){
   else if(old===OZEKI){
     if(w<8){if(st.kadoban){p=SEKI;st.kadoban=false;msg='カド番で負け越し、大関から陥落……。';}else{st.kadoban=true;msg='負け越し。次の場所はカド番だ。';}}
     else{st.kadoban=false;const good=yusho||w>=13;const prevGood=prev&&prev.pos===OZEKI&&(prev.yusho||prev.w>=13);
-      // the real yardstick: two straight yusho as ozeki, or a yusho plus a runner-up-level record (13+ wins)
-      if(good&&prevGood&&(yusho||prev.yusho)){p=YOKO;msg='横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。';}else if(good)msg='来場所は綱取りの場所だ。';}}
+      // yokozuna: every stat A or better, and as ozeki a yusho right after a yusho or a 13+ win basho.
+      // without the strength the second yusho never comes (lost in a play-off), so results are never "wasted"
+      if(yusho&&prevGood&&tsunaOK(st)){p=YOKO;msg='横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。';}
+      else if(tsunaBlocked)msg='千秋楽、優勝決定戦で敗れて賜杯を逃した。横審「綱を張るには、まだ力量が足りない」（不足：'+tsunaLack(st).map(k=>STAT_LABEL[k]+gradeOf(st.stats[k])[0]).join('・')+'）';
+      else if(good)msg=tsunaOK(st)?'来場所は綱取りの場所だ。優勝すれば横綱！':'来場所は綱取りの場所。ただし横綱には全能力A以上が必要（不足：'+tsunaLack(st).map(k=>STAT_LABEL[k]+gradeOf(st.stats[k])[0]).join('・')+'）';}}
   if(yusho){st.yusho++;if(old>=MAKU)st.makuYusho++;}
   const when=(Math.floor(st.b/6)+1)+'年目 '+BASHO[st.b%6];
   st.hist.push({when,rank:r.name,pos:old,w,l,yusho,mae:wasMae||undefined,kyu:B.kyu||undefined});
