@@ -383,6 +383,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 #nextBtn.locked::after{content:'';position:absolute;left:0;bottom:0;height:4px;background:#2a1700;border-radius:2px;animation:unlockBar .9s linear forwards}@keyframes unlockBar{from{width:0}to{width:100%}}
 .itemlist{display:grid;gap:10px}.itemrow{display:grid;gap:6px}.itemuse{padding:9px 12px;font-size:14px}
 .scard.itemcard .kk{background:linear-gradient(#8a5a1e,#5a3410);color:#ffe9b0}.scard.itemcard{background:#fbf1dc}
+.tutbz{display:grid;gap:3px;margin:6px 0 4px}.tutbz div{display:grid;grid-template-columns:4.6em 1fr;gap:6px;align-items:center;font-size:12px;line-height:1.35}.tutbz .dvb{text-align:center;margin:0}#tut p.tutft,#tutText p{margin:4px 0 0;font-size:13px}
 .heirnote{margin:0;font-size:12.5px;font-weight:700;color:#7a1f1f;background:linear-gradient(90deg,rgba(226,176,74,.35),rgba(226,176,74,0));padding:4px 8px;border-left:3px solid #c9932c;border-radius:2px}
 .turns .itembtn{margin-left:auto;margin-block:-3px}
 .itembtn{display:inline-flex;align-items:center;gap:4px;margin-left:6px;vertical-align:middle;border:0;border-radius:999px;padding:0 8px 0 2px;line-height:1;background:linear-gradient(#f3d27a,#c9932c);color:#2a1700;font-weight:800;font-size:12px;letter-spacing:0;box-shadow:0 0 0 1px #f6e2a4,0 2px 6px rgba(0,0,0,.35);position:relative}
@@ -679,7 +680,7 @@ const lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const ease=t=>1-Math.pow(1-clamp(t,0,1),3), easeIn=t=>Math.pow(clamp(t,0,1),2), easeIO=t=>{t=clamp(t,0,1);return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;};
 const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const KAN=['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
-const kanNum=n=>n<=20?KAN[n-1]:(Math.floor(n/10)>1?KAN[Math.floor(n/10)-1]:'')+'十'+(n%10?KAN[n%10-1]:'');
+const kanNum=n=>n>=100?'百'+(n>100?kanNum(n-100):''):n<=20?KAN[n-1]:(Math.floor(n/10)>1?KAN[Math.floor(n/10)-1]:'')+'十'+(n%10?KAN[n%10-1]:'');
 const BASHO=['初場所','春場所','夏場所','名古屋場所','秋場所','九州場所'];
 const MONTH=[1,3,5,7,9,11];
 const VENUE=['東京・両国国技館','大阪','東京・両国国技館','名古屋','東京・両国国技館','福岡'];
@@ -1622,6 +1623,7 @@ function addLog(t){st.log.unshift(t);st.log=st.log.slice(0,5);}
 function tutSteps(){const fav={oshi:['てっぽう','押し'],yotsu:['四股','力'],waza:['申し合い','技']}[st.type]||['てっぽう','押し'];
   return[
   {t:'よく来たな、'+st.name+'。ここがおまえの部屋だ。\n稽古で体と技をきたえて、本場所で勝ち、番付を上げていく。めざすは横綱だ。'},
+  {sel:'#hRank',banzuke:true,t:'番付（力士の位）は下から順にこうなっている。'},
   {sel:'#hStats',t:'これがおまえの「体と技」だ。\n押し・力・技・速さの4つと、体重、疲れ。\n取組の強さは、この合計で決まる。'},
   {sel:'#hActs',t:'稽古はこの6つから選ぶ。\n・四股 → 力が上がる\n・てっぽう → 押しが上がる\n・すり足 → 速さが上がる\n・申し合い → 技がよく上がる（力も少し）\n・ちゃんこ → 体重が増える（重いほど押されにくい）\n・休む → 疲れが取れる。けがも治る'},
   {sel:'#hStats',t:'稽古をすると「疲れ」がたまる。\n疲れが多いと伸びが悪くなり、けがもしやすい。\n疲れが60をこえたら「休む」か「ちゃんこ」で回復しろ。'},
@@ -1631,7 +1633,11 @@ function tutSteps(){const fav={oshi:['てっぽう','押し'],yotsu:['四股','�
   {sel:'#autoBtn',t:'忙しいときは「オート」で進められる。\nどこで止めるかも選べるぞ。\n遊び方は「？ 遊び方」でいつでも見られる。さあ、稽古だ！'}];}
 let tutI=0,tutList=null;
 function startTut(){if(!st||autoGrow)return;tutList=tutSteps();tutI=0;$('tut').hidden=false;showTut();}
-function showTut(){const S=tutList[tutI],hole=$('tutHole'),box=$('tutBox');$('tutText').textContent=S.t;$('tutStep').textContent=(tutI+1)+' / '+tutList.length;
+const BANZUKE_GUIDE=[['序ノ口','いちばん下。新弟子はここから（前相撲で勝つと載る）'],['序二段','いちばん人数が多い段'],['三段目','ここまでは浴衣に下駄'],['幕下','十両の一歩手前。上位は厳しい'],
+  ['十両','「関取」。大銀杏を結い、給料が出て、取組は15番'],['幕内','前頭。テレビで見る土俵'],['小結','三役のはじまり'],['関脇','大関とりを狙う地位'],['大関','横綱の一歩手前'],['横綱','最高位。綱を締めて土俵入り']];
+function showTut(){const S=tutList[tutI],hole=$('tutHole'),box=$('tutBox');$('tutText').textContent=S.t;
+  if(S.banzuke){const ul=document.createElement('div');ul.className='tutbz';for(const [n,d] of BANZUKE_GUIDE.slice().reverse()){const r=document.createElement('div');r.append(badgeLabel(n==='幕内'?'前頭':n),document.createTextNode(d));ul.append(r);}
+    const ft=document.createElement('p');ft.textContent='7番（十両からは15番）取って、勝ち越せば上がり、負け越せば下がる。めざすは一番上の横綱だ。';$('tutText').append(ul,ft);}$('tutStep').textContent=(tutI+1)+' / '+tutList.length;
   $('tutNext').textContent=tutI===tutList.length-1?'はじめる':'次へ';
   const el=S.sel&&document.querySelector(S.sel);
   if(el){el.scrollIntoView({block:'center'});const r=el.getBoundingClientRect(),pd=6;Object.assign(hole.style,{display:'block',left:(r.left-pd)+'px',top:(r.top-pd)+'px',width:(r.width+pd*2)+'px',height:(r.height+pd*2)+'px'});
@@ -1652,6 +1658,7 @@ function goalText(){if(st.maezumo)return'前相撲：2勝すれば、来場所�
   const est=w=>{const r=[];for(let k=0;k<7;k++)r.push(moveBanzuke(st.pos,w,I.d.b-w).p);r.sort((a,b)=>a-b);return r[3];};
   if(st.pos>=YOKO)return'横綱：負け越すと進退問題。2場所続けて休むのも危ない';
   if(st.pos===OZEKI){if(st.kadoban)return'カド番：負け越すと大関から陥落する';return tsunaTori(st)?'綱取りの場所！ 優勝をめざせ':'綱取り：優勝か13勝のあと、次の場所で優勝すれば横綱';}
+  if(st.pos===SEKI&&st.ozekiBack===st.b)return'大関復帰の場所：10勝すれば大関に戻れる';
   if(st.pos===SEKI){const l3=st.hist.slice(-2).reduce((a,h)=>a+h.w,0);return'大関取りの目安：三役で3場所33勝（あと '+Math.max(0,33-l3)+'勝）';}
   if(st.pos===KOMU)return'勝ち越せば三役を守れる。10勝で関脇も見える';
   if(I.i===5){const need=I.num<=1?8:I.num<=2?9:I.num<=5?11:12;return'勝ち越しで'+nm(est(8))+'前後へ・三役の目安は'+need+'勝';}
@@ -2196,12 +2203,14 @@ function endBasho(){
   const prev=st.hist[st.hist.length-1];
   if(wasMae){p=w>=3?posOf(0,17,Math.random()<.5):w>=2?posOf(0,20):w>=1?posOf(0,23):posOf(0,25,false);yusho=false;st.maezumo=false;msg=w>=2?'新序出世！ 来場所から序ノ口に名前が載る。':'前相撲を終えた。来場所は序ノ口の下位から。';}
   else if(old<KOMU){const mv=moveBanzuke(old,w,l);p=mv.p;if(mv.msg)msg=mv.msg;}
-  else if(old===KOMU){p=w>=8?(w>=10?SEKI:KOMU+(Math.random()<.5?1:0)):Math.max(MAKU,KOMU-1-Math.round((l-w)*1.3));if(w>=8&&p===KOMU)msg='小結の地位を守った。';}
+  else if(old===KOMU){p=w>=8?(w>=10||(w===9&&Math.random()<.3)?SEKI:KOMU):Math.max(MAKU,KOMU-1-Math.round((l-w)*1.3*2));if(w>=8&&p===KOMU)msg='小結の地位を守った。';}
   else if(old===SEKI){const last3=w+st.hist.slice(-2).reduce((a,h)=>a+h.w,0);
     const sanAll=st.hist.length>=2&&st.hist.slice(-2).every(h=>h.pos>=KOMU);
-    if(sanAll&&last3>=33&&w>=10){p=OZEKI;msg='大関昇進！「謹んでお受けいたします」';}else if(w<8)p=KOMU;else if(w>=10)msg='大関とりへ。三役で3場所33勝が目安だ（直近3場所 '+last3+'勝）。';}
+    if(st.ozekiBack===st.b&&w>=10){p=OZEKI;msg='大関復帰！ 陥落直後の場所で10勝し、大関に戻った。';}
+    else if(sanAll&&last3>=33&&w>=10){p=OZEKI;msg='大関昇進！「謹んでお受けいたします」';}else if(w<8){p=w>=6?KOMU:KOMU-1-Math.round((8-w)*1.6);if(st.ozekiBack===st.b)msg='大関復帰はならず。';}
+    else if(st.ozekiBack===st.b)msg='大関復帰はならず（10勝が必要だった）。';else if(w>=10)msg='大関とりへ。三役で3場所33勝が目安だ（直近3場所 '+last3+'勝）。';}
   else if(old===OZEKI){
-    if(w<8){if(st.kadoban){p=SEKI;st.kadoban=false;msg='カド番で負け越し、大関から陥落……。';}else{st.kadoban=true;msg='負け越し。次の場所はカド番だ。';}}
+    if(w<8){if(st.kadoban){p=SEKI;st.kadoban=false;st.ozekiBack=st.b+1;msg='カド番で負け越し、大関から陥落……。来場所10勝すれば大関に戻れる。';}else{st.kadoban=true;msg='負け越し。次の場所はカド番だ。';}}
     else{st.kadoban=false;const good=yusho||w>=13;const prevGood=prev&&prev.pos===OZEKI&&(prev.yusho||prev.w>=13);
       // yokozuna: every stat A or better, and as ozeki a yusho right after a yusho or a 13+ win basho.
       // without the strength the second yusho never comes (lost in a play-off), so results are never "wasted"
@@ -2456,6 +2465,8 @@ function moveBanzuke(old,w,l){
     p=mono(old+Math.round(mv*2));
     if(I.i===2&&w===7)p=Math.min(p,posOf(3,15));    // 三段目 zensho tops out around 幕下15枚目
     if(I.i===3&&w===7&&I.num>15)p=Math.min(p,posOf(3,3));   // makushita zensho from below 15枚目: near the top, not straight to 十両
+    if(I.i===1)p=Math.min(p,posOf(2,w===7?rnd(25,45):45,eastR()));        // jonidan never jumps past sandanme
+    if(I.i===2&&w<7)p=Math.min(p,posOf(3,30,eastR()));                      // sandanme 6-1 tops out around makushita 30
     if(I.i<3)p=Math.min(p,JURYO-1);
     if(I.i===3){const need=I.num<=1?4:I.num<=3?5:I.num<=5?6:I.num<=15?7:99;
       if(w>=need)p=posOf(4,I.num<=2&&w>=6?rnd(9,12):rnd(11,14),eastR());
