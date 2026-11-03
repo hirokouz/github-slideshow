@@ -2899,8 +2899,8 @@ function divorce(R){const her=firstName(R.pid);R.declined.push(R.pid);R.stage=nu
    a divorce = 絶不調 for a year */
 function heartbreak(r0){const R=st.rom;if(!r0||!r0.pid||!['dating','engaged','married'].includes(r0.stage))return'';
   const gone=!R||R.pid!==r0.pid||!R.stage||(r0.stage==='married'&&R.stage!=='married');if(!gone)return'';
-  if(r0.stage==='married'){addBuff(st,'power',-3,6,'絶不調（離婚）');addBuff(st,'growth',-.2,6,'絶不調（離婚）');const lost=money();addMoney(-lost);saveRoster();return'・慰謝料としてご祝儀を全額（'+lost+'）失った・離婚のショックで1年間 絶不調（取組の力 −3・稽古の伸び −20%）';}
-  addBuff(st,'power',-3,1,'絶不調（失恋）');return'・失恋のショックで次の場所は絶不調（取組の力 −3）';}
+  if(r0.stage==='married'){addBuff(st,'power',-5,6,'絶不調（離婚）');addBuff(st,'growth',-.2,6,'絶不調（離婚）');const lost=money();addMoney(-lost);saveRoster();return'・慰謝料としてご祝儀を全額（'+lost+'）失った・離婚のショックで1年間 絶不調（取組の力 −5・稽古の伸び −20%）';}
+  addBuff(st,'power',-5,1,'絶不調（失恋）');return'・失恋のショックで次の場所は絶不調（取組の力 −5）';}
 const relSnap=()=>st&&st.rom&&st.rom.pid?{pid:st.rom.pid,stage:st.rom.stage}:null;
 function endSecret(){st.secretB=null;if(secretOf()==='osana')setFlag(st,'osanaFriend');if(st.flags)st.flags.secretOsana=false;st.secret=null;st.cheatHeat=0;}
 function checkLife(w,l,yusho,endedIdx){
