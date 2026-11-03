@@ -369,6 +369,11 @@ body:not(.onTitle) #sndBtn{display:none}
 .strats .mu.adv{background:#2f8a4a;color:#fff}.strats .mu.dis{background:#9a2b25;color:#fff}.strats .mu.even{background:#3a4468;color:#cfd6f0}
 .strats .pw{font-style:normal;color:var(--kin);font-size:10px;margin-left:3px;letter-spacing:-.05em}
 .strats button.rec{border-color:var(--kin);box-shadow:0 0 0 1px var(--kin),0 0 10px rgba(226,176,74,.35)}
+.fixrow{display:flex;gap:4px 14px;justify-content:center;flex-wrap:wrap;margin-top:6px}.fixrow .fixs{margin-top:0}
+#bMini{display:grid;gap:6px}.minitxt{margin:0;text-align:center;font-size:13px;font-weight:700;color:var(--kin)}
+.minibtns{display:grid;gap:8px;grid-template-columns:1fr}.minibtns.two{grid-template-columns:1fr 1fr}
+.minibtns button{font-size:20px;font-weight:800;padding:14px 8px;border-radius:14px;border:0;background:linear-gradient(#f0cf73,#d9a73c);color:#2a1700;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.minibtns button:active{transform:scale(.96);filter:brightness(1.1)}.minibtns button.dir{background:linear-gradient(#3a4a86,#26305e);color:#fff;font-size:22px}
 .fixs{display:flex;gap:6px;align-items:center;justify-content:center;font-size:11px;color:var(--nezumi);margin-top:6px}
 .blog{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;min-height:22px}.blog::-webkit-scrollbar{display:none}
 .blog span{flex:none;font-size:10.5px;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--shiro);white-space:nowrap}
@@ -587,12 +592,13 @@ body:not(.onTitle) #sndBtn{display:none}
         <button data-s="yotsu"><i class="mu"></i><span class="k">四</span><b>四つ<em class="pw"></em></b><span>力・体重</span></button>
         <button data-s="waza"><i class="mu"></i><span class="k">技</span><b>技<em class="pw"></em></b><span>技・速さ</span></button>
       </div>
-      <label class="fixs"><input type="checkbox" id="autoStrat">作戦は相性で自動に選ぶ（立ち合いだけ自分で）</label>
+      <div class="fixrow"><label class="fixs"><input type="checkbox" id="autoStrat">作戦は相性で自動</label><label class="fixs"><input type="checkbox" id="miniChk">取組ミニゲーム</label></div>
     </div>
     <div id="bTachi" hidden>
       <button class="primary" id="tachiBtn">立つ！</button>
       <p class="hint" style="margin-top:8px">白い輪が金の輪に重なった瞬間に立つ。早すぎると「待った」</p>
     </div>
+    <div id="bMini" hidden><p class="minitxt" id="miniTxt"></p><div class="minibtns" id="miniBtns"></div></div>
     <div id="bNext" hidden><button class="primary" id="nextBtn">次の一番へ</button></div>
     <div class="blog" id="bLog"></div>
     <label class="auto"><input type="checkbox" id="autoChk">残りの取組をおまかせで取る</label>
@@ -1574,7 +1580,7 @@ function tutSteps(){const fav={oshi:['てっぽう','押し'],yotsu:['四股','�
   {sel:'#hStats',t:'稽古をすると「疲れ」がたまる。\n疲れが多いと伸びが悪くなり、けがもしやすい。\n疲れが60をこえたら「休む」か「ちゃんこ」で回復しろ。'},
   {sel:'#hActs',t:'迷ったら、おまえは'+({oshi:'押し相撲',yotsu:'四つ相撲',waza:'技能派'}[st.type]||'押し相撲')+'だから「'+fav[0]+'」を中心に'+fav[1]+'をのばせ。\n序盤は「ちゃんこ」で体重を増やすのも大事だ。'},
   {sel:'#hTurns',t:'稽古は1場所につき5回。\nこの丸が全部うまったら、本場所に出る。'},
-  {sel:'#bashoBtn',t:'本場所では毎日1番ずつ取組がある。\n勝ち越せば番付が上がり、負け越せば下がる。\nまずは序ノ口からだ。'},
+  {sel:'#bashoBtn',t:'本場所では毎日1番ずつ取組がある。\n作戦を選んで立ち合い、そのあと作戦ごとの勝負（押しは連打、四つはタイミング、技は反応）。\n負けそうでも土俵際で連打すれば逆転できる。\n勝ち越せば番付が上がり、負け越せば下がる。'},
   {sel:'#autoBtn',t:'忙しいときは「オート」で進められる。\nどこで止めるかも選べるぞ。\n遊び方は「？ 遊び方」でいつでも見られる。さあ、稽古だ！'}];}
 let tutI=0,tutList=null;
 function startTut(){if(!st||autoGrow)return;tutList=tutSteps();tutI=0;$('tut').hidden=false;showTut();}
@@ -1790,7 +1796,7 @@ function startBasho(){
   if(!st.basho)st.basho={n:r.bouts,day:0,w:0,l:0,marks:'',used:[]};
   B=st.basho;
   if(st.inj>=2&&B.day===0){B.kyu=B.n;B.l=B.n;B.day=B.n;B.marks='や'.repeat(B.n);toast((st.injPart||'')+'のケガで、全休することになった');endBasho();return;}
-  autoMode=false;$('autoChk').checked=false;$('autoStrat').checked=!!roster.autoStrat;persist();show('sBout');ring=makeCanvas($('ring'),330/400);faceCv=makeCanvas($('bFace'),1);nextBout();
+  autoMode=false;$('autoChk').checked=false;$('autoStrat').checked=!!roster.autoStrat;$('miniChk').checked=roster.mini!==false;persist();show('sBout');ring=makeCanvas($('ring'),330/400);faceCv=makeCanvas($('bFace'),1);nextBout();
 }
 let faceCv=null;
 function renderProfile(){
@@ -1835,7 +1841,7 @@ function nextBout(){if(!autoMode)SND.play('hyoshigi');
   $('bOp').textContent=B.opp.name;{const e=$('bOpRank');e.innerHTML='';e.append(divBadge(B.opp.pos),side(B.opp.pos+1)+' '+rankRest(B.opp.pos));}$('bOpSt').textContent=(B.opp.rival?'宿敵（'+(st.rival.w||0)+'勝'+(st.rival.l||0)+'敗）・':'')+STYLE[B.opp.style]+'・'+B.opp.age+'歳・'+B.opp.height+'cm・'+B.opp.kg+'kg';
   $('bOp').parentElement.classList.toggle('rival',!!B.opp.rival);$('bMySt').textContent=st.height+'cm・'+Math.round(st.kg)+'kg';
   anim={phase:'intro',t:0,salted:false};fx=[];cam={z:1,fx:0,shake:0};gyX=null;
-  $('bPick').hidden=false;$('bTachi').hidden=true;$('bNext').hidden=true;
+  $('bPick').hidden=false;$('bTachi').hidden=true;$('bNext').hidden=true;$('bMini').hidden=true;
   if(autoMode)setTimeout(()=>{if(anim&&(anim.phase==='ready'||anim.phase==='intro'))choose(Math.random()<.55?counterOf(B.opp.style):pick(['oshi','yotsu','waza']));},250);
   else if(roster.autoStrat){const S=stratScores(),k=Object.keys(S).sort((a,b)=>S[b].score-S[a].score)[0];setTimeout(()=>{if(anim&&(anim.phase==='ready'||anim.phase==='intro')&&!autoMode)choose(k);},350);}
 }
@@ -1850,19 +1856,67 @@ function tachi(){
   const r=1-anim.t*anim.speed,d=r-.32;
   if(d>.2&&anim.matta<2){anim.matta++;anim.t=0;anim.msg='待った';anim.msgT=.9;return;}
   const q=Math.abs(d)<=.045?'sharp':Math.abs(d)<=.12?'normal':'late';
-  $('bTachi').hidden=true;resolve(q);
+  $('bTachi').hidden=true;if(roster.mini!==false)startMini(q);else resolve(q);
 }
+/* ---------- bout mini games ----------
+   oshi: mash to thrust; yotsu: stop the moving needle in the zone to drive forward;
+   waza: react to the arrow to deflect; edge: mash to survive at the straw */
+function miniDiff(){return clamp((levelOf(B.opp.pos)-levelOf(st.pos))/8,-1,1);}
+function startMini(q){const g=B.strat,d=miniDiff(),M={phase:'mini',t:0,q,g,TL:TL.out,dw:1,c0:0,ws:g,kind:'out',score:.5};
+  if(g==='oshi')Object.assign(M,{dur:3,taps:0,need:Math.round(16+d*4)});
+  if(g==='yotsu')Object.assign(M,{dur:4.2,tries:3,hits:0,zone:.2-d*.05,speed:1.1+d*.25+Math.random()*.2});
+  if(g==='waza')Object.assign(M,{round:0,rounds:3,pts:0,cue:null,wait:rnd(.5,1.1),win:.85-d*.15});
+  anim=M;miniUI();}
+function startEdge(q,mini,gap){anim={phase:'edge',t:0,q,mini,g:'edge',TL:TL.out,dw:-1,c0:0,ws:B.opp.style,kind:'out',dur:1.8,taps:0,need:Math.round(clamp(12-gap*.35,8,18))};miniUI();}
+function miniUI(){const a=anim,box=$('miniBtns'),tx=$('miniTxt');box.innerHTML='';box.className='minibtns';$('bMini').hidden=false;
+  const btn=(label,cls,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=label;if(cls)b.className=cls;b.addEventListener('pointerdown',e=>{e.preventDefault();fn();});box.append(b);};
+  if(a.g==='oshi'){tx.textContent='突っ張り！ 3秒間ひたすら連打！';btn('突っ張る！','',()=>miniInput('tap'));}
+  if(a.g==='yotsu'){tx.textContent='針が緑に来たら「寄る！」（3回）';btn('寄る！','',()=>miniInput('tap'));}
+  if(a.g==='waza'){tx.textContent='矢印が出たら、同じ向きを押していなす（3回）';box.classList.add('two');btn('◀ いなす','dir',()=>miniInput('L'));btn('いなす ▶','dir',()=>miniInput('R'));}
+  if(a.g==='edge'){tx.textContent='土俵際！ 連打で残せ！';btn('残せ！！','',()=>miniInput('tap'));}}
+function miniInput(k){const a=anim;if(!a||(a.phase!=='mini'&&a.phase!=='edge'))return;
+  if(a.g==='oshi'||a.g==='edge'){a.taps++;a.pop=.12;SND.play('act',a.g==='edge'?'teppo':'shiko');return;}
+  if(a.g==='yotsu'){if(a.tries<=0)return;a.tries--;const x=.5+.5*Math.sin(a.t*a.speed*3.2),dd=Math.abs(x-.5);const hit=dd<=a.zone/2;
+    a.hits+=hit?(dd<a.zone/6?1.25:1):0;a.flash={ok:hit,t:.4};SND.play('act',hit?'moushi':'suri');if(a.tries<=0)a.endAt=a.t+.35;return;}
+  if(a.g==='waza'){if(a.cue&&!a.cue.done){const ok=k===a.cue.dir,fast=a.t-a.cue.t<a.win*.55;a.pts+=ok?(fast?1:.65):0;a.cue.done=true;a.flash={ok,t:.4};SND.play(ok?'pluck':'lose');a.wait=rnd(.45,.95);a.next=a.t+a.wait;}
+    else if(!a.cue||a.cue.done){a.flash={ok:false,t:.4,early:true};a.pts-=.15;}}}
+function updateMini(a,dt){a.t+=dt;if(a.pop)a.pop=Math.max(0,a.pop-dt);if(a.flash)a.flash.t-=dt;
+  let done=false;
+  if(a.g==='oshi'){a.score=clamp(a.taps/a.need,0,1.2)/1.2;a.c0=(a.score-.4)*.1;if(a.t>=a.dur)done=true;}
+  if(a.g==='yotsu'){a.score=clamp(a.hits/3,0,1);a.c0=(a.score-.4)*.1;if(a.t>=a.dur||(a.endAt&&a.t>=a.endAt))done=true;}
+  if(a.g==='waza'){if(a.round<a.rounds){if(!a.cue||a.cue.done){if(a.t>=(a.next||a.wait)){if(a.cue)a.round++;if(a.round<a.rounds){a.cue={dir:Math.random()<.5?'L':'R',t:a.t};SND.play('hyoshigi');}}}
+      else if(a.t-a.cue.t>a.win){a.cue.done=true;a.flash={ok:false,t:.4};a.next=a.t+rnd(.45,.9);}}
+    else done=true;a.score=clamp(a.pts/a.rounds,0,1);a.c0=(a.score-.4)*.08;}
+  if(a.g==='edge'){a.score=clamp(a.taps/a.need,0,1);a.c0=-.05+(a.score)*.05;if(a.t>=a.dur)done=true;}
+  if(done){$('bMini').hidden=true;if(a.g==='edge'){const ok=a.taps>=a.need;resolve(a.q,a.mini,ok?'win':'lose');}else resolve(a.q,a.score);}}
+function drawMini(g,W,H,t,a,text){
+  const bx=W*.18,bw=W*.64,by=H*.1,bh=H*.045;
+  const bar=(fill,col)=>{g.fillStyle='rgba(0,0,0,.45)';g.fillRect(bx-3,by-3,bw+6,bh+6);g.fillStyle=col;g.fillRect(bx,by,bw*clamp(fill,0,1),bh);g.strokeStyle='#f3eee2';g.lineWidth=1.5;g.strokeRect(bx,by,bw,bh);};
+  const timer=(left,tot)=>{g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=3;g.beginPath();g.arc(W*.9,H*.12,H*.04,-Math.PI/2,-Math.PI/2+6.283*clamp(left/tot,0,1));g.stroke();};
+  if(a.g==='oshi'||a.g==='edge'){bar(a.taps/a.need,a.g==='edge'?'#d0473a':'#e2b04a');timer(a.dur-a.t,a.dur);
+    text((a.taps)+' / '+a.need,H*.24,H*.075*(1+(a.pop||0)*2),'#fff6e0');}
+  if(a.g==='yotsu'){g.fillStyle='rgba(0,0,0,.45)';g.fillRect(bx-3,by-3,bw+6,bh+6);g.fillStyle='#3d8a4f';g.fillRect(bx+bw*(.5-a.zone/2),by,bw*a.zone,bh);
+    const x=.5+.5*Math.sin(a.t*a.speed*3.2);g.fillStyle='#fff';g.fillRect(bx+bw*x-2,by-6,4,bh+12);g.strokeStyle='#f3eee2';g.lineWidth=1.5;g.strokeRect(bx,by,bw,bh);timer(a.dur-a.t,a.dur);
+    for(let i=0;i<3;i++){g.fillStyle=i<3-a.tries?'#e2b04a':'rgba(255,255,255,.3)';g.beginPath();g.arc(W/2-20+i*20,H*.22,5,0,6.283);g.fill();}}
+  if(a.g==='waza'){if(a.cue&&!a.cue.done){const L=a.cue.dir==='L',k=1-(a.t-a.cue.t)/a.win;g.save();g.translate(W/2,H*.2);g.scale(L?-1:1,1);g.fillStyle='rgba(255,224,138,'+(.5+.5*k)+')';
+      g.beginPath();g.moveTo(-W*.08,-H*.04);g.lineTo(W*.02,-H*.04);g.lineTo(W*.02,-H*.08);g.lineTo(W*.1,0);g.lineTo(W*.02,H*.08);g.lineTo(W*.02,H*.04);g.lineTo(-W*.08,H*.04);g.closePath();g.fill();g.restore();}
+    for(let i=0;i<a.rounds;i++){g.fillStyle=i<a.round?'#e2b04a':'rgba(255,255,255,.3)';g.beginPath();g.arc(W/2-20+i*20,H*.32,5,0,6.283);g.fill();}}
+  if(a.flash&&a.flash.t>0)text(a.flash.early?'早い！':a.flash.ok?'よし！':'ミス',H*.4,H*.08,a.flash.ok?'#ffe08a':'#ff9a8a');}
 const TL={out:{imp:.16,drive:1.0,edge:1.45,land:1.8,end:2.5},down:{imp:.16,drive:1.0,edge:1.4,land:1.75,end:2.6},throw:{imp:.16,drive:1.0,edge:1.3,land:1.62,end:2.45},slap:{imp:.16,drive:.72,edge:1.02,land:1.28,end:2.1}};
-function resolve(q){
+function resolve(q,mini,force){
   const o=B.opp,s=B.strat;
   const ostrat=Math.random()<.65?o.style:pick(['oshi','yotsu','waza']);
   const D=deckFx();let me=(o.rival&&spouse()==='imouto'?2:0)+power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q])+D.power+(q!=='late'?D.tachi+(flag('senseiTachi')?1:0):0)+buff('power');
   const op=power(o.stats,o.kg,ostrat,0,0);
   if(BEATS[s]===ostrat)me+=7;else if(BEATS[ostrat]===s)me-=7;
-  const win=Math.random()<1/(1+Math.exp(-(me-op)/5)),mu=BEATS[s]===ostrat?1:BEATS[ostrat]===s?-1:0,gap=me-op-mu*7;
+  if(mini!=null)me+=(mini-.5)*14;
+  let win=force?force==='win':Math.random()<1/(1+Math.exp(-(me-op)/5));const mu=BEATS[s]===ostrat?1:BEATS[ostrat]===s?-1:0,gap=me-op-mu*7;
+  // close loss after a mini game: a last stand at the straw (tawara)
+  if(!force&&!win&&mini!=null&&!autoMode&&Math.random()<.45&&me-op>-14){startEdge(q,mini,me-op);return;}
   const ws=win?s:ostrat;let{km,kind}=pickKm(ws,win?st.stats:o.stats),hiwaza=false;
+  if(force==='win'){({km,kind}=pick([{km:'うっちゃり',kind:'throw'},{km:'突き落とし',kind:'slap'},{km:'逆とったり',kind:'slap'}]));}
   // non-techniques: the loser beats himself (a step out, a stumble, a hand down) in a close bout
-  if(Math.abs(me-op)<5&&Math.random()<.03){const h=pick(HIWAZA);km=h[0];kind=h[1];hiwaza=true;}
+  if(!force&&Math.abs(me-op)<5&&Math.random()<.03){const h=pick(HIWAZA);km=h[0];kind=h[1];hiwaza=true;}
   if(win&&!hiwaza){if(!roster.kmBook)roster.kmBook={};const first=!roster.kmBook[km];roster.kmBook[km]=(roster.kmBook[km]||0)+1;
     if(first&&Object.keys(roster.kmBook).length>1)setTimeout(()=>toast((KM_RARE.has(km)?'珍手！ ':'')+'新しい決まり手「'+km+'」（'+Object.keys(roster.kmBook).length+' / '+KM_NAMES.length+'種）'),900);saveRoster();}
   st.fat=Math.min(100,st.fat+(B.n>7?1.4:2.5));
@@ -1877,11 +1931,12 @@ function resolve(q){
   else{B.l++;B.marks+='●';st.streak=0;if(o.rival)st.rival.l=(st.rival.l||0)+1;}B.day++;
   if(!st.h2h)st.h2h={};const hh=st.h2h[o.name]||(st.h2h[o.name]={w:0,l:0});win?hh.w++:hh.l++;{const ks=Object.keys(st.h2h);if(ks.length>300)delete st.h2h[ks[0]];}
   if(!B.rec)B.rec=[];B.rec.push({w:win,opp:o.name,km});
-  const why=hiwaza?(win?'相手の'+km+'（非技）':'自分の'+km+'（非技）'):win?(q==='sharp'?'鋭い立ち合い':mu>0?'相性で有利':gap>6?'地力で圧倒':gap<-6?'格上を破った':'')
+  const MW={oshi:'突っ張りで圧倒',yotsu:'寄りが決まった',waza:'見事ないなし'},ML={oshi:'突っ張り負け',yotsu:'寄り負け',waza:'いなし損ね'};
+  const why=force==='win'?'土俵際で逆転！':force==='lose'?'土俵際で残せず':mini!=null&&win&&mini>=.8?MW[s]:mini!=null&&!win&&mini<=.3?ML[s]:hiwaza?(win?'相手の'+km+'（非技）':'自分の'+km+'（非技）'):win?(q==='sharp'?'鋭い立ち合い':mu>0?'相性で有利':gap>6?'地力で圧倒':gap<-6?'格上を破った':'')
             :(q==='late'?'立ち遅れ':mu<0?'相性で不利（相手は'+STYLE[ostrat]+'）':gap<-6?'力の差':gap>6?'まさかの取りこぼし':'紙一重');
   checkAch();
   const upset=win&&o.pos-st.pos>=(o.pos>=KOMU?2:10);
-  anim={phase:'clash',t:0,win,km,ws,kind,rare:KM_RARE.has(km),tq:q,why,qmsg:{sharp:'鋭い！',late:'立ち遅れ…'}[q]||'',TL:TL[kind],dw:win?1:-1,c0:(q==='sharp'?.03:q==='late'?-.03:0),hit:{},freeze:0,upset,thrust:ws==='oshi'};
+  anim={phase:'clash',t:0,win,km,ws,kind,rare:KM_RARE.has(km)||force==='win',tq:q,why,qmsg:{sharp:'鋭い！',late:'立ち遅れ…'}[q]||'',TL:TL[kind],dw:win?1:-1,c0:(q==='sharp'?.03:q==='late'?-.03:0),hit:{},freeze:0,upset,thrust:ws==='oshi'};
   persist();
 }
 /* Choreography modelled on how bouts actually unfold:
@@ -1975,7 +2030,8 @@ function updateBout(dt){
   if(!anim)return;const a=anim;
   if(a.msgT>0)a.msgT-=dt;
   if(a.phase==='intro'){a.t+=dt*(autoMode?2.5*autoSpd():1);if(a.t>=1.3){a.phase='ready';if(a.pending)choose(B.strat);}}
-  else if(a.phase==='ready'||a.phase==='tachi'){a.t+=dt;if(a.phase==='tachi'&&1-a.t*a.speed<-.05){$('bTachi').hidden=true;resolve('late');}}
+  else if(a.phase==='ready'||a.phase==='tachi'){a.t+=dt;if(a.phase==='tachi'&&1-a.t*a.speed<-.05){$('bTachi').hidden=true;if(roster.mini!==false)startMini('late');else resolve('late');}}
+  else if(a.phase==='mini'||a.phase==='edge')updateMini(a,dt);
   else if(a.phase==='clash'){
     if(a.freeze>0){a.freeze-=dt;return;}
     const L=a.TL;let sc=autoMode?1.8*autoSpd():1;
@@ -2008,6 +2064,8 @@ function drawBout(t,dt){
     mP={...READY,...stand,lean:lerp(.06,READY.lean,s1),crouch:lerp(.08,READY.crouch,s1),armF:lerp(.05,READY.armF,s1),armB:k<.3?stand.armB:lerp(.05,READY.armB,s1),hd:clamp((s1-.55)/.45,0,1),expr:s1>.5?'strain':'normal'};oP={...mP};
     if(!a.salted&&k>.12){a.salted=true;for(const[x,d]of[[mX,1],[oX,-1]])for(let i=0;i<22;i++)fx.push({k:'s',x:x+d*u*.3,y:fy-u*2.2,vx:d*rnd(25,95),vy:-rnd(40,130),life:rnd(.7,1.1),max:1.1});}
   }
+  if(a&&(a.phase==='mini'||a.phase==='edge')){const L=a.TL,T=a.phase==='edge'?L.edge-.05:L.imp+.02+((a.t*.45)%1)*(L.drive-L.imp)*.8,c=choreo(a,T,W,cx,W*.37);
+    if(a.dw>0){mX=c.wX;oX=c.lX;mP={...c.wP,t};oP={...c.lP,t};}else{mX=c.lX;oX=c.wX;mP={...c.lP,t};oP={...c.wP,t};}if(a.pop){mP.jig=a.pop*3;}}
   if(a&&(a.phase==='ready'||a.phase==='tachi')){const br=Math.sin(t*2.2)*.03,ant=a.phase==='tachi'?clamp(a.t*a.speed,0,1)*.08:0;mP.lean+=br+ant;oP.lean-=br-ant;}
   if(a&&(a.phase==='clash'||a.phase==='done')){
     const c=afterChoreo(a,a.t,W,cx,choreo(a,a.t,W,cx,W*.37));
@@ -2044,6 +2102,7 @@ function drawBout(t,dt){
   }
   if(a&&a.phase==='clash'&&a.t>.2&&a.t<a.TL.edge){const p=1+Math.sin(t*12)*.04;text('のこった！',H*.2,H*.08*p,'#f3eee2');}
   if(a&&a.msg&&a.msgT>0)text(a.msg,H*.22,H*.11,'#e2b04a');
+  if(a&&(a.phase==='mini'||a.phase==='edge'))drawMini(g,W,H,t,a,text);
   if(a&&a.phase==='clash'&&a.qmsg&&a.t<.9){g.globalAlpha=clamp((.9-a.t)/.3,0,1);text(a.qmsg,H*.36,H*.1,a.tq==='sharp'?'#ffe08a':'#ff9a8a');g.globalAlpha=1;}
   if(a&&(a.phase==='clash'||a.phase==='done')&&a.t>a.TL.land+.15){
     const k=ease((a.t-a.TL.land-.15)/.35),pw=W*.62,ph=H*.2,px=(W-pw)/2,py=lerp(-ph,H*.12,k);
@@ -2824,9 +2883,10 @@ $('enterBtn').addEventListener('click',enter);
 $('bashoBtn').addEventListener('click',startBasho);
 $('toTitle').addEventListener('click',()=>{persist();renderTitle();});
 document.querySelectorAll('.strats button').forEach(b=>b.addEventListener('click',()=>choose(b.dataset.s)));
+$('miniChk').addEventListener('change',e=>{roster.mini=e.target.checked;saveRoster();});
 $('autoStrat').addEventListener('change',e=>{roster.autoStrat=e.target.checked;saveRoster();if(e.target.checked&&anim&&(anim.phase==='ready'||anim.phase==='intro')&&!autoMode){const S=stratScores();choose(Object.keys(S).sort((a,b)=>S[b].score-S[a].score)[0]);}});
 $('tachiBtn').addEventListener('click',tachi);
-$('ring').addEventListener('pointerdown',()=>{if(anim&&anim.phase==='tachi')tachi();});
+$('ring').addEventListener('pointerdown',()=>{if(anim&&anim.phase==='tachi')tachi();else if(anim&&(anim.phase==='mini'||anim.phase==='edge')&&(anim.g==='oshi'||anim.g==='edge'))miniInput('tap');});
 $('nextBtn').addEventListener('click',nextBout);
 $('backHome').addEventListener('click',()=>{rcData=null;if(st&&st.pendingKikyo)openKikyo();else nextAfterEvent();});
 $('kDone').addEventListener('click',()=>nextAfterEvent());
