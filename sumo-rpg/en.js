@@ -122,6 +122,15 @@ const T2=[
  ['明るくて世話焼き。泣き虫だったころから、ずっと励ましてくれる','Cheerful and caring. She has cheered him on since he was a crybaby'],['おっとりしたお嬢さま。芯が強く、後援会の人たちにも好かれている','A gentle young lady with a strong core, loved by the supporters'],['食事の管理はおまかせ。体のことになると、ちょっとこわい','Leave the meals to her. A little scary when it comes to his health'],
  ['兄ゆずりの負けず嫌い。兄との取組の日は、どっちを応援するか悩む','As competitive as her brother. On the day they meet, she can\'t decide who to cheer for'],['朝稽古のあと、いつも黙々と手伝っている。笑うと目が細くなる','Quietly helps after every morning practice. Her eyes narrow when she smiles'],['落ち着いた聞き上手。取材ノートには、誰よりも細かく相撲のことが書いてある','Calm and a good listener. Her notebook holds more sumo detail than anyone\'s'],
 ];
+T2.push(
+ ['「あんたの相撲が気に入った。腹いっぱい食わせたる。今度うちの店に来な」','"I like your sumo. I\'ll fill you up. Come by my place sometime."'],['「最近ちっとも店に顔を出さんな。わしはもう、ほかの若いのを応援するわ」','"You never come by the restaurant any more. I\'ll be backing some other youngster now."'],
+ ['「いい相撲とるな。これからワシが面倒みたる。今度メシ行こう」','"You fight good sumo. I\'ll look after you from now on. Let\'s get dinner."'],['「ずいぶん顔を見せんな。ワシはもう、ほかの力士を応援するわ」','"You never show your face these days. I\'ll be backing another rikishi now."'],
+ ['「あなたのお相撲、うちのお客さまにも評判なのよ。今度ゆっくりお食事にいらして」','"Your sumo is popular with our guests too. Do come for a relaxing dinner sometime."'],['「最近お見えになりませんね。残念ですけれど、ほかのお相撲さんを応援させていただきます」','"We haven\'t seen you lately. It\'s a pity, but I shall support another rikishi."'],
+ ['「君の相撲、伸びしろしかないね。応援させてよ。今度食事でもどう？」','"Your sumo is all upside. Let me back you. Dinner sometime?"'],['「最近会えてないね。悪いけど、別の力士を応援することにしたよ」','"We haven\'t met in a while. Sorry, but I\'ve decided to back a different rikishi."'],
+ ['「お疲れさん！ 明日からは、うちの店でたらふく食わせたる」','"Well done! From tomorrow, I\'ll feed you all you can eat at my place."'],['「ようやった。第二の人生も、ワシが応援させてもらうで」','"You did well. I\'ll back your second life too."'],['「長いあいだ、本当にお疲れさまでございました」','"Thank you so much for all these years."'],['「最高のキャリアだったね。次のチャレンジも応援するよ」','"What a career. I\'ll back your next challenge too."'],
+ ['十両昇進','Jūryō promotion'],['新入幕','Makuuchi debut'],['大関昇進','Ōzeki promotion'],['横綱昇進','Yokozuna promotion'],['妻の','his wife '],['恋人の','his girlfriend '],['婚約者の','his fiancée '],['記者','Reporter'],
+ ['ちゃんこ屋「大関」の大将から祝いの席に招かれた。','The chef of the "Ōzeki" chanko restaurant invited him to a celebration dinner.'],
+);
 for(const [a,b] of T2)X[a]=b;
 const KM={'押し出し':'Oshidashi','突き出し':'Tsukidashi','押し倒し':'Oshitaoshi','突き倒し':'Tsukitaoshi','寄り切り':'Yorikiri','寄り倒し':'Yoritaoshi','上手投げ':'Uwatenage','下手投げ':'Shitatenage','小手投げ':'Kotenage','すくい投げ':'Sukuinage','上手出し投げ':'Uwatedashinage','下手出し投げ':'Shitatedashinage','首投げ':'Kubinage','吊り出し':'Tsuridashi','吊り落とし':'Tsuriotoshi',
   '外掛け':'Sotogake','内掛け':'Uchigake','切り返し':'Kirikaeshi','渡し込み':'Watashikomi','上手ひねり':'Uwatehineri','下手ひねり':'Shitatehineri','送り吊り出し':'Okuritsuridashi','櫓投げ':'Yaguranage','二丁投げ':'Nichōnage','河津掛け':'Kawazugake',
@@ -130,10 +139,10 @@ const KM={'押し出し':'Oshidashi','突き出し':'Tsukidashi','押し倒し':
 for(const k in KM){X[k]=KM[k];G[k]=KM[k];}
 /* ---------- helpers ---------- */
 const GK=Object.keys(G).sort((a,b)=>b.length-a.length);
-function rankEN(side,div,num){const d={'序ノ口':'Jonokuchi','序二段':'Jonidan','三段目':'Sandanme','幕下':'Makushita','十両':'Jūryō','前頭':'Maegashira'}[div];const n=kan(num);return(side?(side==='東'?'East ':'West '):'')+d+' '+n+(side?'':'');}
-function names(s){return s.replace(/[㐀-鿿぀-ヿー]{1,6}/g,m=>nameEN(m)||m);}
+function rankEN(side,div,num){num=num==='筆頭'?'一':num.replace('枚目','');const d={'序ノ口':'Jonokuchi','序二段':'Jonidan','三段目':'Sandanme','幕下':'Makushita','十両':'Jūryō','前頭':'Maegashira'}[div];const n=kan(num);return(side?(side==='東'?'East ':'West '):'')+d+' '+n+(side?'':'');}
+function names(s){return s.replace(/[\u3400-\u9fff\u30ce\u4e43]{1,6}/g,m=>nameEN(m)||m);}
 function gloss(s){
-  s=s.replace(new RegExp('(東|西)?\\s?('+DIVJ+')([一二三四五六七八九十百\\d]+)枚目','g'),(m,sd,dv,nm)=>rankEN(sd,dv,nm));
+  s=s.replace(new RegExp('(東|西)?\\s?('+DIVJ+')([一二三四五六七八九十百\\d]+枚目|筆頭)','g'),(m,sd,dv,nm)=>rankEN(sd,dv,nm));
   s=s.replace(/(東|西)\s?(横綱|大関|関脇|小結)/g,(m,sd,r)=>(sd==='東'?'East ':'West ')+G[r]);
   s=s.replace(/(\d+)年目/g,'Year $1').replace(/(\d+)場所目/g,'Basho $1').replace(/(\d+)歳/g,'age $1').replace(/(\d+)勝(\d+)敗(\d+)休/g,'$1-$2-$3a').replace(/(\d+)勝(\d+)敗/g,'$1–$2').replace(/(\d+)勝/g,'$1 wins').replace(/(\d+)敗/g,'$1 losses').replace(/(\d+)回/g,'$1×')
        .replace(/(\d+)月/g,(m,n)=>['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+n]||m).replace(/(\d+)連覇中/g,'$1 titles in a row').replace(/(\d+)連覇/g,'$1 in a row').replace(/(\d+)連勝/g,'$1 straight wins');
@@ -144,6 +153,11 @@ function gloss(s){
 const RK=r=>gloss(r);
 const R=[
   [/^入門(\d+)年目$/,m=>'Year '+m[1]],
+  [/^(東|西)?\s?(前頭)?([一二三四五六七八九十百]+|筆頭)(枚目)?$/,m=>((m[1]?X[m[1]]+' ':'')+(m[2]?'Maegashira ':'')+(m[3]==='筆頭'?'1':kan(m[3]))).trim()],
+  [/^(\d+)年目の年の瀬　(\d+)歳$/,m=>'End of year '+m[1]+' · age '+m[2]],
+  [/^前相撲 ([一二三四五六七八九十]+)番$/,m=>'Maezumo bout '+kan(m[1])],
+  [/^(\d+)日目$/,m=>'Day '+m[1]],
+  [/^(\d+)番相撲$/,m=>'Bout '+m[1]],
   [/^出身　通算$/,m=>' · Career '],
   [/^(\d+)歳$/,m=>m[1]],
   [/^まだ本場所に出ていない$/,m=>'Hasn\'t fought a basho yet'],
@@ -210,9 +224,29 @@ const R=[
   [/^よく来たな、(.+)。ここがおまえの部屋だ。\n稽古で体と技をきたえて、本場所で勝ち、番付を上げていく。めざすは横綱だ。$/,m=>'Welcome, '+(nameEN(m[1])||m[1])+'. This is your stable.\nBuild your body and skills in training, win at the basho, and climb the banzuke. The goal is Yokozuna.'],
   [/^(.+) (\+|−)([\d.]+)$/,m=>tr(m[1])+' '+m[2]+m[3]],
 ];
+/* sentences built from translated fragments with Japanese names/terms still inside */
+let PK=null;
+function mixed(s){if(!PK)PK=Object.keys(X).filter(k=>k.length>=2&&k.length<=90).sort((a,b)=>b.length-a.length);
+  for(const k of PK)if(s.includes(k))s=s.split(k).join(X[k]);
+  s=s.replace(new RegExp('(東|西)?\\s?('+DIVJ+')([一二三四五六七八九十百\\d]+枚目|筆頭)','g'),(m,sd,dv,nm)=>rankEN(sd,dv,nm)).replace(/(東|西)\s?(横綱|大関|関脇|小結)/g,(m,sd,r)=>(sd==='東'?'East ':'West ')+G[r]);
+  s=s.replace(/(\d+)年目 /g,'Year $1 ').replace(/\u306f(?=\d)/g,': ');
+  s=names(s);for(const k of GK)if(k.length>=2&&s.includes(k))s=s.split(k).join(G[k]);
+  // leftover particles between a name and English
+  s=s.replace(/your (?:wife|fiancée|girlfriend)\u306e([A-Z][A-Za-z\u014d\u016b\u0101]+)/g,'$1').replace(/([A-Za-z\u014d\u016b\u0101])\u306e(?=[ A-Za-z])/g,"$1's ").replace(/([A-Za-z\u014d\u016b\u0101)])[\u306f\u304c\u3092\u306b\u3068](?=[ A-Za-z"\u201c(])/g,'$1 ').replace(/([A-Za-z\u014d\u016b\u0101])\u3055\u3093/g,'$1');
+  s=s.replace(/」「/g,'", "');
+  return s.replace(/(\d+)勝(\d+)敗/g,'$1–$2').replace(/(\d+)勝/g,'$1 wins').replace(/(\d+)敗/g,'$1 losses').replace(/(\d+)歳/g,'$1').replace(/：/g,': ').replace(/・/g,' · ').replace(/、/g,', ').replace(/。/g,'. ').replace(/（/g,' (').replace(/）/g,')').replace(/「/g,'"').replace(/」/g,'"').replace(/　/g,' ').replace(/！/g,'!').replace(/？/g,'?').replace(/…/g,'…').replace(/ {2,}/g,' ').replace(/ ([,.!?)])/g,'$1').replace(/([.!?]) "(\s|$)/g,'$1"$2');}
 /* ---------- main ---------- */
 const cache=new Map();
-function tr(s,ctx){if(s==null)return s;s=String(s);if(!J.test(s))return s;
+/* tidy English built from fragments: missing spaces between sentences, sentence-initial capitals, "the" mid-sentence */
+function post(s){if(s.length<20)return s;s=s.replace(/([.!?]) "(\s|$)/g,'$1"$2');
+  // a sentence end glued to the next sentence: decide by quote parity whether a " opens or closes
+  let out='',q=0;for(let k=0;k<s.length;k++){const c=s[k];out+=c;if(c==='"'||c==='\u201c'||c==='\u201d'){q++;continue;}
+    if(/[.!?]/.test(c)&&/[a-z\u014d\u016b\u0101)]/.test(s[k-1]||'')){const n=s[k+1]||'';
+      if(/[A-Z\u201c]/.test(n))out+=' ';
+      else if(n==='"'){if(q%2===1){out+='"';q++;k++;if(/[A-Z]/.test(s[k+1]||''))out+=' ';}else out+=' ';}}}
+  s=out.replace(/, The (?=[a-z])/g,', the ').replace(/ {2,}/g,' ');
+  return s.replace(/^([a-z])(?=[a-z]* )/,c=>c.toUpperCase()).replace(/\n([a-z])/g,(m,c)=>'\n'+c.toUpperCase());}
+function tr(s,ctx){if(s==null)return s;s=String(s);if(!J.test(s)){const p=post(s);return p;}
   if(s.trim().length===1){const k=s.trim();return k==='東'||k==='西'?s.replace(k,X[k]):ctx==='stat'&&G[k]?G[k]:s;} // single kanji are icons, except East/West and the stat names
   const c=cache.get(s);if(c!==undefined)return c;
   const lead=s.match(/^\s*/)[0],trail=s.match(/\s*$/)[0],core=s.trim();let out=null;
@@ -220,7 +254,8 @@ function tr(s,ctx){if(s==null)return s;s=String(s);if(!J.test(s))return s;
   else if(core.length===1)out=null; // single kanji are decorative icons
   else if(nameEN(core))out=nameEN(core);
   else{for(const [re,f] of R){const m=core.match(re);if(m){const r=f(m);if(r!=null&&!J.test(r)){out=r;break;}}}
-    if(out==null&&core.length<=28){const g=gloss(core);if(!J.test(g))out=g;}}
-  const res=out==null?s:lead+out+trail;if(cache.size>5000)cache.clear();cache.set(s,res);return res;}
+    if(out==null&&core.length<=28&&!/[A-Za-z]{3}/.test(core)){const g=gloss(core);if(!J.test(g))out=g;}}
+  if(out==null){const lat=(core.match(/[A-Za-z]/g)||[]).length,jp=(core.match(/[\u3040-\u30ff\u3400-\u9fff]/g)||[]).length;if(lat>=6&&lat>=jp)out=mixed(core);else{const m2=mixed(core),j2=(m2.match(/[\u3040-\u30ff\u3400-\u9fff]/g)||[]).length;if(j2<=jp*.25)out=m2;}}
+  const res=out==null?s:lead+post(out)+trail;if(cache.size>5000)cache.clear();cache.set(s,res);return res;}
 window.I18N_EN={tr,nameEN,kan};
 })();

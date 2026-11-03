@@ -19,7 +19,8 @@ for l in js.split('\n'):
         x=mm.group(1);pre=mm.string[:mm.start()];post=mm.string[mm.end():]
         if not J.search(x) or '<' in x:return mm.group(0)
         if re.search(r'(Tj\(|===|!==|==|includes\(|indexOf\(|split\(|replace\(|startsWith\(|endsWith\(|getItem\(|setItem\()\s*$',pre):return mm.group(0)
-        if re.match(r'\s*(===|!==|==|:)',post):return mm.group(0)
+        if re.match(r'\s*(===|!==|==)',post):return mm.group(0)
+        if re.match(r'\s*:',post) and re.search(r'[{,]\s*$',pre):return mm.group(0)  # object key
         found.append(x);return (" " if re.search(r"[A-Za-z0-9_$]$",pre) else "")+"Tj("+mm.group(0)+")"
     out.append(lit.sub(rep,l))
 s2=head+'\n'.join(out)
