@@ -91,7 +91,7 @@ input[type=text]{width:100%;box-sizing:border-box;background:#fffaf0;color:var(-
 .rinfo{display:grid;gap:4px;align-content:center;min-width:0}
 .rinfo .side{font-family:var(--f-mincho);font-weight:800;color:var(--shu);font-size:13px;letter-spacing:.2em}
 .rinfo .rank{font-family:var(--f-brush);font-size:27px;line-height:1.15}
-.rinfo .when{font-size:12px;color:#5b5246}
+.rinfo .when{font-size:13px;color:#5b5246}
 .turns{display:flex;gap:4px;align-items:center;font-size:12px;color:#5b5246;margin-top:4px;flex-wrap:wrap}
 .turns i{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--sumi)}
 .turns i.used{background:var(--sumi)}
@@ -116,7 +116,7 @@ input[type=text]{width:100%;box-sizing:border-box;background:#fffaf0;color:var(-
 .acts button .recb{position:absolute;top:-7px;left:50%;transform:translateX(-50%);background:var(--kin);color:#2a1700;font-size:9px;font-weight:800;padding:1px 6px;border-radius:999px;white-space:nowrap}
 .acts button.risky{border-color:#c0392b}.acts button.risky span.d{color:#ff8a80}
 .home .acts span.d{white-space:nowrap}
-.hgoal{display:grid;gap:2px;font-size:11.5px;line-height:1.45;color:var(--shiro);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+.hgoal{display:grid;gap:2px;font-size:13px;line-height:1.45;color:var(--shiro);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
 .hgoal b{color:var(--kin);font-weight:700;margin-right:6px}.hgoal span{display:block;white-space:normal;word-break:break-word}
 .home #bashoBtn:disabled{padding:8px 14px;font-size:13px;background:transparent;border:1px dashed var(--line);color:var(--nezumi);box-shadow:none;opacity:1}
 .home #bashoBtn:not(:disabled){animation:bashoGlow 1.6s ease-in-out infinite}@keyframes bashoGlow{50%{box-shadow:0 0 0 3px rgba(226,176,74,.35),0 0 18px rgba(226,176,74,.45)}}
@@ -268,8 +268,8 @@ body.autoOn #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 66px)}
 .home .rinfo .rank{font-size:21px}
 .home .hst{padding:9px 12px;gap:6px}
 .home .stats{grid-template-columns:1fr 1fr;gap:5px 14px}
-.home .stat{grid-template-columns:2.4em 1fr 3.9em;gap:6px;font-size:11.5px}
-.home .stat b{font-size:12.5px}
+.home .stat{grid-template-columns:2.4em 1fr 4.1em;gap:6px;font-size:13px}
+.home .stat b{font-size:14px}
 .stat b.g-S{color:#ff7a59}.stat b.g-A{color:#e2b04a}.stat b.g-B{color:#e6d27a}.stat b.g-C{color:#9fd18b}.stat b.g-D{color:#7fb7e0}.stat b.g-E{color:#a7a3c8}.stat b.g-F{color:#8a8fa3}
 .home .bar{height:7px}
 .home .acts{grid-template-columns:repeat(3,1fr);gap:6px}
@@ -281,14 +281,14 @@ body.autoOn #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 66px)}
 button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:#fff!important;box-shadow:0 4px 0 #5a1f17!important}
 .tie.warn{box-shadow:0 0 0 1.5px #ff6b6b}
 .acts button.tani .k{background:#dbe7f6;color:#1f4a7a}
-.home .acts.four span.d{font-size:9px}.home .acts.four b{font-size:12px}
+.home .acts.four span.d{font-size:10.5px}.home .acts.four b{font-size:13.5px}
 .acts button.fam .k{background:#f6d6dc;color:#8a2a3c}
 .home .acts button{grid-template-columns:1fr;justify-items:center;text-align:center;padding:7px 4px;gap:1px}
 .home .acts .k{grid-row:auto;width:28px;height:28px;font-size:16px}
-.home .acts b{font-size:13px}.home .acts span.d{font-size:9.5px;line-height:1.35}
+.home .acts b{font-size:15px}.home .acts span.d{font-size:11px;line-height:1.35}
 .hlog.more{-webkit-mask-image:linear-gradient(#000 60%,transparent);mask-image:linear-gradient(#000 60%,transparent)}.hlog.more.end{-webkit-mask-image:none;mask-image:none}
 .hlogw{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;align-items:start}.spk{width:30px;height:30px;border-radius:50%;box-shadow:0 0 0 1.5px var(--kin);background:#f3eadb}
-.hlog{margin:0;font-size:12px;line-height:1.45;color:var(--shiro);border-left:2px solid var(--kin);padding-left:8px;min-height:1.45em;max-height:2.9em;overflow-y:auto;overscroll-behavior:contain;white-space:normal;word-break:break-word}
+.hlog{margin:0;font-size:13.5px;line-height:1.45;color:var(--shiro);border-left:2px solid var(--kin);padding-left:8px;min-height:1.45em;max-height:2.9em;overflow-y:auto;overscroll-behavior:contain;white-space:normal;word-break:break-word}
 .home #bashoBtn{padding:12px 16px;font-size:16px}
 .deckbar{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center}
 .deck.mini{gap:6px}
@@ -330,7 +330,7 @@ body:not(.onTitle) #sndBtn{display:none}
 @keyframes pulse{50%{opacity:.25}}
 #autoBar select{font:inherit;font-size:12px;background:#2a2620;color:var(--washi);border:1px solid var(--line);border-radius:6px;padding:2px 4px}
 #autoBar button{border:0;border-radius:999px;background:var(--kin);color:#2a1700;font-weight:700;padding:5px 12px;font-size:12.5px}
-.tabs button{white-space:nowrap;letter-spacing:-.06em;display:grid;justify-items:center;gap:1px;background:var(--ai2);border:1px solid var(--line);border-radius:10px;padding:6px 1px;font-size:10px;font-weight:700}
+.tabs button{white-space:nowrap;letter-spacing:0;display:grid;justify-items:center;gap:1px;background:var(--ai2);border:1px solid var(--line);border-radius:10px;padding:6px 1px;font-size:12px;font-weight:700}
 .tabs .ti{font-family:var(--f-brush);font-size:17px;color:var(--kin);line-height:1.1}
 .tabs small{font-size:9px;color:var(--nezumi);font-weight:500}
 .sheet{position:fixed;inset:0;z-index:40;background:rgba(4,7,18,.62);display:flex;align-items:flex-end;justify-content:center}
@@ -383,6 +383,16 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 .itemlist{display:grid;gap:10px}.itemrow{display:grid;gap:6px}.itemuse{padding:9px 12px;font-size:14px}
 .scard.itemcard .kk{background:linear-gradient(#8a5a1e,#5a3410);color:#ffe9b0}.scard.itemcard{background:#fbf1dc}
 .tutbz{display:grid;gap:3px;margin:6px 0 4px}.tutbz div{display:grid;grid-template-columns:4.6em 1fr;gap:6px;align-items:center;font-size:12px;line-height:1.35}.tutbz .dvb{text-align:center;margin:0}#tut p.tutft,#tutText p{margin:4px 0 0;font-size:13px}
+.home .rinfo .rank{display:flex;align-items:center;flex-wrap:wrap;gap:2px 6px}.home .rinfo .rank .dvb{margin:0}.home .rinfo .rank .rnum{white-space:nowrap}
+.bestb{font-size:10.5px;font-weight:800;color:#2a1700;background:var(--kin);border-radius:999px;padding:1px 7px;font-family:"Zen Kaku Gothic New",sans-serif;letter-spacing:0}
+.home .acts button{min-width:0}.home .acts.four span.d{font-size:10px;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.hbox{display:grid;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.04);overflow:hidden}.hbox .hgoal{border:0;border-radius:0;background:none;padding:5px 10px 3px}
+.hrec{display:flex;align-items:center;gap:6px;width:100%;padding:3px 10px 5px;border:0;border-top:1px dashed var(--line);background:none;color:var(--shiro);text-align:left;overflow:hidden}
+.hrec .hl{font-family:var(--f-brush);color:var(--kin);font-size:15px;flex:none}.hrec .he{font-size:13px;color:var(--nezumi)}
+.hrec .hc{display:grid;justify-items:center;line-height:1.15;padding:2px 7px;border-radius:7px;flex:none}.hrec .hc i{font-style:normal;font-size:10.5px;color:var(--nezumi)}.hrec .hc em{font-style:normal;font-weight:800;font-size:15px;font-variant-numeric:tabular-nums}
+.hrec .hc.kk{background:rgba(246,241,228,.12)}.hrec .hc.kk em{color:#fff6e0}.hrec .hc.mk em{color:#8f9bb8}.hrec .hc.yu{box-shadow:inset 0 0 0 1.5px var(--kin)}
+.hrec .hm{margin-left:auto;font-size:12px;color:var(--kin);flex:none}
+.recseg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.recseg button{padding:7px 4px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--shiro);font-size:13px;font-weight:700}.recseg button.on{background:var(--kin);color:#2a1700;border-color:var(--kin)}
 .heirnote{margin:0;font-size:12.5px;font-weight:700;color:#7a1f1f;background:linear-gradient(90deg,rgba(226,176,74,.35),rgba(226,176,74,0));padding:4px 8px;border-left:3px solid #c9932c;border-radius:2px}
 .resetbtn{font-size:12px;padding:8px;color:#d98a7f;border-color:rgba(217,138,127,.5)}.resetbtn.armed{background:#9a2b25;color:#fff;border-color:#9a2b25}
 .tbars{display:inline-flex;gap:2px}.tbars i{width:9px;height:12px;border-radius:2px;border:1.5px solid #8a6d3b;background:transparent}.tbars i.used{background:linear-gradient(#e2b04a,#b07d22);border-color:#b07d22}
@@ -535,15 +545,13 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
     </div>
     <div class="acts" id="hActs"></div>
     <div class="hlogw"><canvas id="hSpk" class="spk" aria-hidden="true"></canvas><p class="hlog" id="hLog1"></p></div>
-    <div class="hgoal" id="hGoal"></div>
+    <div class="hbox"><div class="hgoal" id="hGoal"></div><button type="button" class="hrec" id="hRec" aria-label="星取表を見る"></button></div>
     <button class="primary" id="bashoBtn">本場所へ</button>
-    <div class="deckbar"><span class="label">サポート</span><div class="deck mini" id="hDeck"></div></div>
     <nav class="tabs" aria-label="そのほか">
-      <button type="button" data-sheet="hist"><span class="ti">星</span>星取表</button>
-      <button type="button" data-sheet="log"><span class="ti">話</span>部屋話</button>
-      <button type="button" data-sheet="ach"><span class="ti">績</span>実績<small id="hAchN"></small></button>
+      <button type="button" data-sheet="log"><span class="ti">記</span>記録<small id="hAchN"></small></button>
+      <button type="button" id="cardBtn"><span class="ti">札</span>カード</button>
       <button type="button" id="hGacha"><span class="ti">祝</span>ガチャ</button>
-      <button type="button" id="toTitle"><span class="ti">替</span>力士替</button>
+      <button type="button" id="toTitle"><span class="ti">替</span>力士</button>
       <button type="button" id="itemBtn" class="itemtab" hidden><span class="ti">巻</span>道具<b id="itemN">0</b></button>
       <button type="button" id="autoBtn"><span class="ti">自</span>オート</button>
     </nav>
@@ -552,6 +560,8 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
   <div id="sheet" class="sheet" hidden>
     <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="sheetT">
       <div class="row" style="justify-content:space-between"><b class="brush" id="sheetT" style="font-size:22px"></b><button class="ghost" id="sheetX" style="width:auto;padding:6px 14px">閉じる</button></div>
+      <div class="recseg" id="recSeg"><button type="button" data-r="hist">星取表</button><button type="button" data-r="log">部屋の話</button><button type="button" data-r="ach">実績</button></div>
+      <div data-p="cards"><p class="muted" style="font-size:12.5px;margin:0 0 8px">付けたカードの効果が、稽古と取組に効く（3枚まで）。</p><div class="deck" id="hDeck"></div></div>
       <div data-p="hist" class="washi"><div class="histbox"><table class="hist" id="hHist"></table></div></div>
       <div data-p="log"><div class="log" id="hLog"></div><p class="label" style="margin-top:12px">いま効いている出来事</p><div class="log" id="hBuffs"></div></div>
       <div data-p="ach"><div class="achs" id="hAch"></div></div>
@@ -1444,7 +1454,8 @@ const SND=(()=>{
   return{ready:()=>unlocked,state:()=>ctx?ctx.state+':'+(track||'-')+(songOn?'(song '+(songOn.a.paused?'paused':'playing')+')':''):'none',sync,play:(n,...a)=>{if(ctx&&unlocked&&fx[n])try{fx[n](...a);}catch(e){}},cfg,save,unlock};
 })();
 function show(id){for(const s of SCR)$(s).hidden=s!==id;cur=id;closeSheet();window.scrollTo(0,0);document.body.classList.toggle('onTitle',id==='sTitle');SND.sync();}
-function openSheet(k,title){const sh=$('sheet');sh.hidden=false;$('sheetT').textContent=title||'';for(const el of sh.querySelectorAll('[data-p]'))el.hidden=el.dataset.p!==k;}
+function openSheet(k,title){const sh=$('sheet');sh.hidden=false;$('sheetT').textContent=title||'';for(const el of sh.querySelectorAll('[data-p]'))el.hidden=el.dataset.p!==k;
+  const rs=$('recSeg');rs.hidden=!['hist','log','ach'].includes(k);for(const b of rs.children)b.classList.toggle('on',b.dataset.r===k);}
 function closeSheet(){const sh=$('sheet');if(sh)sh.hidden=true;}
 
 /* ---------- title ---------- */
@@ -1608,7 +1619,7 @@ function enter(){
 
 /* ---------- home ---------- */
 const TURNS=5;
-const TANI_ACT={id:'tani',k:'谷',name:'タニマチ会食',desc:'ご祝儀↑・体重↑・疲れ+5',sd:'祝儀↑体重↑ 疲+5',fat:5,tani:true};
+const TANI_ACT={id:'tani',k:'谷',name:'会食',desc:'ご祝儀↑・体重↑・疲れ+5',sd:'祝儀↑体重↑ 疲+5',fat:5,tani:true};
 const DATE_ACT={id:'date',k:'恋',name:'デート',desc:'疲れ−12・親密度↑',sd:'親密度↑ 疲−12',fat:-12,date:true};
 const FAMILY_ACT={id:'family',k:'家',name:'家族サービス',desc:'疲れ−20・家族の絆',sd:'絆↑　疲−20',fat:-20,family:true};
 const ACTS=[
@@ -1686,16 +1697,16 @@ function renderHome(){
   const r=st.maezumo?{div:'前相撲',name:'前相撲',bouts:3}:rank(st.pos);
   const plate=$('hTate');plate.innerHTML='';const n=document.createElement('span');n.textContent=st.name;plate.append(n);
   if(st.pos===YOKO){const sm=document.createElement('small');sm.textContent='横綱';plate.append(sm);}
-  {const hs=$('hSide');hs.textContent=side(st.pos)+(st.kadoban&&st.pos===OZEKI?'　カド番':'');const ties=document.createElement('span');ties.className='ties';
+  {const hs=$('hSide');hs.textContent=side(st.pos)+(st.kadoban&&st.pos===OZEKI?'　カド番':'');if(!st.maezumo&&st.hist.length>1&&st.pos>=(st.best||0)){const bb=document.createElement('span');bb.className='bestb';bb.textContent='最高位';bb.style.marginLeft='6px';hs.append(bb);}const ties=document.createElement('span');ties.className='ties';
     const add=(cls,txt,warn,title)=>{const t=document.createElement('span');t.className='tie '+cls+(warn?' warn':'');t.textContent=txt;t.title=title;ties.append(t);};
     const Rm=st.rom;if(Rm&&(Rm.stage==='dating'||Rm.stage==='engaged'))add('love','♥'+PARTNERS[Rm.pid].name.replace(/^.*[・の]/,'')+' '+Rm.aff,(Rm.dateMiss||0)>=2,Rm.stage==='engaged'?'婚約中':'交際中');
     if(spouse())add('fam','家 '+PARTNERS[Rm.pid].name.replace(/^.*[・の]/,'')+(Rm.kid?'・長男':''),(Rm.famMiss||0)>=2,'家族');
     if(st.inj>0)add('inj',(st.inj>=2?'休場':'負傷')+' あと'+(st.injHeal||st.inj*2)+'休',false,(st.injPart||'')+'のケガ：'+INJ_SEV[clamp(st.inj,1,3)]+'・あと'+(st.injHeal||st.inj*2)+'回休めば治る');
-    if(!st.maezumo&&st.hist.length>1&&st.pos>=(st.best||0))add('best','最高位',false,'自己最高位');
     if(st.tani)add('tani','谷 '+st.tani.short,(st.tani.miss||0)>=2,'タニマチ：'+st.tani.name);
     if(ties.childNodes.length)hs.append(ties);}
-  const hr=$('hRank');hr.innerHTML='';hr.append(divBadge(st.pos,st.maezumo,true));{const rest=st.maezumo?'':rankRest(st.pos);if(rest){const r2=document.createElement('span');r2.style.cssText='display:block';r2.textContent=rest;hr.append(r2);}}
-  {const w=$('hWhen');w.textContent=ageOf(st)+'歳・入門'+yearOf(st)+'年目'+(st.b<3&&st.school?'・教習所通い':'')+'　';const n=document.createElement('span');n.className='nw';n.textContent=BASHO[st.b%6]+'（'+MONTH[st.b%6]+'月）まで';w.append(n);}
+  const hr=$('hRank');hr.innerHTML='';hr.append(divBadge(st.pos,st.maezumo,true));{const rest=st.maezumo?'':rankRest(st.pos);if(rest){const r2=document.createElement('span');r2.className='rnum';r2.textContent=rest;hr.append(r2);}
+}
+  {const w=$('hWhen');w.textContent=ageOf(st)+'歳・入門'+yearOf(st)+'年目'+(st.b<3&&st.school?'・教習所通い':'')+'　';const n=document.createElement('span');n.className='nw';n.textContent=BASHO[st.b%6]+'まで';w.append(n);}
   const tu=$('hTurns');tu.innerHTML='';const lab=document.createElement('span');lab.textContent='稽古 '+st.used+'/'+TURNS;tu.append(lab);
   {const g=document.createElement('span');g.className='tbars';for(let i=0;i<TURNS;i++){const d=document.createElement('i');if(i<st.used)d.className='used';g.append(d);}tu.append(g);}
   const sb=$('hStats');sb.innerHTML='';
@@ -1727,8 +1738,14 @@ function renderHome(){
   {const hl=$('hLog1');hl.textContent=st.log[0]||'';hl.scrollTop=0;hl.classList.remove('end');requestAnimationFrame(()=>hl.classList.toggle('more',hl.scrollHeight>hl.clientHeight+2));}drawSpeaker(st.log[0]);
   {const ib=itemBtnEl(),n=itemCount();ib.hidden=!n;$('itemN').textContent=n;ib.classList.toggle('new',!!st.itemNew&&n>0);}
   {const gb=$('hGoal');gb.innerHTML='';const g1=document.createElement('span');g1.innerHTML='<b>目標</b>';g1.append(goalText());gb.append(g1);
-    if(st.rival){const g2=document.createElement('span');g2.innerHTML='<b>宿敵</b>';g2.append(st.rival.name+'（'+rivalRank()+'）　'+((st.rival.w||0)+(st.rival.l||0)?'通算 '+(st.rival.w||0)+'勝'+(st.rival.l||0)+'敗':'まだ対戦なし'));gb.append(g2);}}
+}
+  {const hr2=$('hRec');hr2.innerHTML='';const lb=document.createElement('span');lb.className='hl';lb.textContent='星取';hr2.append(lb);
+    const H=st.hist.filter(h=>!h.mae).slice(-4);if(!H.length){const e=document.createElement('span');e.className='he';e.textContent='まだ本場所に出ていない';hr2.append(e);}
+    for(const h of H){const c=document.createElement('span');c.className='hc'+(h.w>h.l?' kk':' mk')+(h.yusho&&h.pos>=MAKU?' yu':'');
+      const t=document.createElement('i');t.textContent=h.when.replace(/^\d+年目 /,'').replace('場所','');const r=document.createElement('em');r.textContent=h.w+'-'+(h.l-(h.kyu||0))+(h.kyu?'-'+h.kyu:'');c.append(t,r);hr2.append(c);}
+    const mr=document.createElement('span');mr.className='hm';mr.textContent='全部▶';hr2.append(mr);}
   const bf=$('hBuffs');bf.innerHTML='';
+  if(st.rival){const q=document.createElement('p');q.textContent='宿敵：'+st.rival.name+'（'+rivalRank()+'）　'+((st.rival.w||0)+(st.rival.l||0)?'通算 '+(st.rival.w||0)+'勝'+(st.rival.l||0)+'敗':'まだ対戦なし');bf.append(q);}
   if(st.rom&&st.rom.stage){const q=document.createElement('p');const R=st.rom,P=PARTNERS[R.pid];
     q.textContent=R.stage==='crush'?'気になる人：'+P.name+'（親密度 '+R.aff+'・場所で勝つと告白のチャンス）':R.stage==='married'?'妻：'+firstName(R.pid)+(R.kid?'・長男あり':'')+'（'+P.fx+'）':R.stage==='engaged'?'婚約者：'+firstName(R.pid)+'（年の瀬に披露宴）':'交際中：'+firstName(R.pid)+'（親密度 '+R.aff+(st.pos<JURYO&&R.aff>=60?'・関取になれば結婚できる':'')+'）';bf.append(q);}const ab2=activeBuffs();if(!ab2.length){const q=document.createElement('p');q.textContent='なし';bf.append(q);}
   if(flag('heirImouto')){const q=document.createElement('p');q.textContent='母・千夏ゆずりの負けん気：勝ち越しをかけた一番で 取組の力 +5、宿敵との取組で +2（ずっと）';bf.append(q);}
@@ -1846,6 +1863,8 @@ function train(a){SND.play('act',a.id);
 /* ---------- basho ---------- */
 let B=null,anim=null,autoMode=false,ring=null,cam={z:1,fx:0,shake:0},gyX=null;
 function genOpp(myPos,used){
+  if(st&&st.maezumo){let name;do{name=pick(OP_A)+pick(OP_B);}while(name===st.name||used.includes(name));const lv=levelOf(0)*.85,v=()=>lv*rnd(.8,1.15);
+    return{name,age:Math.round(rnd(15,19)),pos:0,mae:true,style:pick(['oshi','yotsu','waza']),stats:{oshi:v(),chikara:v(),waza:v(),hayasa:v()},kg:Math.round(rnd(85,125)),height:Math.round(rnd(168,190)),face:oppFace(),mawashi:'#26262e',zan:true};}
   let p;const I=divInfo(myPos);
   if(myPos>=KOMU)p=pick([MAKU+16,MAKU+22,MAKU+26,MAKU+30,MAKU+32,KOMU,SEKI,SEKI,OZEKI,OZEKI,YOKO]);
   else if(myPos>=MAKU+24)p=Math.random()<.5?pick([KOMU,SEKI,OZEKI,OZEKI,YOKO]):clamp(myPos+Math.round(rnd(-6,6)),MAKU,KOMU-1);
@@ -1910,7 +1929,7 @@ function nextBout(){if(!autoMode)SND.play('hyoshigi');
   $('bDay').textContent=dayLabel();
   setHoshi();setBoutInfo();renderBLog();renderStrats();
   $('bMy').textContent=st.name;{const e=$('bMyRank');e.innerHTML='';e.append(divBadge(st.pos,st.maezumo),st.maezumo?'':side(st.pos)+' '+rankRest(st.pos));}$('bMySt').textContent=Math.round(st.kg)+'kg';
-  $('bOp').textContent=B.opp.name;{const e=$('bOpRank');e.innerHTML='';e.append(divBadge(B.opp.pos),side(B.opp.pos+1)+' '+rankRest(B.opp.pos));}$('bOpSt').textContent=(B.opp.rival?'宿敵（'+(st.rival.w||0)+'勝'+(st.rival.l||0)+'敗）・':'')+STYLE[B.opp.style]+'・'+B.opp.age+'歳・'+B.opp.height+'cm・'+B.opp.kg+'kg';
+  $('bOp').textContent=B.opp.name;{const e=$('bOpRank');e.innerHTML='';if(B.opp.mae)e.append(divBadge(0,true),'新弟子');else e.append(divBadge(B.opp.pos),side(B.opp.pos+1)+' '+rankRest(B.opp.pos));}$('bOpSt').textContent=(B.opp.rival?'宿敵（'+(st.rival.w||0)+'勝'+(st.rival.l||0)+'敗）・':'')+STYLE[B.opp.style]+'・'+B.opp.age+'歳・'+B.opp.height+'cm・'+B.opp.kg+'kg';
   $('bOp').parentElement.classList.toggle('rival',!!B.opp.rival);$('bMySt').textContent=st.height+'cm・'+Math.round(st.kg)+'kg';
   anim={phase:'intro',t:0,salted:false};fx=[];cam={z:1,fx:0,shake:0};gyX=null;
   $('bPick').hidden=false;$('bTachi').hidden=true;$('bNext').hidden=true;$('bMini').hidden=true;$('nextBtn').classList.remove('wait');if(B.mashed&&Date.now()-B.mashed<6000)lockBtns([...document.querySelectorAll('.strats button')],600);B.mashed=0;
@@ -3041,7 +3060,11 @@ $('backHome').addEventListener('click',()=>{rcData=null;if(st&&st.pendingKikyo)o
 $('kDone').addEventListener('click',()=>nextAfterEvent());
 $('sheetX').addEventListener('click',closeSheet);$('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet();});
 addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet();});
-document.querySelectorAll('.tabs [data-sheet]').forEach(b=>b.addEventListener('click',()=>openSheet(b.dataset.sheet,{hist:'星取表',log:'部屋の話',ach:'実績'}[b.dataset.sheet])));
+const REC_T={hist:'星取表',log:'記録',ach:'記録'};
+document.querySelectorAll('.tabs [data-sheet]').forEach(b=>b.addEventListener('click',()=>openSheet(b.dataset.sheet,REC_T[b.dataset.sheet])));
+for(const b of $('recSeg').children)b.addEventListener('click',()=>openSheet(b.dataset.r,REC_T[b.dataset.r]));
+$('hRec').addEventListener('click',()=>openSheet('hist','星取表'));
+$('cardBtn').addEventListener('click',()=>{pickSlot=null;renderDeck();openSheet('cards','サポートカード');});
 const AGE_DESC={15:'はじめの能力は低いが、伸びしろは最大。長く強くなれる。',18:'体ができていて能力やや高め。伸びもまずまず。',22:'即戦力で三段目付出デビュー。ただし伸びは早く止まる。'};
 const TYPE_DESC={oshi:'押しが強い。前に出て一気に勝負。',yotsu:'力が強く体も大きい。まわしを取って寄る。',waza:'小柄で素早い。技とスピードでかわす。'};
 function descs(){$('ageDesc').textContent=AGE_DESC[document.querySelector('input[name=age]:checked').value];$('typeDesc').textContent=TYPE_DESC[document.querySelector('input[name=type]:checked').value];}
