@@ -2924,7 +2924,7 @@ const LIFE={
     const say=ahead?'「やっと来たか。待ってたぞ」':kind==='yokozuna'?'「……先に綱を張られたか。だが、土俵の上では負けん」':'「先を越されたな。すぐに追いつく。土俵で待ってろ」';
     return{solo:true,t:'宿敵からのひとこと',kt:'お祝い',scene:'rival',text:'花道の奥で、宿敵・'+Rv.name+'（'+rivalRank()+'）が待っていた。\n'+say,
       ch:[{l:'「次も負けない」と握手する',f:()=>{addBuff(st,'growth',.06,2,'宿敵への闘志');Rv.edge=(Rv.edge||0)+.2;return[Rv.name+'の手は、驚くほど熱かった。','次の2場所、稽古の伸び +6%（宿敵も少し強くなる）'];}}]};},
-  yusho_party:()=>{const CG=congrats('yusho'),n=st.makuYusho||1;return{t:n===1?'初優勝の祝勝会':'優勝'+n+'回目の祝勝会',scene:'juryo',banner:'幕内優勝',kt:'祝勝',
+  yusho_party:()=>{const n=st.makuYusho||1;return{t:n===1?'初優勝の祝勝会':'優勝'+n+'回目の祝勝会',scene:'juryo',banner:'幕内優勝',kt:'祝勝',
     text:'千秋楽の夜、部屋で祝勝会が開かれた。'+(n===1?'初めての賜杯に、部屋じゅうが沸いた。':'これで幕内優勝 '+n+'回目。')+'大きな鯛を両手で持ち上げ、カメラのフラッシュを浴びる。',
     ch:[{l:'オープンカーで優勝パレード',f:()=>{const v=earn(300+100*Math.min(n,10));return['沿道は人で埋まった。「おめでとう！」の声が、どこまでも続いた。','ご祝儀 +'+v];}},
         {l:'祝勝会のあと、すぐ稽古場へ',f:()=>{addBuff(st,'growth',.1,2,'勝って兜の緒を締めよ');return['ふと静かな稽古場に戻り、四股を踏んだ。次の場所は、もう始まっている。','次の2場所、稽古の伸び +10%'];}}]};},
