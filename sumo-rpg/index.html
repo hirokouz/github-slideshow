@@ -2854,6 +2854,8 @@ function hasP(s){return !!(s&&s.rom&&['dating','engaged','married'].includes(s.r
 function pickEvent(s){if(!s.seenEv)s.seenEv=[];
   const ok=EVENTS.filter(e=>!e.need||e.need(s));
   const fresh=ok.filter(e=>!s.seenEv.includes(e.id)&&!e.rep);
+  const fate=s.rom&&!s.rom.stage&&s.rom.fate,fev=fate==='osana'?'osana':fate==='reijo'?'koenkai':null;
+  if(fev){const e=ok.find(x=>x.id===fev);if(e)return e;}
   if(fresh.length){const priority=fresh.find(e=>e.id==='osanaConfess')||fresh.find(e=>e.id==='osana2');return priority||pick(fresh);}
   const again=ok.filter(e=>e.rep||(e.id==='osana'&&s.flags&&s.flags.osanaShy&&!s.flags.osana));return pick(again.length?again:ok);}
 
@@ -2868,7 +2870,7 @@ const PARTNERS={
   reijo:{k:'綾',name:'後援会長の娘・綾乃',how:'地元後援会の集まりで出会った',fx:'ご祝儀 +20%（ずっと）'},
   eiyo:{k:'真',name:'管理栄養士の真緒',how:'部屋のちゃんこ番を手伝いに来た管理栄養士',fx:'ちゃんこで体重が増えやすく、けがをしにくい'},
   imouto:{k:'千',name:'宿敵の妹・千夏',how:'宿敵が紹介してくれた妹',fx:'宿敵との取組で力 +2'},
-  kisha:{k:'奈',name:'相撲記者の奈央子',how:'新入幕の取材で部屋に来た',fx:'初めて当たる相手との取組で力 +2（取材ノートの研究）'},
+  kisha:{k:'奈',name:'相撲記者の奈央子',how:'関取昇進の取材で部屋に来た',fx:'初めて当たる相手との取組で力 +2（取材ノートの研究）'},
   deshi:{k:'紗',name:'部屋の手伝いの紗季',how:'朝稽古のあと、いつも部屋を手伝っている',fx:'稽古の伸び +10%（ずっと）'},
 };
 /* what she wears depends on the season of the coming basho (Jan..Nov) */
@@ -2887,9 +2889,16 @@ function checkLife(w,l,yusho,endedIdx){
   const R=rom();
   if(flag('secretOsana')&&hasP(st)&&Math.random()<.22+(st.cheatHeat||0)){queueLife('caught');}
   if(!R.stage){if(ageOf(st)<LOVE_AGE)return;
-    const cand=[['osana',(flag('osana')||flag('partner'))&&!flag('osanaFriend')],['reijo',flag('koenkai')],['eiyo',(st.chankoN||0)>=20],['imouto',st.rival&&(st.rival.w||0)>=5],['deshi',(st.trainN||0)>=60],['kisha',(st.best||0)>=MAKU]]
-      .filter(([k,ok])=>ok&&!R.declined.includes(k));
-    if(cand.length&&Math.random()<.6)queueLife('meet',pick(cand)[0]);return;}
+    /* each heroine keeps her own condition, but who comes first is fair: at 18 one heroine is chosen at random
+       ("fate") and he meets her once her condition is met. Her homecoming event is shown first (遥・綾乃).
+       If it has not happened within 12 basho, he meets whoever already qualifies */
+    const all=[['osana',(flag('osana')||flag('partner'))&&!flag('osanaFriend')],['reijo',flag('koenkai')],['eiyo',(st.chankoN||0)>=12],['imouto',st.rival&&(st.rival.w||0)>=5],['deshi',(st.trainN||0)>=60],['kisha',(st.best||0)>=JURYO]]
+      .filter(([k])=>!R.declined.includes(k));
+    if(!all.length)return;
+    if(!R.fate||R.declined.includes(R.fate)||!all.some(([k])=>k===R.fate)){R.fate=pick(all)[0];R.fateB=st.b;}
+    const ok=all.filter(([,c])=>c).map(([k])=>k);
+    let who=null;if(ok.includes(R.fate)){if(Math.random()<.6)who=R.fate;}else if(st.b-(R.fateB||st.b)>=12&&ok.length&&Math.random()<.6)who=pick(ok);
+    if(who){R.fate=null;queueLife('meet',who);}return;}
   if(R.stage==='crush'){
     R.aff=clamp(R.aff+(w>l?6:2)+(yusho?10:0),0,100);
     if(st.b>R.metB&&R.aff>=30&&!(R.confCool>st.b))queueLife('confess',R.pid);
