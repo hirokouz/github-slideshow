@@ -1582,7 +1582,7 @@ function enter(){
     if(H.height)st.height=Math.round(clamp(H.height+rnd(-3,4),168,200));if(fb>=MAKU)st.kgMax+=10;st.kgRate=+(st.kgRate*1.1).toFixed(2);
     st.home=H.home||st.home;addBuff(st,'growth',.1,999,'父の血');
     const mom={osana:()=>addBuff(st,'power',1,999,'母ゆずりの勝負強さ'),reijo:()=>addBuff(st,'money',.2,999,'母の実家の後援会'),eiyo:()=>{addBuff(st,'inj',-.25,999,'母の献立');st.kgRate=+(st.kgRate*1.15).toFixed(2);},
-      imouto:()=>setFlag(st,'heirImouto'),deshi:()=>addBuff(st,'growth',.08,999,'母の励まし')}[H.mom];if(mom)mom();
+      imouto:()=>{setFlag(st,'heirImouto');addLog('母・千夏ゆずりの負けん気：格上の相手と宿敵に強い（取組の力 +2）');},deshi:()=>addBuff(st,'growth',.08,999,'母の励まし')}[H.mom];if(mom)mom();
     st.nisei=true;st.heir={father:H.name,fatherBest:fb,fatherBestName:H.bestName,mom:H.mom,stat:H.stat};
     addLog('父・'+H.name+'（最高位 '+H.bestName+'）の背中を追って入門した。');st.lifeQ=st.lifeQ||[];st.lifeQ.push({kind:'nisei_press'});roster.heir=null;}
   if(roster.siblingOf){for(const k in st.stats)st.stats[k]+=3;st.home=roster.siblingHome||st.home;addBuff(st,'growth',.1,999,'兄の背中');addLog('兄・'+roster.siblingOf+'の背中を追って入門した。');roster.siblingOf=null;}
@@ -1710,6 +1710,7 @@ function renderHome(){
   const bf=$('hBuffs');bf.innerHTML='';
   if(st.rom&&st.rom.stage){const q=document.createElement('p');const R=st.rom,P=PARTNERS[R.pid];
     q.textContent=R.stage==='crush'?'気になる人：'+P.name+'（親密度 '+R.aff+'・場所で勝つと告白のチャンス）':R.stage==='married'?'妻：'+firstName(R.pid)+(R.kid?'・長男あり':'')+'（'+P.fx+'）':R.stage==='engaged'?'婚約者：'+firstName(R.pid)+'（年の瀬に披露宴）':'交際中：'+firstName(R.pid)+'（親密度 '+R.aff+(st.pos<JURYO&&R.aff>=60?'・関取になれば結婚できる':'')+'）';bf.append(q);}const ab2=activeBuffs();if(!ab2.length){const q=document.createElement('p');q.textContent='なし';bf.append(q);}
+  if(flag('heirImouto')){const q=document.createElement('p');q.textContent='母・千夏ゆずりの負けん気：格上の相手と宿敵との取組で 取組の力 +2（ずっと）';bf.append(q);}
   for(const b of ab2){const q=document.createElement('p');const lab={power:'取組の力',growth:'稽古の伸び',inj:'けがのしやすさ',money:'ご祝儀'}[b.k];
     q.textContent=b.note+'：'+lab+' '+(b.v>0?'+':'')+(b.k==='power'?b.v:Math.round(b.v*100)+'%')+(b.until-st.b>50?'（ずっと）':'（あと'+(b.until-st.b)+'場所）');bf.append(q);}
   const ht=$('hHist');ht.innerHTML='';
@@ -1955,7 +1956,7 @@ const TL={out:{imp:.16,drive:1.0,edge:1.45,land:1.8,end:2.5},down:{imp:.16,drive
 function resolve(q,mini,force){
   const o=B.opp,s=B.strat,pa=anim;
   const ostrat=Math.random()<.65?o.style:pick(['oshi','yotsu','waza']);
-  const D=deckFx();let me=(st.nisei&&st.niseiBold&&st.b<12&&(st.lstreak||0)>=2?-1.5:0)+(o.rival&&flag('heirImouto')?2:0)+(tsunaTori(st)&&!tsunaOK(st)?-3:0)+(o.rival&&spouse()==='imouto'?2:0)+power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q])+D.power+(q!=='late'?D.tachi+(flag('senseiTachi')?1:0):0)+buff('power');
+  const D=deckFx();let me=(st.nisei&&st.niseiBold&&st.b<12&&(st.lstreak||0)>=2?-1.5:0)+(flag('heirImouto')&&(o.rival||o.pos>st.pos)?2:0)+(tsunaTori(st)&&!tsunaOK(st)?-3:0)+(o.rival&&spouse()==='imouto'?2:0)+power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q])+D.power+(q!=='late'?D.tachi+(flag('senseiTachi')?1:0):0)+buff('power');
   const op=power(o.stats,o.kg,ostrat,0,0);
   if(BEATS[s]===ostrat)me+=7;else if(BEATS[ostrat]===s)me-=7;
   if(mini!=null)me+=(mini-.5)*14;
