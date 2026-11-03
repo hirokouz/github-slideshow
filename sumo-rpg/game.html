@@ -561,7 +561,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
         <div class="seg"><label><input type="radio" name="aS" value="1">ふつう</label><label><input type="radio" name="aS" value="3">速い</label></div>
         <button class="primary" id="autoGo" style="margin-top:6px">この設定でオート開始</button>
       </div>
-      <div data-p="items"><p class="muted" style="font-size:12px;margin-bottom:8px">道具は部屋のみんなで共有。使うと今の力士の能力が上がる。</p><div id="hItems" class="itemlist"></div></div>
+      <div data-p="items"><p class="muted" style="font-size:12px;margin-bottom:8px">道具は、ガチャで引いた力士本人の持ち物。使うとこの力士の能力が上がる。引退すると消える（二代目の息子には受け継がれる）。</p><div id="hItems" class="itemlist"></div></div>
       <div data-p="deck"><p class="muted" style="font-size:12px;margin-bottom:8px" id="pickHint"></p><div id="hPick"></div></div>
     </div>
   </div>
@@ -571,11 +571,11 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
     <div class="row" style="justify-content:space-between"><h2 class="brush" style="font-size:32px">ご祝儀ガチャ</h2><span class="purse">ご祝儀<b id="gMoney">0</b></span></div>
     <p class="muted" style="font-size:12.5px">勝ち星・勝ち越し・優勝でご祝儀がたまる。カードは部屋のみんなで共有。同じカードが出ると強くなる（最大★5）。</p>
     <div class="row2"><button class="primary" id="g1">1回引く（100）</button><button class="primary" id="g10">10連（900）</button></div>
-    <p class="muted rates">提供割合　SSR 3%・SR 12%・R 35%・N 50%　／　10連は1枚以上SR以上確定　／　SRとSSRの中に、能力のランクを上げる「秘伝書」「極意書」も入っている</p>
+    <p class="muted rates">提供割合　SSR 3%・SR 12%・R 35%・N 50%　／　10連は1枚以上SR以上確定　／　SRとSSRの中に、能力のランクを上げる「秘伝書」「極意書」も入っている（引いた力士の持ち物）</p>
     <div class="gres" id="gRes"></div>
     <div class="row" style="justify-content:space-between"><p class="label">カード図鑑</p><span class="muted" style="font-size:12px" id="gOwned"></span></div>
     <div class="gbook" id="gBook"></div>
-    <div class="row" style="justify-content:space-between"><p class="label">道具（秘伝書・極意書）</p><span class="muted" style="font-size:12px">ホームの「道具」から使える</span></div>
+    <div class="row" style="justify-content:space-between"><p class="label">道具（秘伝書・極意書）</p><span class="muted" style="font-size:12px" id="gItemOwner">引いた力士の持ち物になる</span></div>
     <div class="gbook" id="gItems"></div>
     <button class="ghost" id="gBack">もどる</button>
   </section>
@@ -778,6 +778,7 @@ function loadRoster(){
   if(!roster.migrated){roster.migrated=true;try{const old=JSON.parse(localStorage.getItem(KEY)||'null');if(old&&old.name&&!Object.keys(roster.list).length){const m=migrate(old);roster.list[m.id]=m;roster.active=m.id;}}catch(e){}saveRoster();}
   for(const id in roster.list)migrate(roster.list[id]);
   recastRoster();
+  if(roster.items&&Object.keys(roster.items).length){const a=roster.active&&roster.list[roster.active];const bag=bagOf(a||null);for(const k in roster.items)bag[k]=(bag[k]||0)+roster.items[k];delete roster.items;saveRoster();}
 }
 /* rikishi made with the old illustrations (or the parts editor) move to the
    registered cast, so every stable member has full per-rank art */
@@ -1566,6 +1567,7 @@ function enter(){
       hist:[],yusho:0,makuYusho:0,kadoban:false,log:[],basho:null,deck:[],face:Object.assign({},draftFace),...profileSeed(type),age0:age,v2:1,v3:1,pBonus:prestigeBonus()};
   st.best=st.pos;st.home=$('homeIn').value||st.home;st.rival=makeRival(st);st.rival.face=oppFace();st.rival.home=pick(PREFS);
   rollPotential(st);
+  if(roster.itemPool&&Object.keys(roster.itemPool).length){st.items=roster.itemPool;roster.itemPool={};addLog('部屋で預かっていた秘伝書を受け取った。');}
   st.maezumo=age!==22;st.school=true;addBuff(st,'growth',.15,3,'相撲教習所');
   if(roster.sonOf&&!roster.heir){roster.heir={name:roster.sonOf,best:JURYO,bestName:'十両',stat:'oshi',height:st.height,home:roster.sonHome};roster.sonOf=null;}
   if(roster.heir){const H=roster.heir,fb=H.best;
@@ -1577,6 +1579,7 @@ function enter(){
     st.home=H.home||st.home;addBuff(st,'growth',.1,999,'父の血');
     const mom={osana:()=>addBuff(st,'power',1,999,'母ゆずりの勝負強さ'),reijo:()=>addBuff(st,'money',.2,999,'母の実家の後援会'),eiyo:()=>{addBuff(st,'inj',-.25,999,'母の献立');st.kgRate=+(st.kgRate*1.15).toFixed(2);},
       imouto:()=>{setFlag(st,'heirImouto');addLog('母・千夏ゆずりの負けん気：勝ち越しをかけた一番に強い（取組の力 +5）。宿敵との取組でも力 +2');},deshi:()=>addBuff(st,'growth',.08,999,'母の励まし')}[H.mom];if(mom)mom();
+    if(H.items&&Object.keys(H.items).length){st.items=Object.assign(st.items||{},H.items);addLog('父から、秘伝書を受け継いだ。');}
     st.nisei=true;st.heir={father:H.name,fatherBest:fb,fatherBestName:H.bestName,mom:H.mom,stat:H.stat};
     addLog('父・'+H.name+'（最高位 '+H.bestName+'）の背中を追って入門した。');st.lifeQ=st.lifeQ||[];st.lifeQ.push({kind:'nisei_press'});roster.heir=null;}
   if(roster.siblingOf){for(const k in st.stats)st.stats[k]+=3;st.home=roster.siblingHome||st.home;addBuff(st,'growth',.1,999,'兄の背中');addLog('兄・'+roster.siblingOf+'の背中を追って入門した。');roster.siblingOf=null;}
@@ -2349,14 +2352,17 @@ const GRADE_T=[0,25,40,55,70,85,100];
 const gradeIdx=v=>{let i=0;for(let j=0;j<GRADE_T.length;j++)if(v>=GRADE_T[j])i=j;return i;};
 function rankUpValue(v,ranks){const g=gradeIdx(v);if(g>=6)return v;const t=Math.min(6,g+ranks),into=v-GRADE_T[g],band=(GRADE_T[g+1]||115)-GRADE_T[g];
   return t>=6?Math.max(100,v):GRADE_T[t]+Math.min(into/band,.95)*((GRADE_T[t+1]||115)-GRADE_T[t]);}
-function useItem(id){const it=ITEM[id];if(!it||!st||!(roster.items&&roster.items[id]>0))return;const k=it.stat,v=st.stats[k];if(gradeIdx(v)>=6){toast(STAT_LABEL[k]+'はもうSランクだ');return;}
-  const nv=rankUpValue(v,it.ranks);st.stats[k]=nv;roster.items[id]--;if(!roster.items[id])delete roster.items[id];lastGain[k]=nv-v;
+/* scrolls belong to the rikishi who drew them (the active one); with nobody in the stable they wait for the next recruit */
+function itemOwner(){if(st&&roster.list[st.id]===st)return st;return(roster.active&&roster.list[roster.active])||null;}
+function bagOf(o){if(o){if(!o.items)o.items={};return o.items;}if(!roster.itemPool)roster.itemPool={};return roster.itemPool;}
+function useItem(id){const it=ITEM[id],bag=bagOf(st);if(!it||!st||!(bag[id]>0))return;const k=it.stat,v=st.stats[k];if(gradeIdx(v)>=6){toast(STAT_LABEL[k]+'はもうSランクだ');return;}
+  const nv=rankUpValue(v,it.ranks);st.stats[k]=nv;bag[id]--;if(!bag[id])delete bag[id];lastGain[k]=nv-v;
   addLog(it.name+'を読んだ。'+STAT_LABEL[k]+' '+gradeOf(v)[0]+' → '+gradeOf(nv)[0]);toast(STAT_LABEL[k]+'が '+gradeOf(v)[0]+' → '+gradeOf(nv)[0]+' に上がった！');SND.play('fanfare',false);
   saveRoster();persist();renderItems();renderHome();}
-const itemCount=()=>Object.values(roster.items||{}).reduce((a,n)=>a+n,0);
-function renderItems(){const box=$('hItems');if(!box)return;box.innerHTML='';const own=ITEMS.filter(it=>(roster.items||{})[it.id]>0);
+const itemCount=()=>st?Object.values(st.items||{}).reduce((a,n)=>a+n,0):0;
+function renderItems(){const box=$('hItems');if(!box)return;box.innerHTML='';const bag=bagOf(st),own=ITEMS.filter(it=>bag[it.id]>0);
   if(!own.length){const p2=document.createElement('p');p2.className='muted';p2.style.fontSize='12.5px';p2.textContent='道具はまだない。ご祝儀ガチャで「秘伝書」「極意書」が出ることがある。';box.append(p2);return;}
-  for(const it of own){const el=cardEl(it,{force:true,lv:1});el.classList.add('itemcard');el.querySelector('.stars').textContent='×'+roster.items[it.id];
+  for(const it of own){const el=cardEl(it,{force:true,lv:1});el.classList.add('itemcard');el.querySelector('.stars').textContent='×'+bag[it.id];
     const v=st.stats[it.stat],b=document.createElement('button');b.type='button';b.className='primary itemuse';const maxed=gradeIdx(v)>=6;
     b.textContent=maxed?'Sランクなので使えない':'使う（'+STAT_LABEL[it.stat]+' '+gradeOf(v)[0]+' → '+gradeOf(rankUpValue(v,it.ranks))[0]+'）';b.disabled=maxed;b.addEventListener('click',()=>useItem(it.id));
     const w=document.createElement('div');w.className='itemrow';w.append(el,b);box.append(w);}}
@@ -2371,7 +2377,7 @@ function earn(base){const D=deckFx();const v=Math.round(base*Math.max(.2,1+D.mon
 function drawOne(guarantee){let r=Math.random(),rar='N';for(const[k,p]of RATES){if(r<p){rar=k;break;}r-=p;}
   if(guarantee&&(rar==='R'||rar==='N'))rar='SR';
   const c=pick([...CARDS,...ITEMS].filter(x=>x.r===rar));
-  if(c.item){if(!roster.items)roster.items={};roster.itemSeen=roster.itemSeen||{};const isNew=!roster.itemSeen[c.id];roster.itemSeen[c.id]=1;roster.items[c.id]=(roster.items[c.id]||0)+1;return{c,isNew};}
+  if(c.item){const ow=itemOwner(),bag=bagOf(ow);roster.itemSeen=roster.itemSeen||{};const isNew=!roster.itemSeen[c.id];roster.itemSeen[c.id]=1;bag[c.id]=(bag[c.id]||0)+1;if(ow)ow.touched=Date.now();return{c,owner:ow?ow.name:null,isNew};}
   const isNew=!roster.cards[c.id];roster.cards[c.id]=(roster.cards[c.id]||0)+1;return{c,isNew};}
 function pull(n){const cost=n===10?PULL10:PULL1;if((roster.money||0)<cost)return;roster.money-=cost;const res=[];
   for(let i=0;i<n;i++){const last=n===10&&i===9&&!res.some(x=>x.c.r==='SR'||x.c.r==='SSR');res.push(drawOne(last));}
@@ -2391,11 +2397,12 @@ function renderGacha(res){
   $('gMoney').textContent=roster.money||0;
   $('g1').disabled=(roster.money||0)<PULL1;$('g10').disabled=(roster.money||0)<PULL10;
   const box=$('gRes');box.innerHTML='';
-  if(res){res.forEach((x,i)=>{const el=cardEl(x.c,{isNew:x.isNew,force:x.c.item,lv:x.c.item?1:undefined});if(x.c.item){el.classList.add('itemcard');el.querySelector('.stars').textContent='持ち物 ×'+roster.items[x.c.id];}el.classList.add('reveal');el.style.animationDelay=(i*.12)+'s';box.append(el);});
+  if(res){res.forEach((x,i)=>{const el=cardEl(x.c,{isNew:x.isNew,force:x.c.item,lv:x.c.item?1:undefined});if(x.c.item){el.classList.add('itemcard');el.querySelector('.stars').textContent=(x.owner?x.owner+'の持ち物 ×':'次の新弟子へ ×')+bagOf(itemOwner())[x.c.id];}el.classList.add('reveal');el.style.animationDelay=(i*.12)+'s';box.append(el);});
     if(res.some(x=>x.c.r==='SSR'))box.classList.add('ssr-hit');else box.classList.remove('ssr-hit');}
   const book=$('gBook');book.innerHTML='';for(const c of CARDS)book.append(cardEl(c));
   $('gOwned').textContent=CARDS.filter(c=>cardLv(c.id)).length+' / '+CARDS.length;
-  const ib=$('gItems');ib.innerHTML='';for(const it of ITEMS){const n=(roster.items||{})[it.id]||0,seen=(roster.itemSeen||{})[it.id];const el=cardEl(it,{force:!!seen,lv:seen?1:0});el.classList.add('itemcard');el.querySelector('.stars').textContent=seen?'持ち物 ×'+n:'';ib.append(el);}
+  {const ow=itemOwner();$('gItemOwner').textContent=ow?ow.name+'の持ち物（ホームの「道具」から使える）':'力士がいないので、次の新弟子が受け取る';}
+  const ib=$('gItems');ib.innerHTML='';for(const it of ITEMS){const n=bagOf(itemOwner())[it.id]||0,seen=(roster.itemSeen||{})[it.id];const el=cardEl(it,{force:!!seen,lv:seen?1:0});el.classList.add('itemcard');el.querySelector('.stars').textContent=seen?'持ち物 ×'+n:'';ib.append(el);}
 }
 /* deck on the home screen: three slots */
 let pickSlot=null;
@@ -2610,7 +2617,7 @@ function drawRetire(g,W,H,t,dt){if(!RT)return;const S=RT.steps[RT.i],s=RT.s;RT.t
 function retire(id,path){const s=roster.list[id];if(!s)return;path=path||'oyakata';const pts=Math.round(prestigeOf(s)*(path==='chanko'?.5:1));
   roster.hall.push({name:s.name,face:s.face,best:bestRankName(s),bestPos:Math.max(s.best||0,s.pos),makuYusho:s.makuYusho,yusho:s.yusho,w:totalWins(s),l:s.hist.reduce((a,h)=>a+h.l-(h.kyu||0),0),age:ageOf(s),years:yearOf(s),oicho:Math.max(s.best||0,s.pos)>=JURYO,path:{oyakata:'親方',son:'二代目を送り出す',chanko:'ちゃんこ屋の店主'}[path]});
   const married=s.rom&&s.rom.stage==='married';if(path==='son'){const fb=Math.max(s.best||0,s.pos),top=Object.keys(s.stats).sort((a,b)=>s.stats[b]-s.stats[a])[0];
-    roster.heir={name:s.name,best:fb,bestName:rank(fb).name,stat:top,height:s.height,mom:s.rom&&s.rom.pid,home:s.home,makuYusho:s.makuYusho||0};}if(path==='chanko')roster.shops=(roster.shops||0)+1;
+    roster.heir={items:s.items||{},name:s.name,best:fb,bestName:rank(fb).name,stat:top,height:s.height,mom:s.rom&&s.rom.pid,home:s.home,makuYusho:s.makuYusho||0};}if(path==='chanko')roster.shops=(roster.shops||0)+1;
   const bonusP=(s.flags&&s.flags.oyakoko?3:0)+(married?3:0)+(s.weddingPrestige||0);roster.prestige=(roster.prestige||0)+pts+bonusP;delete roster.list[id];if(roster.active===id)roster.active=null;if(st&&st.id===id)st=null;
   checkAchStable();saveRoster();toast(path==='chanko'?s.name+' がちゃんこ屋を開いた。毎日のご祝儀 +50・部屋の格 +'+pts:s.name+' が引退。部屋の格 +'+(pts+bonusP)+'（新弟子の成長 +'+Math.round(prestigeBonus()*100)+'%）');
   if(path==='son')openCreate();else renderTitle();}
