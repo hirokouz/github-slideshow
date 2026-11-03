@@ -810,6 +810,7 @@ function migrate(s){if(!s)return s;if(s.cap)for(const k in s.cap)s.cap[k]=Math.m
   if(!s.v3){const f=x=>mapV2(x);s.pos=f(s.pos);if(s.best!==undefined)s.best=f(s.best);for(const h of s.hist||[])h.pos=f(h.pos);if(s.basho&&s.basho.opp)s.basho.opp.pos=f(s.basho.opp.pos);s.v3=1;}
   if(!s.ach){s.ach={};try{for(const a of ACH)if(!ACH_STABLE.has(a.id)&&roster.ach[a.id]&&a.c(s))s.ach[a.id]=1;}catch(e){}}
   if(s.tutDone===undefined&&(s.b>0||s.used>0))s.tutDone=true;   // rikishi from before per-rikishi tutorials
+  {const fix=t=>typeof t==='string'?t.replace(/美咲/g,'真緒'):t;if(s.buffs)for(const b of s.buffs)b.note=fix(b.note);if(Array.isArray(s.log))s.log=s.log.map(fix);}
   if(!s.rival)s.rival=makeRival(s);if(s.rival.pos===undefined)s.rival.pos=s.pos;if(s.best===undefined)s.best=s.pos;if(!s.deck)s.deck=[];if(!s.id)s.id='r'+Date.now().toString(36)+Math.floor(Math.random()*1e4);if(!s.touched)s.touched=Date.now();return s;}
 function loadRoster(){
   try{const r=JSON.parse(localStorage.getItem(ROSTER_KEY)||'null');if(r&&r.list){roster=r;}}catch(e){}
@@ -2856,7 +2857,7 @@ function pickEvent(s){if(!s.seenEv)s.seenEv=[];
 const PARTNERS={
   osana:{k:'遥',name:'幼なじみの遥',how:'帰省先で再会した幼なじみ',fx:'取組の力 +1（ずっと）、負け越した場所のあと疲れが全回復'},
   reijo:{k:'綾',name:'後援会長の娘・綾乃',how:'地元後援会の集まりで出会った',fx:'ご祝儀 +20%（ずっと）'},
-  eiyo:{k:'美',name:'管理栄養士の美咲',how:'部屋のちゃんこ番を手伝いに来た管理栄養士',fx:'ちゃんこで体重が増えやすく、けがをしにくい'},
+  eiyo:{k:'真',name:'管理栄養士の真緒',how:'部屋のちゃんこ番を手伝いに来た管理栄養士',fx:'ちゃんこで体重が増えやすく、けがをしにくい'},
   imouto:{k:'千',name:'宿敵の妹・千夏',how:'宿敵が紹介してくれた妹',fx:'宿敵との取組で力 +2'},
   deshi:{k:'紗',name:'部屋の手伝いの紗季',how:'朝稽古のあと、いつも部屋を手伝っている',fx:'稽古の伸び +10%（ずっと）'},
 };
@@ -2905,7 +2906,7 @@ function checkLife(w,l,yusho,endedIdx){
 function applySpouse(pid){
   if(pid==='osana')addBuff(st,'power',1,999,'妻・遥の支え');
   if(pid==='reijo')addBuff(st,'money',.2,999,'妻・綾乃の人脈');
-  if(pid==='eiyo')addBuff(st,'inj',-.3,999,'妻・美咲の献立');
+  if(pid==='eiyo')addBuff(st,'inj',-.3,999,'妻・真緒の献立');
   if(pid==='deshi')addBuff(st,'growth',.1,999,'妻・紗季の励まし');
 }
 const TANIS=[
