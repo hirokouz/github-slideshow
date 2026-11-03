@@ -373,6 +373,8 @@ body:not(.onTitle) #sndBtn{display:none}
 body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 #nextBtn.locked.wait::after{display:none}
 #nextBtn.locked::after{content:'';position:absolute;left:0;bottom:0;height:4px;background:#2a1700;border-radius:2px;animation:unlockBar .9s linear forwards}@keyframes unlockBar{from{width:0}to{width:100%}}
+.itemlist{display:grid;gap:10px}.itemrow{display:grid;gap:6px}.itemuse{padding:9px 12px;font-size:14px}
+.scard.itemcard .kk{background:linear-gradient(#8a5a1e,#5a3410);color:#ffe9b0}.scard.itemcard{background:#fbf1dc}
 .fixrow{display:flex;gap:4px 14px;justify-content:center;flex-wrap:wrap;margin-top:6px}.fixrow .fixs{margin-top:0}
 #bMini{display:grid;gap:6px}.minitxt{margin:0;text-align:center;font-size:13px;font-weight:700;color:var(--kin)}
 .minibtns{display:grid;gap:8px;grid-template-columns:1fr}.minibtns.two{grid-template-columns:1fr 1fr}
@@ -509,7 +511,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
       </div>
     </div>
     <div class="panel hst">
-      <div class="row" style="justify-content:space-between"><p class="label">体と技 <button type="button" id="tutBtn" class="tutq" aria-label="遊び方を見る">？ 遊び方</button><button type="button" id="sndBtn2" class="tutq" aria-label="音の設定">♪</button></p><span class="muted" style="font-size:10.5px" id="hPower"></span></div>
+      <div class="row" style="justify-content:space-between"><p class="label">体と技 <button type="button" id="tutBtn" class="tutq" aria-label="遊び方を見る">？ 遊び方</button><button type="button" id="sndBtn2" class="tutq" aria-label="音の設定">♪</button><button type="button" id="itemBtn" class="tutq" aria-label="道具を使う" hidden>道具</button></p><span class="muted" style="font-size:10.5px" id="hPower"></span></div>
       <div class="stats" id="hStats"></div>
     </div>
     <div class="acts" id="hActs"></div>
@@ -554,6 +556,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
         <div class="seg"><label><input type="radio" name="aS" value="1">ふつう</label><label><input type="radio" name="aS" value="3">速い</label></div>
         <button class="primary" id="autoGo" style="margin-top:6px">この設定でオート開始</button>
       </div>
+      <div data-p="items"><p class="muted" style="font-size:12px;margin-bottom:8px">道具は部屋のみんなで共有。使うと今の力士の能力が上がる。</p><div id="hItems" class="itemlist"></div></div>
       <div data-p="deck"><p class="muted" style="font-size:12px;margin-bottom:8px" id="pickHint"></p><div id="hPick"></div></div>
     </div>
   </div>
@@ -563,10 +566,12 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
     <div class="row" style="justify-content:space-between"><h2 class="brush" style="font-size:32px">ご祝儀ガチャ</h2><span class="purse">ご祝儀<b id="gMoney">0</b></span></div>
     <p class="muted" style="font-size:12.5px">勝ち星・勝ち越し・優勝でご祝儀がたまる。カードは部屋のみんなで共有。同じカードが出ると強くなる（最大★5）。</p>
     <div class="row2"><button class="primary" id="g1">1回引く（100）</button><button class="primary" id="g10">10連（900）</button></div>
-    <p class="muted rates">提供割合　SSR 3%・SR 12%・R 35%・N 50%　／　10連は1枚以上SR以上確定</p>
+    <p class="muted rates">提供割合　SSR 3%・SR 12%・R 35%・N 50%　／　10連は1枚以上SR以上確定　／　SRとSSRの中に、能力のランクを上げる「秘伝書」「極意書」も入っている</p>
     <div class="gres" id="gRes"></div>
     <div class="row" style="justify-content:space-between"><p class="label">カード図鑑</p><span class="muted" style="font-size:12px" id="gOwned"></span></div>
     <div class="gbook" id="gBook"></div>
+    <div class="row" style="justify-content:space-between"><p class="label">道具（秘伝書・極意書）</p><span class="muted" style="font-size:12px">ホームの「道具」から使える</span></div>
+    <div class="gbook" id="gItems"></div>
     <button class="ghost" id="gBack">もどる</button>
   </section>
 
@@ -1659,6 +1664,7 @@ function renderHome(){
   $('hAchN').textContent=Object.keys(roster.ach).length+'/'+ACH.length;renderAch($('hAch'));
   const lg=$('hLog');lg.innerHTML='';for(const t of st.log){const p=document.createElement('p');p.textContent=t;lg.append(p);}
   $('hLog1').textContent=st.log[0]||'';
+  {const ib=$('itemBtn'),n=itemCount();ib.hidden=!n;ib.textContent='道具 '+n;}
   {const gb=$('hGoal');gb.innerHTML='';const g1=document.createElement('span');g1.innerHTML='<b>目標</b>';g1.append(goalText());gb.append(g1);
     if(st.rival){const g2=document.createElement('span');g2.innerHTML='<b>宿敵</b>';g2.append(st.rival.name+'（'+rivalRank()+'）　'+((st.rival.w||0)+(st.rival.l||0)?'通算 '+(st.rival.w||0)+'勝'+(st.rival.l||0)+'敗':'まだ対戦なし（同じ段にいると当たる）'));gb.append(g2);}}
   const bf=$('hBuffs');bf.innerHTML='';
@@ -2287,6 +2293,26 @@ const CARDS=[
   {id:'minarai',  r:'N',  k:'箒',name:'見習い呼出',           role:'呼出',     desc:'申し合い +10%',                          fx:{moushi:.1}},
 ];
 const CARD=Object.fromEntries(CARDS.map(c=>[c.id,c]));
+/* rank-up scrolls: consumable items from the gacha. +1 rank (SR) or +2 ranks (SSR) for one stat; kept by the stable */
+const ITEMS=[];for(const [k,lab,kk] of [['oshi','押し','押'],['chikara','力','力'],['waza','技','技'],['hayasa','速さ','速']]){
+  ITEMS.push({id:'up1_'+k,r:'SR',k:kk,name:lab+'の秘伝書',role:'道具',desc:lab+'のランクが1つ上がる（使い切り）',stat:k,ranks:1,item:true});
+  ITEMS.push({id:'up2_'+k,r:'SSR',k:kk,name:lab+'の極意書',role:'道具',desc:lab+'のランクが2つ上がる（使い切り）',stat:k,ranks:2,item:true});}
+const ITEM=Object.fromEntries(ITEMS.map(c=>[c.id,c]));
+const GRADE_T=[0,25,40,55,70,85,100];
+const gradeIdx=v=>{let i=0;for(let j=0;j<GRADE_T.length;j++)if(v>=GRADE_T[j])i=j;return i;};
+function rankUpValue(v,ranks){const g=gradeIdx(v);if(g>=6)return v;const t=Math.min(6,g+ranks),into=v-GRADE_T[g],band=(GRADE_T[g+1]||115)-GRADE_T[g];
+  return t>=6?Math.max(100,v):GRADE_T[t]+Math.min(into/band,.95)*((GRADE_T[t+1]||115)-GRADE_T[t]);}
+function useItem(id){const it=ITEM[id];if(!it||!st||!(roster.items&&roster.items[id]>0))return;const k=it.stat,v=st.stats[k];if(gradeIdx(v)>=6){toast(STAT_LABEL[k]+'はもうSランクだ');return;}
+  const nv=rankUpValue(v,it.ranks);st.stats[k]=nv;roster.items[id]--;if(!roster.items[id])delete roster.items[id];lastGain[k]=nv-v;
+  addLog(it.name+'を読んだ。'+STAT_LABEL[k]+' '+gradeOf(v)[0]+' → '+gradeOf(nv)[0]);toast(STAT_LABEL[k]+'が '+gradeOf(v)[0]+' → '+gradeOf(nv)[0]+' に上がった！');SND.play('fanfare',false);
+  saveRoster();persist();renderItems();renderHome();}
+const itemCount=()=>Object.values(roster.items||{}).reduce((a,n)=>a+n,0);
+function renderItems(){const box=$('hItems');if(!box)return;box.innerHTML='';const own=ITEMS.filter(it=>(roster.items||{})[it.id]>0);
+  if(!own.length){const p2=document.createElement('p');p2.className='muted';p2.style.fontSize='12.5px';p2.textContent='道具はまだない。ご祝儀ガチャで「秘伝書」「極意書」が出ることがある。';box.append(p2);return;}
+  for(const it of own){const el=cardEl(it,{force:true,lv:1});el.classList.add('itemcard');el.querySelector('.stars').textContent='×'+roster.items[it.id];
+    const v=st.stats[it.stat],b=document.createElement('button');b.type='button';b.className='primary itemuse';const maxed=gradeIdx(v)>=6;
+    b.textContent=maxed?'Sランクなので使えない':'使う（'+STAT_LABEL[it.stat]+' '+gradeOf(v)[0]+' → '+gradeOf(rankUpValue(v,it.ranks))[0]+'）';b.disabled=maxed;b.addEventListener('click',()=>useItem(it.id));
+    const w=document.createElement('div');w.className='itemrow';w.append(el,b);box.append(w);}}
 const RATES=[['SSR',.03],['SR',.12],['R',.35],['N',.5]];
 const PULL1=100,PULL10=900,MAXLV=5;
 const cardLv=id=>Math.min(MAXLV,roster.cards[id]||0);
@@ -2297,7 +2323,9 @@ function deckFx(){const D={all:0,crit:0,inj:0,kg:0,money:0,fat:0,rest:0,power:0,
 function earn(base){const D=deckFx();const v=Math.round(base*Math.max(.2,1+D.money+buff('money')+(flag('koenkai')?.1:0)));roster.money=(roster.money||0)+v;return v;}
 function drawOne(guarantee){let r=Math.random(),rar='N';for(const[k,p]of RATES){if(r<p){rar=k;break;}r-=p;}
   if(guarantee&&(rar==='R'||rar==='N'))rar='SR';
-  const c=pick(CARDS.filter(x=>x.r===rar));const isNew=!roster.cards[c.id];roster.cards[c.id]=(roster.cards[c.id]||0)+1;return{c,isNew};}
+  const c=pick([...CARDS,...ITEMS].filter(x=>x.r===rar));
+  if(c.item){if(!roster.items)roster.items={};roster.itemSeen=roster.itemSeen||{};const isNew=!roster.itemSeen[c.id];roster.itemSeen[c.id]=1;roster.items[c.id]=(roster.items[c.id]||0)+1;return{c,isNew};}
+  const isNew=!roster.cards[c.id];roster.cards[c.id]=(roster.cards[c.id]||0)+1;return{c,isNew};}
 function pull(n){const cost=n===10?PULL10:PULL1;if((roster.money||0)<cost)return;roster.money-=cost;const res=[];
   for(let i=0;i<n;i++){const last=n===10&&i===9&&!res.some(x=>x.c.r==='SR'||x.c.r==='SSR');res.push(drawOne(last));}
   saveRoster();renderGacha(res);SND.play('gacha',res.some(x=>x.c.r==='SSR'));}
@@ -2316,10 +2344,11 @@ function renderGacha(res){
   $('gMoney').textContent=roster.money||0;
   $('g1').disabled=(roster.money||0)<PULL1;$('g10').disabled=(roster.money||0)<PULL10;
   const box=$('gRes');box.innerHTML='';
-  if(res){res.forEach((x,i)=>{const el=cardEl(x.c,{isNew:x.isNew});el.classList.add('reveal');el.style.animationDelay=(i*.12)+'s';box.append(el);});
+  if(res){res.forEach((x,i)=>{const el=cardEl(x.c,{isNew:x.isNew,force:x.c.item,lv:x.c.item?1:undefined});if(x.c.item){el.classList.add('itemcard');el.querySelector('.stars').textContent='持ち物 ×'+roster.items[x.c.id];}el.classList.add('reveal');el.style.animationDelay=(i*.12)+'s';box.append(el);});
     if(res.some(x=>x.c.r==='SSR'))box.classList.add('ssr-hit');else box.classList.remove('ssr-hit');}
   const book=$('gBook');book.innerHTML='';for(const c of CARDS)book.append(cardEl(c));
   $('gOwned').textContent=CARDS.filter(c=>cardLv(c.id)).length+' / '+CARDS.length;
+  const ib=$('gItems');ib.innerHTML='';for(const it of ITEMS){const n=(roster.items||{})[it.id]||0,seen=(roster.itemSeen||{})[it.id];const el=cardEl(it,{force:!!seen,lv:seen?1:0});el.classList.add('itemcard');el.querySelector('.stars').textContent=seen?'持ち物 ×'+n:'';ib.append(el);}
 }
 /* deck on the home screen: three slots */
 let pickSlot=null;
@@ -2956,6 +2985,7 @@ function autoStep(){
 }
 $('autoBtn').addEventListener('click',()=>{if(autoGrow)autoStop('オート成長を止めました');else openAutoCfg();});
 $('autoGo').addEventListener('click',startAutoFromCfg);
+$('itemBtn').addEventListener('click',()=>{renderItems();openSheet('items','道具');});
 function sndUI(){const c=SND.cfg();$('sndBtn').classList.toggle('off',!c.on);$('sndBtn2').classList.toggle('off',!c.on);$('sndOn').checked=c.on;$('sndBgm').value=c.bgm;$('sndSfx').value=c.sfx;}
 for(const id of ['sndBtn','sndBtn2'])$(id).addEventListener('click',()=>{sndUI();openSheet('snd','音の設定');});
 $('sndOn').addEventListener('change',e=>{const c=SND.cfg();c.on=e.target.checked;SND.save(c);sndUI();});
