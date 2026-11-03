@@ -2884,9 +2884,16 @@ const firstName=pid=>PARTNERS[pid]?PARTNERS[pid].name.replace(/^.*[・の]/,''):
 function pName(){return firstName(rom().pid);}
 function queueLife(kind,pid){if(!st.lifeQ)st.lifeQ=[];st.lifeQ.push({kind,pid});}
 function spouse(){return st&&st.rom&&st.rom.stage==='married'?st.rom.pid:null;}
+/* two-timing: the other woman he is secretly seeing (遥 from the homecoming event, or anyone from 'tempt') */
+const secretOf=()=>st&&(st.secret||(flag('secretOsana')?'osana':null));
+const twoTiming=()=>{const sec=secretOf(),R=st&&st.rom;return !!(sec&&R&&['dating','engaged','married'].includes(R.stage)&&R.pid!==sec);};
+function endSecret(){if(secretOf()==='osana')setFlag(st,'osanaFriend');if(st.flags)st.flags.secretOsana=false;st.secret=null;st.cheatHeat=0;}
 function checkLife(w,l,yusho,endedIdx){
   const R=rom();
-  if(flag('secretOsana')&&hasP(st)&&Math.random()<.22+(st.cheatHeat||0)){queueLife('caught');}
+  if(twoTiming()){const heat=st.cheatHeat||0;
+    if(st.pos>=JURYO&&(R.stage!=='dating'||st.pos>=MAKU)&&Math.random()<.18+heat*.6)queueLife('scoop');
+    else if(Math.random()<.22+heat)queueLife('caught');}
+  else if(R.stage&&['dating','engaged','married'].includes(R.stage)&&!secretOf()&&!(st.temptCool>st.b)&&Math.random()<.1){st.temptCool=st.b+6;queueLife('tempt');}
   if(!R.stage){if(ageOf(st)<LOVE_AGE)return;
     /* each heroine keeps her own condition, but who comes first is fair: at 18 one heroine is chosen at random
        ("fate") and he meets her once her condition is met. Her homecoming event is shown first (遥・綾乃).
@@ -3038,17 +3045,43 @@ const LIFE={
           R.aff=clamp(R.aff-5,0,100);R.confCool=st.b+2;if(!seki)return['「ごめんね。今は……お相撲、がんばってほしいから」。'+her+'は困ったように笑った。','返事は保留・関取（十両）になると告白が成功しやすくなる'];return['「少し……考えさせて」。'+her+'はうつむいてしまった。','返事は保留・もう少し距離を縮めてから、また伝えよう'];}},
         {l:'手紙を渡す',f:()=>{if(!seki&&Math.random()>=.25+rom().aff/200){const R=rom();R.confCool=st.b+2;return['返事の手紙には「関取になったら、もう一度聞かせてください」と書いてあった。','返事は保留・関取（十両）になると告白が成功しやすくなる'];}yes(30);return['次の日、'+her+'から「手紙、読んだよ。よろしくお願いします」と返事が来た。',her+'と交際を始めた（親密度 30）'];}},
         {l:'やっぱり言えない',f:()=>{const R=rom();R.confCool=st.b+1;addBuff(st,'power',1,1,'胸に秘めた想い');return['言葉が出てこなかった。この気持ちは土俵にぶつけよう。','次の場所で取組の力 +1・また告白のチャンスが来る'];}}]};},
-  caught:()=>{const R=rom(),P=PARTNERS[R.pid],her=P.name.replace(/^.*[・の]/,''),married=R.stage==='married',big=st.pos>=MAKU;
-    return{t:'修羅場',scene:'date',w:{e:'angry',after:()=>rom().stage?'sulk':'sad'},text:her+'がスマホの通知を見てしまった。「この“遥”って誰？」'+(married&&big?'翌週、週刊誌に「人気力士、深夜の密会」の見出しが出た。':''),
-    ch:[{l:'正直に謝る',f:()=>{st.flags.secretOsana=false;setFlag(st,'osanaFriend');st.cheatHeat=0;
+  caught:()=>{const R=rom(),P=PARTNERS[R.pid],her=P.name.replace(/^.*[・の]/,''),married=R.stage==='married',big=st.pos>=MAKU,sec=secretOf()||'osana',sn=firstName(sec);
+    return{t:'修羅場',scene:'date',w:{e:'angry',after:()=>rom().stage?'sulk':'sad'},text:her+'がスマホの通知を見てしまった。「この“'+sn+'”って誰？」'+(married&&big?'翌週、週刊誌に「人気力士、深夜の密会」の見出しが出た。':''),
+    ch:[{l:'正直に謝る',f:()=>{if(sec==='osana')setFlag(st,'osanaFriend');endSecret();
           if(married){R.famMiss=3;R.bond=0;addBuff(st,'power',-2,2,'家庭の危機');if(big){addBuff(st,'money',-.3,6,'週刊誌の報道');if(st.tani){st.tani.miss=3;}}
             return[her+'は長い間黙っていた。「次はないからね」。家の空気が冷えきっている。','取組の力 −2（2場所）・家族の絆リセット・家族サービスを続けて信頼を取り戻そう'+(big?'・報道で1年間ご祝儀 −30%、タニマチも離れかけている':'')];}
           const wasEng=R.stage==='engaged';R.aff=clamp(R.aff-(wasEng?40:30),0,100);if(wasEng&&R.aff<40)R.stage='dating';
           if(R.aff<=0){R.declined.push(R.pid);R.stage=null;R.pid=null;return['「もう信じられない」。'+her+'は去っていった。','別れた'];}
           addBuff(st,'power',-1,1,'自己嫌悪');return['泣かれた。何度も頭を下げて、やっと許してもらえた。','親密度 −'+(wasEng?40:30)+(wasEng&&R.stage==='dating'?'・婚約は白紙に戻った':'')+'・次の場所で取組の力 −1'];}},
         {l:'ごまかす',f:()=>{if(Math.random()<.5){st.cheatHeat=(st.cheatHeat||0)+.2;R.aff=clamp(R.aff-10,0,100);return['「ただの同級生だよ」。'+her+'はそれ以上聞かなかった……今は。','親密度 −10・次にばれたらもっとまずい'];}
-          if(married){R.famMiss=3;R.bond=0;addBuff(st,'power',-3,2,'信頼の崩壊');st.flags.secretOsana=false;return['うそはすぐにばれた。'+her+'は実家に帰ってしまった。','取組の力 −3（2場所）・家族サービスで迎えに行こう'];}
-          R.declined.push(R.pid);R.stage=null;R.pid=null;st.flags.secretOsana=false;return['うそを重ねたことで、決定的に嫌われた。','別れた'];}}]};},
+          if(married){R.famMiss=3;R.bond=0;addBuff(st,'power',-3,2,'信頼の崩壊');endSecret();return['うそはすぐにばれた。'+her+'は実家に帰ってしまった。','取組の力 −3（2場所）・家族サービスで迎えに行こう'];}
+          R.declined.push(R.pid);R.stage=null;R.pid=null;endSecret();return['うそを重ねたことで、決定的に嫌われた。','別れた'];}}]};},
+  tempt:()=>{const R=rom(),cur=R.pid,ex=(R.declined||[]).filter(k=>k!==cur&&PARTNERS[k]&&WIMG[k]),others=Object.keys(PARTNERS).filter(k=>k!==cur&&!ex.includes(k)&&WIMG[k]),
+      isEx=ex.length&&(Math.random()<.6||!others.length),pid=isEx?pick(ex):pick(others),P=PARTNERS[pid],n=firstName(pid),rel={dating:'恋人',engaged:'婚約者',married:'妻'}[R.stage],cn=firstName(cur);
+    return{t:isEx?'元恋人との再会':'二人きりの誘い',kt:'誘惑',scene:'date',w:{pid,e:isEx?'shy':'wink',after:()=>secretOf()===pid?'smile':'sad'},
+      text:isEx?'場所後の打ち上げの帰り、昔付き合っていた'+n+'と偶然会った。「久しぶり。……少し、話さない？」\n'+rel+'の'+cn+'の顔が、ふと浮かんだ。':P.how+'という'+P.name+'から、二人きりの食事に誘われた。「'+rel+'さんがいるのは知ってる。でも、一度だけ」\n'+rel+'の'+cn+'の顔が、ふと浮かんだ。',
+      ch:[{l:'こっそり会う',f:()=>{st.secret=pid;st.cheatHeat=0;addBuff(st,'power',1,1,'ときめき');return['連絡先を交換した。胸がざわつく。……'+cn+'には言えない。','二股になった・次の場所で取組の力 +1。ばれると修羅場、関取なら週刊誌に狙われる'];}},
+          {l:'「'+(R.stage==='married'?'妻':R.stage==='engaged'?'婚約者':'彼女')+'がいるから」と断る',f:()=>{addBuff(st,'power',1,1,'誠実');if(R.stage!=='married')R.aff=clamp((R.aff||0)+5,0,100);return[n+'は少しさみしそうに笑って、手を振った。','次の場所で取組の力 +1'+(R.stage!=='married'?'・親密度 +5':'')];}}]};},
+  scoop:()=>{const R=rom(),her=firstName(R.pid),sec=secretOf(),sn=firstName(sec),rel={dating:'恋人',engaged:'婚約者',married:'妻'}[R.stage],eng=R.stage==='engaged',mar=R.stage==='married',nk=R.pid==='kisha';
+    const hit=(heavy)=>{const out=[];addBuff(st,'money',heavy?-.3:-.2,heavy?6:3,'週刊誌の報道');addBuff(st,'power',heavy?-2:-1,2,'集中できない');out.push('ご祝儀 −'+(heavy?30:20)+'%（'+(heavy?'1年':'半年')+'）','取組の力 −'+(heavy?2:1)+'（2場所）');
+      if(st.tani){st.tani.miss=Math.max(st.tani.miss||0,heavy?3:2);out.push(heavy?'タニマチが離れていく':'タニマチが「顔を見せんか」と怒っている');}
+      if(flag('koenkai')&&heavy){addBuff(st,'money',-.1,6,'後援会の失望');out.push('地元後援会も失望');}
+      if(mar){R.famMiss=3;R.bond=0;out.push(her+'は'+(R.kid?'子どもを連れて':'')+'実家に帰ってしまった（家族サービスで迎えに行こう）');}
+      else if(eng&&heavy){R.stage='dating';R.aff=clamp((R.aff||0)-50,0,100);out.push('婚約会見は取りやめ。'+her+'の両親が激怒し、婚約は白紙に');}
+      else{R.aff=clamp((R.aff||0)-(heavy?40:25),0,100);out.push('親密度 −'+(heavy?40:25));}
+      if(!mar&&R.aff<=0){R.declined.push(R.pid);R.stage=null;R.pid=null;out.push(her+'とは別れた');}
+      endSecret();return out.join('・');};
+    const lead=nk?her+'が青ざめた顔で帰ってきた。「……うちの編集部が、あなたの記事を出そうとしてる。'+sn+'さんって、誰？」':'稽古場の前に、週刊誌の記者が待っていた。「来週号で、'+sn+'さんとの密会を載せます。'+rel+'の'+her+'さんがいるのに、ですよね。コメントをいただけますか」';
+    const ch=nk?[{l:'奈央子に、すべて正直に話す',f:()=>{const wasE=eng;if(mar){R.bond=0;R.famMiss=2;}else R.aff=clamp((R.aff||0)-25,0,100);endSecret();addBuff(st,'power',-1,1,'自己嫌悪');
+          return['奈央子は黙って聞いたあと、編集長に電話をかけた。「この記事、私が止める。……でも、次はないから」','記事は出なかった・'+(mar?'家族の絆リセット':'親密度 −25')+(wasE?'・婚約はなんとか続いている':'')+'・次の場所で取組の力 −1'];}},
+        {l:'「ただの知り合いだ」とごまかす',f:()=>{if(Math.random()<.35){st.cheatHeat=(st.cheatHeat||0)+.3;return['奈央子は「そう」とだけ言った。記事は、出なかった……今は。','次にばれたら、もっとまずい'];}
+          return['奈央子は記者だ。うそは一晩で見抜かれた。翌週、別の週刊誌に写真が出た。',hit(true)];}}]
+      :[{l:'すぐに認めて謝罪会見を開く',f:()=>{const r=hit(false);return['カメラの前で、深く頭を下げた。「すべて自分の責任です」。正直さに、少しだけ同情の声も上がった。',r];}},
+        {l:'「事実無根です」と否定する',f:()=>{if(Math.random()<.3){st.cheatHeat=(st.cheatHeat||0)+.3;return['記事は「疑惑」として小さく載っただけだった。……次は写真を撮られるかもしれない。','うわさで済んだ・次にばれたら、もっとまずい'];}
+          return['翌週、二人で歩く写真が載った。「否定したのに」と、批判はさらに大きくなった。',hit(true)];}},
+        {l:'親方に頼んで、記事を止めてもらう',f:()=>{const v=Math.min(roster.money||0,500);roster.money=(roster.money||0)-v;if(Math.random()<.5){st.cheatHeat=(st.cheatHeat||0)+.2;addLog('親方「二度とこんなことで頭を下げさせるな」');return['親方が出版社に頭を下げに行き、記事は見送られた。','ご祝儀 −'+v+'（おわびの品）・親方の信頼が落ちた・次にばれたら、もっとまずい'];}
+          return['親方の働きかけもむなしく、記事は出た。しかも「もみ消し工作」と書かれた。','ご祝儀 −'+v+'・'+hit(true)];}}];
+    return{t:'週刊誌のスクープ',kt:'スクープ',scene:'date',w:{pid:R.pid,e:nk?'serious':'worry',after:()=>rom().pid?(rom().stage?'sad':'angry'):'sad'},banner:null,text:lead,ch};},
   tani_invite:()=>{const T=pick(TANIS);return{t:'タニマチのお誘い',scene:'tani',tw:{id:T.id,show:'scene',after:()=>st.tani?'gift':'normal'},text:'場所後、'+T.name+'から料亭に招かれた。'+T.say,
     ch:[{l:'誘いにのる',f:()=>{st.tani={...T,b:st.b,miss:0,bond:0};const v=earn(100);return[T.name+'が後援者（タニマチ）になった。','タニマチがついた・ご祝儀 +'+v+'・毎場所ご祝儀が入る。会食に顔を出さないと離れていく'];}},
         {l:'丁重に断る',f:()=>{st.taniCool=st.b+3;st.stats.waza+=.8;return['「そうか、また気が向いたら」と笑って帰っていった。','技 +0.8'];}}]};},
