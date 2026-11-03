@@ -382,6 +382,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 #nextBtn.locked::after{content:'';position:absolute;left:0;bottom:0;height:4px;background:#2a1700;border-radius:2px;animation:unlockBar .9s linear forwards}@keyframes unlockBar{from{width:0}to{width:100%}}
 .itemlist{display:grid;gap:10px}.itemrow{display:grid;gap:6px}.itemuse{padding:9px 12px;font-size:14px}
 .scard.itemcard .kk{background:linear-gradient(#8a5a1e,#5a3410);color:#ffe9b0}.scard.itemcard{background:#fbf1dc}
+.heirnote{margin:0;font-size:12.5px;font-weight:700;color:#7a1f1f;background:linear-gradient(90deg,rgba(226,176,74,.35),rgba(226,176,74,0));padding:4px 8px;border-left:3px solid #c9932c;border-radius:2px}
 .fixrow{display:flex;gap:4px 14px;justify-content:center;flex-wrap:wrap;margin-top:6px}.fixrow .fixs{margin-top:0}
 #bMini{display:grid;gap:6px}.minitxt{margin:0;text-align:center;font-size:13px;font-weight:700;color:var(--kin)}
 .minibtns{display:grid;gap:8px;grid-template-columns:1fr}.minibtns.two{grid-template-columns:1fr 1fr}
@@ -472,6 +473,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
   <!-- CREATE -->
   <section id="sCreate" class="scr" hidden>
     <div class="washi" style="display:grid;gap:8px">
+      <p class="heirnote" id="heirNote" hidden></p>
       <p class="label">入門届　しこ名</p>
       <div class="row"><input type="text" id="nameIn" maxlength="6" aria-label="しこ名" class="grow"><select id="homeIn" class="homesel" aria-label="出身地"></select><button class="ghost ink" id="randName" style="width:auto">おまかせ</button></div>
     </div>
@@ -1544,7 +1546,7 @@ function buildAiPick(){const box=$('aiPick');box.innerHTML='';
 function setFaceMode(m){faceMode=m;$('modeAi').classList.toggle('on',m==='ai');$('modeParts').classList.toggle('on',m==='parts');$('aiPick').hidden=m!=='ai';$('faceOpts').hidden=m!=='parts';
   if(m==='ai'&&!draftFace.img)draftFace=randAiFace();if(m==='parts'&&draftFace.img){delete draftFace.img;}buildAiPick();buildFaceOpts();facePop=1;}
 function fillHomes(){const h=$('homeIn');if(h.options.length)return;for(const p of PREFS){const o=document.createElement('option');o.value=p;o.textContent=p+'出身';h.append(o);}}
-function openCreate(){fillHomes();$('homeIn').value=pick(PREFS);const a15=$('a15');if(a15)a15.checked=true;const to=$('tOshi');if(to)to.checked=true;setTimeout(descs,0);$('nameIn').value=pick(NAMES);draftFace=entryIds().length?aiFace(entryIds()[0]):randFace();faceMode=draftFace.img?'ai':'parts';setFaceMode(faceMode);show('sCreate');facePrev=makeCanvas($('facePrev'),1);}
+function openCreate(){fillHomes();$('homeIn').value=pick(PREFS);const a15=$('a15');if(a15)a15.checked=true;const to=$('tOshi');if(to)to.checked=true;setTimeout(descs,0);$('nameIn').value=pick(NAMES);draftFace=entryIds().length?aiFace(entryIds()[0]):randFace();faceMode=draftFace.img?'ai':'parts';setFaceMode(faceMode);{const H=roster.heir,hn=$('heirNote');hn.hidden=!H;if(H){hn.textContent='二代目として入門　父：'+H.name+'（最高位 '+H.bestName+'）'+(H.mom?'・母：'+firstName(H.mom):'');$('nameIn').value=H.name[0]+pick(OP_B).slice(-1);$('homeIn').value=H.home||$('homeIn').value;}}show('sCreate');facePrev=makeCanvas($('facePrev'),1);}
 function buildFaceOpts(){
   const box=$('faceOpts');box.innerHTML='';
   for(const k in FACE_OPTS){const o=FACE_OPTS[k];const row=document.createElement('div');row.className='fopt';
@@ -1571,7 +1573,18 @@ function enter(){
   st.best=st.pos;st.home=$('homeIn').value||st.home;st.rival=makeRival(st);st.rival.face=oppFace();st.rival.home=pick(PREFS);
   rollPotential(st);
   st.maezumo=age!==22;st.school=true;addBuff(st,'growth',.15,3,'相撲教習所');
-  if(roster.sonOf){for(const k in st.stats)st.stats[k]+=4;st.home=roster.sonHome||st.home;addBuff(st,'growth',.1,999,'父の血');addLog('父・'+roster.sonOf+'と、おかみさんになった母に見送られて入門した。');roster.sonOf=null;}
+  if(roster.sonOf&&!roster.heir){roster.heir={name:roster.sonOf,best:JURYO,bestName:'十両',stat:'oshi',height:st.height,home:roster.sonHome};roster.sonOf=null;}
+  if(roster.heir){const H=roster.heir,fb=H.best;
+    // the better the father, the stronger the blood: start a little ahead and, above all, with more room to grow
+    const tier=fb>=YOKO?8:fb>=KOMU?5:fb>=MAKU?3:fb>=JURYO?2:1,capUp=fb>=YOKO?12:fb>=OZEKI?8:fb>=KOMU?5:fb>=MAKU?2:0;
+    for(const k in st.stats)st.stats[k]+=tier;for(const k in st.cap)st.cap[k]+=capUp;
+    const dr={oshi:'teppo',chikara:'shiko',waza:'moushi',hayasa:'suri'}[H.stat];if(dr)st.affin[dr]=+clamp(st.affin[dr]*1.25,.6,1.8).toFixed(2);
+    if(H.height)st.height=Math.round(clamp(H.height+rnd(-3,4),168,200));if(fb>=MAKU)st.kgMax+=10;st.kgRate=+(st.kgRate*1.1).toFixed(2);
+    st.home=H.home||st.home;addBuff(st,'growth',.1,999,'父の血');
+    const mom={osana:()=>addBuff(st,'power',1,999,'母ゆずりの勝負強さ'),reijo:()=>addBuff(st,'money',.2,999,'母の実家の後援会'),eiyo:()=>{addBuff(st,'inj',-.25,999,'母の献立');st.kgRate=+(st.kgRate*1.15).toFixed(2);},
+      imouto:()=>setFlag(st,'heirImouto'),deshi:()=>addBuff(st,'growth',.08,999,'母の励まし')}[H.mom];if(mom)mom();
+    st.nisei=true;st.heir={father:H.name,fatherBest:fb,fatherBestName:H.bestName,mom:H.mom,stat:H.stat};
+    addLog('父・'+H.name+'（最高位 '+H.bestName+'）の背中を追って入門した。');st.lifeQ=st.lifeQ||[];st.lifeQ.push({kind:'nisei_press'});roster.heir=null;}
   if(roster.siblingOf){for(const k in st.stats)st.stats[k]+=3;st.home=roster.siblingHome||st.home;addBuff(st,'growth',.1,999,'兄の背中');addLog('兄・'+roster.siblingOf+'の背中を追って入門した。');roster.siblingOf=null;}
   addLog(st.maezumo?'親方「まずは前相撲だ。勝てば来場所から序ノ口に名前が載る」':'付出の新弟子は前相撲なし。いきなり三段目の土俵に上がる。');
   if(st.pBonus>0)addLog('部屋の格のおかげで稽古がはかどる（成長 +'+Math.round(st.pBonus*100)+'%）');
@@ -1942,7 +1955,7 @@ const TL={out:{imp:.16,drive:1.0,edge:1.45,land:1.8,end:2.5},down:{imp:.16,drive
 function resolve(q,mini,force){
   const o=B.opp,s=B.strat,pa=anim;
   const ostrat=Math.random()<.65?o.style:pick(['oshi','yotsu','waza']);
-  const D=deckFx();let me=(tsunaTori(st)&&!tsunaOK(st)?-3:0)+(o.rival&&spouse()==='imouto'?2:0)+power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q])+D.power+(q!=='late'?D.tachi+(flag('senseiTachi')?1:0):0)+buff('power');
+  const D=deckFx();let me=(st.nisei&&st.niseiBold&&st.b<12&&(st.lstreak||0)>=2?-1.5:0)+(o.rival&&flag('heirImouto')?2:0)+(tsunaTori(st)&&!tsunaOK(st)?-3:0)+(o.rival&&spouse()==='imouto'?2:0)+power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q])+D.power+(q!=='late'?D.tachi+(flag('senseiTachi')?1:0):0)+buff('power');
   const op=power(o.stats,o.kg,ostrat,0,0);
   if(BEATS[s]===ostrat)me+=7;else if(BEATS[ostrat]===s)me-=7;
   if(mini!=null)me+=(mini-.5)*14;
@@ -1961,6 +1974,7 @@ function resolve(q,mini,force){
   if(!st.inj&&(st.tiredB||0)>=1&&Math.random()<(.025*st.tiredB+(st.fat>80?.04:0))*(B.n>7?.5:1)*Math.max(0,1+deckFx().inj+buff('inj'))){injure((st.tiredB||0)>=3?3:2,'たまった疲れで、取組中に');}
   const k=win?{oshi:'oshi',yotsu:'chikara',waza:'waza'}[s]:null;if(k)st.stats[k]+=.25*Math.max(0,1-st.stats[k]/capOf(k));
   if(st.inj>=2&&!B.withdraw){B.withdraw=true;addLog('ケガがひどく、この場所は途中休場することになった。');}
+  st.lstreak=win?0:(st.lstreak||0)+1;
   if(win){B.w++;B.marks+='○';B.earn=(B.earn||0)+earn(st.pos>=MAKU?50:st.pos>=JURYO?30:10);st.streak=(st.streak||0)+1;st.bestStreak=Math.max(st.bestStreak||0,st.streak);
     if(o.pos>=OZEKI)B.beatTop=true;if(s==='waza')B.wazaWins=(B.wazaWins||0)+1;
     if(o.pos===YOKO&&st.pos>=MAKU&&st.pos<KOMU){st.kinboshi=(st.kinboshi||0)+1;B.earn+=earn(100);toast('金星！ 横綱を破った（ご祝儀 +100）');}
@@ -2214,6 +2228,8 @@ function endBasho(){
   const newBest=!wasMae&&p>(st.best||0)&&st.hist.length>1;st.newBest=newBest;
   st.pos=p;st.best=Math.max(st.best||0,p);st.b++;st.used=0;st.basho=null;st.fat=Math.max(0,st.fat-25);
   rivalBasho();
+  if(st.nisei&&st.heir&&!st.fatherPassed&&p>st.heir.fatherBest){st.fatherPassed=true;queueLife('nisei_pass');}
+  else if(st.nisei&&st.heir&&Math.random()<.1)queueLife('nisei_father');
   if(st.rival){st.rival.edge=(st.rival.edge||0)+.35;st.rival.kg=Math.min(185,st.rival.kg+rnd(0,3));}
   const newAch=checkAch();
   if(st.b%6===0&&ageOf(st)>=31){for(const k in st.stats)st.stats[k]*=.97;addLog(ageOf(st)+'歳になった。体の衰えを感じる……（能力 −3%）');}
@@ -2484,6 +2500,8 @@ const ACH=[
   {id:'km15',   n:'技のデパート',d:'決まり手を15種類以上出す', r:300, c:()=>Object.keys(roster.kmBook||{}).length>=15},
   {id:'km30',   n:'決まり手博士',d:'決まり手を30種類以上出す', r:800, c:()=>Object.keys(roster.kmBook||{}).length>=30},
   {id:'kmRare', n:'珍手',       d:'珍しい決まり手で勝つ',     r:200, c:()=>Object.keys(roster.kmBook||{}).some(k=>KM_RARE.has(k))},
+  {id:'fuchigoe',n:'父超え',     d:'二代目で父の最高位を超える', r:500, c:s=>!!s.fatherPassed},
+  {id:'oyakoYoko',n:'親子横綱',  d:'父も子も横綱になる',       r:2000,c:s=>!!(s.nisei&&s.heir&&s.heir.fatherBest>=YOKO&&(s.best||0)>=YOKO)},
   {id:'rival10',n:'宿命の対決', d:'宿敵に通算10勝',          r:300, c:s=>(s.rival&&s.rival.w||0)>=10},
   {id:'oyakata',n:'親方',       d:'力士を引退させて親方にする',r:300,c:()=>roster.hall.length>=1},
   {id:'hall3',  n:'名門部屋',   d:'殿堂入りの力士3人',        r:800, c:()=>roster.hall.length>=3},
@@ -2594,7 +2612,8 @@ function drawRetire(g,W,H,t,dt){if(!RT)return;const S=RT.steps[RT.i],s=RT.s;RT.t
   g.fillStyle='#7a1f1f';g.font='700 '+Math.round(H*.07)+'px "Zen Kaku Gothic New",sans-serif';g.fillText(rank(best).name.replace(/枚目$/,''),W*.785,H*.84);}
 function retire(id,path){const s=roster.list[id];if(!s)return;path=path||'oyakata';const pts=Math.round(prestigeOf(s)*(path==='chanko'?.5:1));
   roster.hall.push({name:s.name,face:s.face,best:bestRankName(s),bestPos:Math.max(s.best||0,s.pos),makuYusho:s.makuYusho,yusho:s.yusho,w:totalWins(s),l:s.hist.reduce((a,h)=>a+h.l-(h.kyu||0),0),age:ageOf(s),years:yearOf(s),oicho:Math.max(s.best||0,s.pos)>=JURYO,path:{oyakata:'親方',son:'二代目を送り出す',chanko:'ちゃんこ屋の店主'}[path]});
-  const married=s.rom&&s.rom.stage==='married';if(path==='son'){roster.sonOf=s.name;roster.sonHome=s.home;}if(path==='chanko')roster.shops=(roster.shops||0)+1;
+  const married=s.rom&&s.rom.stage==='married';if(path==='son'){const fb=Math.max(s.best||0,s.pos),top=Object.keys(s.stats).sort((a,b)=>s.stats[b]-s.stats[a])[0];
+    roster.heir={name:s.name,best:fb,bestName:rank(fb).name,stat:top,height:s.height,mom:s.rom&&s.rom.pid,home:s.home,makuYusho:s.makuYusho||0};}if(path==='chanko')roster.shops=(roster.shops||0)+1;
   const bonusP=(s.flags&&s.flags.oyakoko?3:0)+(married?3:0)+(s.weddingPrestige||0);roster.prestige=(roster.prestige||0)+pts+bonusP;delete roster.list[id];if(roster.active===id)roster.active=null;if(st&&st.id===id)st=null;
   checkAchStable();saveRoster();toast(path==='chanko'?s.name+' がちゃんこ屋を開いた。毎日のご祝儀 +50・部屋の格 +'+pts:s.name+' が引退。部屋の格 +'+(pts+bonusP)+'（新弟子の成長 +'+Math.round(prestigeBonus()*100)+'%）');
   if(path==='son')openCreate();else renderTitle();}
@@ -2750,6 +2769,15 @@ const taniId=T=>T&&(T.id||(TANIS.find(x=>x.name===T.name)||{}).id);
 const TIMG={};for(const id in (window.AI_TANI||{})){const a=window.AI_TANI[id],o={faces:{},looks:{}};for(const k in a.faces)o.faces[k]=IMG(a.faces[k]);for(const k in a.looks)o.looks[k]=IMG(a.looks[k]);o.scene=IMG(a.scene);o.gift=IMG(a.gift);TIMG[id]=o;}
 function tImg(id,kind,key){const o=TIMG[id];if(!o)return null;return okImg(key?o[kind][key]:o[kind]);}
 const LIFE={
+  nisei_press:()=>{const H=st.heir;return{t:'二世の入門会見',scene:'juryo',kt:'二代目',banner:'二代目入門',text:'入門の日、記者が部屋に押しかけた。「'+H.fatherBestName+'・'+H.father+'の息子が入門」と、スポーツ紙が一面で書いた。カメラの前で、父の名前ばかりが呼ばれる。',
+    ch:[{l:'「父を超える力士になります」',f:()=>{addBuff(st,'growth',.08,6,'父超えの誓い');st.niseiBold=true;return['記者たちがどよめいた。もう後には引けない。','1年間、稽古の伸び +8%・ただし序盤に負けが込むと二世のプレッシャー'];}},
+        {l:'「自分の相撲を取るだけです」',f:()=>{addBuff(st,'power',1,3,'平常心');return['父が、記者の後ろで小さくうなずいた。','半年間、取組の力 +1'];}}]};},
+  nisei_father:()=>{const H=st.heir,adv={oshi:'押しは、下から下から。顎を引いて、休まず前へ出ろ',chikara:'四股を踏め。足腰がすべてだ',waza:'相手をよく見ろ。力だけが相撲じゃない',hayasa:'立ち合いで半歩、先に出ろ'}[H.stat];
+    return{t:'父の助言',scene:'oyakata',kk:'父',text:'場所後、元'+H.fatherBestName+'の父・'+H.father+'が稽古場に顔を出した。\n「'+adv+'。……おれと同じことをやっても、おれは超えられんぞ」',
+    ch:[{l:'父の相撲を教わる',f:()=>{const k=H.stat;st.stats[k]+=2;return['父の胸を借りた。昔より小さく見えたが、圧力はまだ本物だった。',STAT_LABEL[k]+' +2'];}},
+        {l:'自分の相撲を探す',f:()=>{addBuff(st,'growth',.06,3,'自分の相撲');return['「それでいい」と父は笑った。','半年間、稽古の伸び +6%'];}}]};},
+  nisei_pass:()=>{const H=st.heir;return{t:'父超え',scene:'juryo',kt:'二代目',banner:'父超え',text:'新しい番付に、父・'+H.father+'の最高位（'+H.fatherBestName+'）より上の地位で、自分の名前が載った。\n部屋に電話がかかってきた。父の声は、少しふるえていた。「……よくやった。もう、おれの息子じゃなく、ひとりの力士だ」',
+    ch:[{l:'「まだまだ上を目指します」',f:()=>{addBuff(st,'power',1,2,'父を超えた');return['電話を切ったあと、少しだけ泣いた。','父を超えた・1年間 取組の力 +1'];}}]};},
   tsuna_advice:()=>{const lack=tsunaLack(st),names=lack.map(k=>STAT_LABEL[k]),list=names.join('と'),blocked=st.tsunaAdvWhy==='blocked';
     const opts=[['oyakata',3]];if(st.tani)opts.push(['tani',1]);if(spouse())opts.push(['wife',1]);
     let r=Math.random()*opts.reduce((a,o)=>a+o[1],0),who='oyakata';for(const [k,w] of opts){if((r-=w)<=0){who=k;break;}}
@@ -2837,9 +2865,9 @@ const LIFE={
     ch:[{l:'すぐに病院へ駆けつける',f:()=>{rom().kid={b:st.b};addBuff(st,'power',1,999,'父になった');return['小さな手が、指をぎゅっと握った。','取組の力 +1（ずっと）・引退後、この子を新弟子として入門させられる'];}}]}),
 };
 function wed(pid,gift){const R=rom();R.stage='married';R.weddingB=st.b;earn(gift);applySpouse(pid);addLog(firstName(pid)+'と結婚した。');}
-let kScene='home',kMark=null,kW=null,kT=null,kStop=false;
+let kScene='home',kMark=null,kW=null,kT=null,kStop=false,kOyaK='親',kBanner=null;
 function openLife(item){
-  const s=st,ev=LIFE[item.kind](item.pid);kScene=ev.scene||'date';kMark=ev.mark||null;kStop=!!ev.stopAuto;kEv=null;kT=ev.tw?{id:ev.tw.id,show:ev.tw.show}:null;kW=ev.w?{pid:item.pid||(st.rom&&st.rom.pid),e:ev.w.e||'normal',look:ev.w.look||null}:null;
+  const s=st,ev=LIFE[item.kind](item.pid);kScene=ev.scene||'date';kMark=ev.mark||null;kStop=!!ev.stopAuto;kOyaK=ev.kk||'親';kBanner=ev.banner||null;kEv=null;kT=ev.tw?{id:ev.tw.id,show:ev.tw.show}:null;kW=ev.w?{pid:item.pid||(st.rom&&st.rom.pid),e:ev.w.e||'normal',look:ev.w.look||null}:null;
   $('kWhen').textContent=yearOf(s)+'年目　'+ageOf(s)+'歳';$('kTitle').textContent=ev.kt?ev.kt:ev.scene==='tani'?'後援者':ev.scene==='school'?'相撲教習所':ev.scene==='wedding'?'結婚披露宴':ev.scene==='baby'?'家族':ev.scene==='juryo'?'関取昇進':ev.scene==='oyakata'?'進退':'恋と土俵';
   $('kEvName').textContent=ev.t;$('kText').textContent=ev.text;
   const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;$('kDone').hidden=true;$('kDone').textContent='部屋に戻る';
@@ -2854,7 +2882,7 @@ function drawLifeScene(g,W,H,t,dt){
   if(kScene==='oyakata'){const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#3b2a1c');bg.addColorStop(1,'#8a6a44');g.fillStyle=bg;g.fillRect(0,0,W,H);
     g.fillStyle='rgba(255,240,200,.08)';for(let i=0;i<5;i++)g.fillRect(W*(.06+i*.19),H*.06,W*.15,H*.4);g.fillStyle='#c9b27a';g.fillRect(0,H*.78,W,H*.22);
     const S2=H*.62;g.save();g.beginPath();g.arc(W*.32,H*.5,S2*.42,0,6.283);g.fillStyle='#f3eadb';g.fill();g.clip();g.drawImage(portrait(st.face,st.retiring?'lose':'normal',st.pos>=JURYO,256),W*.32-S2*.5,H*.5-S2*.45,S2,S2);g.restore();
-    g.fillStyle='#f7ecd8';g.beginPath();g.arc(W*.7,H*.5,S2*.42,0,6.283);g.fill();g.strokeStyle='#c9a24a';g.lineWidth=3;g.stroke();g.fillStyle='#7a1f1f';g.font=Math.round(S2*.45)+'px "Yuji Boku",serif';g.textAlign='center';g.textBaseline='middle';g.fillText('親',W*.7,H*.52);g.textBaseline='alphabetic';return;}
+    g.fillStyle='#f7ecd8';g.beginPath();g.arc(W*.7,H*.5,S2*.42,0,6.283);g.fill();g.strokeStyle='#c9a24a';g.lineWidth=3;g.stroke();g.fillStyle='#7a1f1f';g.font=Math.round(S2*.45)+'px "Yuji Boku",serif';g.textAlign='center';g.textBaseline='middle';g.fillText(kOyaK,W*.7,H*.52);g.textBaseline='alphabetic';return;}
   if(kScene==='school'){const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#3b2a1c');bg.addColorStop(1,'#a07446');g.fillStyle=bg;g.fillRect(0,0,W,H);
     g.fillStyle='rgba(255,255,255,.08)';for(let i=0;i<6;i++)g.fillRect(W*(.05+i*.16),H*.08,W*.12,H*.3);
     g.fillStyle='#1f3a2a';g.fillRect(W*.2,H*.06,W*.6,H*.2);g.fillStyle='#e9e4d0';g.font=Math.round(H*.1)+'px "Yuji Boku",serif';g.textAlign='center';g.fillText('相撲教習所',W/2,H*.2);
@@ -2864,10 +2892,10 @@ function drawLifeScene(g,W,H,t,dt){
     g.fillStyle='#e2b04a';g.font=Math.round(H*.12)+'px "Yuji Boku",serif';g.fillText('対',W/2,H*.64);return;}
   if(kScene==='juryo'){const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#4a0d12');bg.addColorStop(1,'#c08a2a');g.fillStyle=bg;g.fillRect(0,0,W,H);
     g.save();g.translate(W/2,H*.56);g.rotate(t*.08);for(let i=0;i<18;i++){g.rotate(Math.PI/9);g.fillStyle='rgba(255,224,150,.12)';g.beginPath();g.moveTo(0,0);g.lineTo(W*.07,-W);g.lineTo(-W*.07,-W);g.fill();}g.restore();
-    const S=H*.74,cx=W/2,cy=H*.6;g.save();g.beginPath();g.arc(cx,cy,S*.4,0,6.283);g.fillStyle='#f3eadb';g.fill();g.clip();g.drawImage(portrait(st.face,'happy',true,256),cx-S*.5,cy-S*.44,S,S);g.restore();
+    const S=H*.74,cx=W/2,cy=H*.6;g.save();g.beginPath();g.arc(cx,cy,S*.4,0,6.283);g.fillStyle='#f3eadb';g.fill();g.clip();g.drawImage(portrait(st.face,'happy',st.pos>=JURYO,256),cx-S*.5,cy-S*.44,S,S);g.restore();
     g.strokeStyle='#f0c860';g.lineWidth=4;g.beginPath();g.arc(cx,cy,S*.4,0,6.283);g.stroke();
-    g.textAlign='center';g.fillStyle='#fff3d0';g.font=Math.round(H*.15)+'px "Yuji Boku",serif';g.fillText('十両昇進',W/2,H*.18);
-    for(const [x,ch] of [[W*.13,'関'],[W*.87,'取']]){g.fillStyle='#f6ecd2';g.fillRect(x-H*.07,H*.34,H*.14,H*.5);g.fillStyle='#7a1f1f';g.font=Math.round(H*.12)+'px "Yuji Boku",serif';g.fillText(ch,x,H*.62);}
+    g.textAlign='center';g.fillStyle='#fff3d0';g.font=Math.round(H*.15)+'px "Yuji Boku",serif';g.fillText(kBanner||'十両昇進',W/2,H*.18);
+    for(const [x,ch] of (kBanner?[]:[[W*.13,'関'],[W*.87,'取']])){g.fillStyle='#f6ecd2';g.fillRect(x-H*.07,H*.34,H*.14,H*.5);g.fillStyle='#7a1f1f';g.font=Math.round(H*.12)+'px "Yuji Boku",serif';g.fillText(ch,x,H*.62);}
     if(kSnow.length<50&&!REDUCED)kSnow.push({x:Math.random()*W,y:-5,v:rnd(20,45),r:rnd(2,4),p:Math.random()*6});
     g.fillStyle='rgba(255,215,120,.9)';kSnow=kSnow.filter(f=>{f.y+=f.v*dt;f.x+=Math.sin(t+f.p)*12*dt;g.fillRect(f.x,f.y,f.r,f.r*1.6);return f.y<H+5;});return;}
   if(kScene==='tani'&&kT&&tImg(kT.id,'scene')){const sc=tImg(kT.id,'scene'),sh=H,sw=sh*sc.naturalWidth/sc.naturalHeight;g.drawImage(sc,(W-sw)/2,0,sw,sh);
