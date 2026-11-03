@@ -27,10 +27,23 @@ def wmask(img):
             if 0<=ny<H and 0<=nx<W and not bg[ny,nx] and near[ny,nx]:bg[ny,nx]=True;q.append((ny,nx))
     return ~bg
 def cut(img,fg,cid,lab,s,box):
+    """hard object mask from the component, then a soft, colour-decontaminated edge so no paper fringe is left"""
     m=np.kron(lab==cid,np.ones((s,s),bool))[:fg.shape[0],:fg.shape[1]]
-    fine=np.asarray(Image.fromarray((m*255).astype('uint8')).filter(ImageFilter.MaxFilter(9)))>0
-    al=Image.fromarray(((fine&fg)*255).astype('uint8')).filter(ImageFilter.GaussianBlur(.6))
-    r=img.convert('RGBA');r.putalpha(al);c=r.crop(box);return c.crop(c.getbbox())
+    near=np.asarray(Image.fromarray((m*255).astype('uint8')).filter(ImageFilter.MaxFilter(9)))>0
+    hard=near&fg
+    a=np.asarray(img.convert('RGB')).astype(float)
+    paper=np.median(np.concatenate([a[:4].reshape(-1,3),a[-4:].reshape(-1,3),a[:,:4].reshape(-1,3),a[:,-4:].reshape(-1,3)]),0)
+    H8=Image.fromarray((hard*255).astype('uint8'))
+    inner=np.asarray(H8.filter(ImageFilter.MinFilter(5)))>0
+    outer=(np.asarray(H8.filter(ImageFilter.MaxFilter(3)))>0)&near
+    d=np.abs(a-paper).sum(2)
+    soft=np.clip((d-14)/(70-14),0,1)
+    al=np.where(inner,1.0,np.where(outer,soft,0.0))
+    al=np.asarray(Image.fromarray((al*255).astype('uint8')).filter(ImageFilter.GaussianBlur(.5))).astype(float)/255
+    al[inner]=1.0
+    A=al[...,None];C=np.clip((a-(1-A)*paper)/np.maximum(A,.08),0,255)
+    rgba=np.dstack([C,al*255]).astype('uint8')
+    r=Image.fromarray(rgba,'RGBA');c=r.crop(box);bb=c.getchannel('A').point(lambda v:255 if v>8 else 0).getbbox();return c.crop(bb)
 if __name__=="__main__":
     out={}
     for i,pid in enumerate(IDS):
@@ -39,15 +52,15 @@ if __name__=="__main__":
         for k,name in enumerate(EX):
             cx,cy=k%4,k//4;cell=P1.crop((cx*W//4,cy*H//3,(cx+1)*W//4,(cy+1)*H//3))
             fg=wmask(cell);comps,lab,s=components(fg,3000);c=max(comps,key=lambda t:t[5])
-            im=cut(cell,fg,c[0],lab,s,(0,0)+cell.size);im=im.resize((200,round(200*im.size[1]/im.size[0])),Image.LANCZOS)
-            ex[name]=uri(im,82)
+            im=cut(cell,fg,c[0],lab,s,(0,0)+cell.size);im=im.resize((300,round(300*im.size[1]/im.size[0])),Image.LANCZOS)
+            ex[name]=uri(im,84)
         P2=Image.open(n+'-P2.png').convert('RGB');fg=wmask(P2);comps,lab,s=components(fg,8000)
         comps=sorted(sorted(comps,key=lambda t:-t[5])[:6],key=lambda t:t[2])
         assert len(comps)==6,(pid,len(comps))
         sc={}
         for name,c in zip(SC,comps):
             im=cut(P2,fg,c[0],lab,s,(max(0,c[2]-4),max(0,c[1]-4),c[4]+4,c[3]+4))
-            im=im.resize((round(380*im.size[0]/im.size[1]),380),Image.LANCZOS);sc[name]=uri(im,82)
+            hh=min(760,im.size[1]);im=im.resize((round(hh*im.size[0]/im.size[1]),hh),Image.LANCZOS);sc[name]=uri(im,84)
             im.save(f'{SRC}/../cut_{pid}_{name}.png')
         out[pid]={'exprs':ex,'looks':sc}
         print(pid,'ok')
