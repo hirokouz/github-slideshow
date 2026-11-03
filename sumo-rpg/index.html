@@ -1717,7 +1717,7 @@ function openWho(who){const box=$('hWho');if(!box||!who)return;box.innerHTML='';
     box.append(pic(wImg(R.pid,'looks',m?'casual':'date')||wImg(R.pid,'exprs','smile')),info(P.name.replace(/^.*[・の]/,''),rel+'・'+P.name,[['人柄',PERSONA[R.pid]],['出会い',P.how],[m?'妻の支え':'結婚すると',P.fx],m&&R.kid?['子ども','ひとり（すくすく育っている）']:null,m?['住まい',st.livesOut?'部屋を出て一緒に暮らしている':'力士は部屋暮らし（関取になったら一緒に暮らせる）']:null].filter(Boolean),m?null:Math.round(R.aff||0)));}
   else if(who==='tani'&&st.tani){const T=st.tani,id=taniId(T),yrs=Math.floor((st.b-(T.b||st.b))/6);title=T.short||'タニマチ';
     box.append(pic(tImg(id,'looks','casual')||tImg(id,'faces','smile')),info(T.name,'タニマチ（後援者）',[['付き合い',yrs>=1?yrs+'年':'1年たらず'],['支え','毎場所ご祝儀をくれる（勝ち越すと満額）'],['会食',(T.miss||0)===0?'よく顔を出している':T.miss===1?'しばらく会っていない':'「顔を見せんな」と言われている。会食に行こう']]));}
-  else if(who==='rival'&&st.rival){const Rv=st.rival;title='宿敵';
+  else if(who==='rival'&&st.rival){const Rv=st.rival;rivalFace();title='宿敵';
     box.append(pic(aiReady(Rv.face)?portrait(Rv.face,'normal',(Rv.pos||0)>=JURYO,256):null,true),info(Rv.name,'宿敵（同じ日に入門）',[['番付',rivalRank()],['出身',Rv.home],['取り口',{oshi:'押し相撲',yotsu:'四つ相撲',waza:'技の相撲'}[Rv.style]],['対戦成績',(Rv.w||0)+'勝'+(Rv.l||0)+'敗'],Rv.yushoN?['優勝',Rv.yushoN+'回']:null].filter(Boolean)));}
   else return;
   openSheet('who',title);}
@@ -2585,8 +2585,10 @@ function rivalBasho(){const R=st.rival;if(!R)return;if(R.pos===undefined)R.pos=s
   R.best=Math.max(R.best||0,R.pos);}
 const rivalSameDiv=()=>{const R=st.rival;if(!R||R.pos===undefined)return true;if(R.pos>=MAKU&&st.pos>=MAKU)return true;if(R.pos>=KOMU||st.pos>=KOMU)return false;return divInfo(R.pos).i===divInfo(st.pos).i;};
 const rivalRank=()=>{const R=st.rival;if(!R)return'';const pos=R.pos===undefined?st.pos:R.pos;return side(pos)+' '+rank(pos).name;};
-function rivalOpp(){const R=st.rival;const hasCast=Object.keys(AIF).some(id=>AIF[id].meta.cast&&id!==(st.face&&st.face.img));
-  if(!R.face||!R.face.img||!AIF[R.face.img]||(hasCast&&!AIF[R.face.img].meta.cast)||R.face.img===(st.face&&st.face.img))R.face=oppFace();const lvl=levelOf(st.pos)+R.edge,v=()=>lvl*rnd(.95,1.08);
+/* the rival always gets a finished illustration face (old saves may hold a drawn placeholder) */
+function rivalFace(){const R=st&&st.rival;if(!R)return null;const hasCast=Object.keys(AIF).some(id=>AIF[id].meta.cast&&id!==(st.face&&st.face.img));
+  if(!R.face||!R.face.img||!AIF[R.face.img]||(hasCast&&!AIF[R.face.img].meta.cast)||R.face.img===(st.face&&st.face.img))R.face=oppFace();return R.face;}
+function rivalOpp(){const R=st.rival;rivalFace();const lvl=levelOf(st.pos)+R.edge,v=()=>lvl*rnd(.95,1.08);
   const s={oshi:v(),chikara:v(),waza:v(),hayasa:v()};s[{oshi:'oshi',yotsu:'chikara',waza:'waza'}[R.style]]*=1.12;
   const p=R.pos===undefined?clamp(st.pos+(Math.random()<.5?-1:1),0,YOKO):R.pos;
   return{name:R.name,age:ageOf(st)+1,pos:p,style:R.style,stats:s,kg:Math.round(R.kg),height:R.height,face:R.face,mawashi:p>=JURYO?'#7a1f1f':'#26262e',rival:true};}
@@ -3054,7 +3056,7 @@ const LIFE={
 function wed(pid,gift){const R=rom();R.stage='married';R.weddingB=st.b;earn(gift);applySpouse(pid);addLog(firstName(pid)+'と結婚した。');if(st.pos>=JURYO&&!st.livesOut)queueLife('move_out');}
 let kScene='home',kMark=null,kW=null,kT=null,kStop=false,kOyaK='親',kBanner=null,kCele=null,kSolo=false;
 function openLife(item){
-  const s=st,ev=LIFE[item.kind](item.pid);kScene=ev.scene||'date';kMark=ev.mark||null;kStop=!!ev.stopAuto;kOyaK=ev.kk||'親';kBanner=ev.banner||null;kSolo=!!ev.solo;kCele=ev.cele&&ev.cele.length?ev.cele:null;kEv=null;kT=ev.tw?{id:ev.tw.id,show:ev.tw.show}:null;kW=ev.w?{pid:ev.w.pid||(PARTNERS[item.pid]?item.pid:(st.rom&&st.rom.pid)),e:ev.w.e||'normal',look:ev.w.look||null}:null;
+  const s=st;rivalFace();const ev=LIFE[item.kind](item.pid);kScene=ev.scene||'date';kMark=ev.mark||null;kStop=!!ev.stopAuto;kOyaK=ev.kk||'親';kBanner=ev.banner||null;kSolo=!!ev.solo;kCele=ev.cele&&ev.cele.length?ev.cele:null;kEv=null;kT=ev.tw?{id:ev.tw.id,show:ev.tw.show}:null;kW=ev.w?{pid:ev.w.pid||(PARTNERS[item.pid]?item.pid:(st.rom&&st.rom.pid)),e:ev.w.e||'normal',look:ev.w.look||null}:null;
   $('kWhen').textContent=yearOf(s)+'年目　'+ageOf(s)+'歳';$('kTitle').textContent=ev.kt?ev.kt:ev.scene==='tani'?'後援者':ev.scene==='school'?'相撲教習所':ev.scene==='wedding'?'結婚披露宴':ev.scene==='baby'?'家族':ev.scene==='juryo'?'関取昇進':ev.scene==='oyakata'?'進退':'恋と土俵';
   $('kEvName').textContent=ev.t;$('kText').textContent=ev.text;
   const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;$('kDone').hidden=true;$('kDone').textContent='部屋に戻る';
@@ -3068,7 +3070,7 @@ function nextAfterEvent(){if(RT){retireNext();return;}if(st&&st.retiring){st.lif
 function drawLifeScene(g,W,H,t,dt){
   if(kScene==='rival'){const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0d1022');bg.addColorStop(1,'#3a2a3e');g.fillStyle=bg;g.fillRect(0,0,W,H);
     softSpot(g,W/2,H*.5,W*.5,'255,200,140',.18);const S2=H*.62,R=st.rival;
-    for(const [x,im] of [[W*.5,R&&aiReady(R.face)?portrait(R.face,'strain',(R.pos||0)>=JURYO,256):null]]){g.save();g.beginPath();g.arc(x,H*.52,S2*.42,0,6.283);g.fillStyle='#f3eadb';g.fill();g.clip();if(im)g.drawImage(im,x-S2*.5,H*.52-S2*.45,S2,S2);g.restore();g.strokeStyle='#e2b04a';g.lineWidth=2.5;g.beginPath();g.arc(x,H*.52,S2*.42,0,6.283);g.stroke();}
+    for(const [x,im] of [[W*.5,R&&aiReady(R.face)?portrait(R.face,kSolo?'happy':'strain',(R.pos||0)>=JURYO,256):null]]){g.save();g.beginPath();g.arc(x,H*.52,S2*.42,0,6.283);g.fillStyle='#f3eadb';g.fill();g.clip();if(im)g.drawImage(im,x-S2*.5,H*.52-S2*.45,S2,S2);g.restore();g.strokeStyle='#e2b04a';g.lineWidth=2.5;g.beginPath();g.arc(x,H*.52,S2*.42,0,6.283);g.stroke();}
     g.fillStyle='#e2b04a';g.font=Math.round(H*.12)+'px "Yuji Boku",serif';g.textAlign='center';g.fillText('宿敵',W*.15,H*.2);return;}
   if(kScene==='retire')return drawRetire(g,W,H,t,dt);
   if(kScene==='oyakata'){const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#3b2a1c');bg.addColorStop(1,'#8a6a44');g.fillStyle=bg;g.fillRect(0,0,W,H);
