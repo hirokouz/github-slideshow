@@ -479,7 +479,6 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 </style>
 </head>
 <body>
-
 <div id="toast" role="status" aria-live="polite"></div>
 <button type="button" id="sndBtn" aria-label="音のオンオフ"><span class="si"></span><span class="st"></span></button>
 <div id="tut" hidden><div class="tut-hole" id="tutHole"></div><div class="tut-box" id="tutBox" role="dialog" aria-live="polite"><div class="tut-who"><span>親</span>親方</div><p id="tutText"></p><div class="tut-ctl"><span id="tutStep"></span><button type="button" id="tutSkip" class="tut-skip">スキップ</button><button type="button" id="tutNext" class="tut-next">次へ</button></div></div></div>
@@ -697,10 +696,10 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
   </section>
 </div>
 
-<script src="faces.js"></script>
-<script src="cast.js"></script>
-<script src="women.js"></script>
-<script src="tani.js"></script>
+<script src="faces.js?v=2e781a3c6f"></script>
+<script src="cast.js?v=03024ef888"></script>
+<script src="women.js?v=4e041303c9"></script>
+<script src="tani.js?v=6d5685c4ed"></script>
 <script>
 (()=>{
 "use strict";
@@ -1563,7 +1562,7 @@ function drawGroupPhoto(t){
   // vignette
   const vg=g.createRadialGradient(W/2,H*.55,H*.3,W/2,H*.55,W*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');g.fillStyle=vg;g.fillRect(0,0,W,H);
   return true;}
-const KEYART=IMG('title.webp');
+const KEYART=IMG('title.webp?v=05e8522537');
 function drawKeyArt(t){const im=okImg(KEYART);if(!im)return false;const{g,W,H}=hero;
   // slow push-in, like a camera drifting toward the dohyo
   const z=REDUCED?1:1.02+.03*(.5-.5*Math.cos(t*.25)),w=W*z,h=w*im.naturalHeight/im.naturalWidth;g.drawImage(im,(W-w)/2,(H-h)*.35,w,h);

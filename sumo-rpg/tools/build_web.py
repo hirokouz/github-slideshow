@@ -4,6 +4,7 @@
 import sys, shutil, json, os, zipfile
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)));WEB=os.path.join(ROOT,'web')
 site=(sys.argv[1].rstrip('/')+'/') if len(sys.argv)>1 else ''
+import runpy;runpy.run_path(os.path.join(ROOT,'tools','make_index.py'))  # index.html from game.html, with ?v= stamps
 html=open(os.path.join(ROOT,'index.html'),encoding='utf-8').read()
 html=html.replace('<meta name="claude:viewport-fit-sides" content="cover">\n','')
 desc='序ノ口の新弟子から、稽古と本場所で番付を上げていく相撲育成RPG。めざすは綱を締めるその日。'
