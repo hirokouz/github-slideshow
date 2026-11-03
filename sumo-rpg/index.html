@@ -2805,7 +2805,7 @@ const EVENTS=[
   {id:'osanaTaken',t:'幼なじみとの再会',need:s=>hasP(s)&&!(s.flags&&(s.flags.osanaFriend||s.flags.secretOsana)),
     text:s=>'商店街で幼なじみの遥とばったり会った。「久しぶり！ 今度ふたりでごはん行こうよ」。でも今の自分には、'+(s.rom.stage==='married'?'妻の':'恋人の')+PARTNERS[s.rom.pid].name.replace(/^.*[・の]/,'')+'がいる。',
     ch:[{l:'「大事な人がいるんだ」と正直に話す',f:s=>{setFlag(s,'osanaFriend');s.rom.aff=clamp((s.rom.aff||0)+5,0,100);addBuff(s,'power',1,1,'けじめ');return['遥は少し驚いて、「そっか、おめでとう。応援してるね」と笑った。','誠実さが伝わった・親密度 +5・次の場所で取組の力 +1'];}},
-        {l:'内緒で連絡先を交換する',f:s=>{setFlag(s,'secretOsana');addBuff(s,'power',1,1,'ときめき');return['「また連絡するね」。スマホに遥の名前が増えた。','次の場所で取組の力 +1・ただし、ばれると修羅場に……'];}}]},
+        {l:'内緒で連絡先を交換する',f:s=>{setFlag(s,'secretOsana');s.secretB=s.b;addBuff(s,'power',1,1,'ときめき');return['「また連絡するね」。スマホに遥の名前が増えた。','次の場所で取組の力 +1・ただし、ばれると修羅場に……'];}}]},
   {id:'osanaConfess',t:'幼なじみの告白',need:s=>hasP(s)&&s.flags&&s.flags.secretOsana,
     text:s=>'こっそり連絡を取り合っていた遥から呼び出された。「本当は、ずっと好きだった」。'+(s.rom.stage==='married'?'家では妻が待っている。':'恋人の顔が頭に浮かぶ。'),
     ch:[{l:'「裏切れない」と断る',f:s=>{s.flags.secretOsana=false;setFlag(s,'osanaFriend');s.rom.aff=clamp((s.rom.aff||0)+8,0,100);return['遥は泣きながら「わかってた」と言った。連絡先は消した。','けじめをつけた・親密度 +8'];}},
@@ -2887,12 +2887,20 @@ function spouse(){return st&&st.rom&&st.rom.stage==='married'?st.rom.pid:null;}
 /* two-timing: the other woman he is secretly seeing (遥 from the homecoming event, or anyone from 'tempt') */
 const secretOf=()=>st&&(st.secret||(flag('secretOsana')?'osana':null));
 const twoTiming=()=>{const sec=secretOf(),R=st&&st.rom;return !!(sec&&R&&['dating','engaged','married'].includes(R.stage)&&R.pid!==sec);};
-function endSecret(){if(secretOf()==='osana')setFlag(st,'osanaFriend');if(st.flags)st.flags.secretOsana=false;st.secret=null;st.cheatHeat=0;}
+function divorce(R){const her=firstName(R.pid);R.declined.push(R.pid);R.stage=null;R.pid=null;R.kid=false;if(st.livesOut){st.livesOut=false;addLog('離婚して、部屋に戻って暮らすことになった。');}return her;}
+/* heartbreak: after any choice that ends a relationship. Breaking up with a girlfriend/fiancee = 絶不調 next basho,
+   a divorce = 絶不調 for a year */
+function heartbreak(r0){const R=st.rom;if(!r0||!r0.pid||!['dating','engaged','married'].includes(r0.stage))return'';
+  const gone=!R||R.pid!==r0.pid||!R.stage||(r0.stage==='married'&&R.stage!=='married');if(!gone)return'';
+  if(r0.stage==='married'){addBuff(st,'power',-3,6,'絶不調（離婚）');addBuff(st,'growth',-.2,6,'絶不調（離婚）');return'・離婚のショックで1年間 絶不調（取組の力 −3・稽古の伸び −20%）';}
+  addBuff(st,'power',-3,1,'絶不調（失恋）');return'・失恋のショックで次の場所は絶不調（取組の力 −3）';}
+const relSnap=()=>st&&st.rom&&st.rom.pid?{pid:st.rom.pid,stage:st.rom.stage}:null;
+function endSecret(){st.secretB=null;if(secretOf()==='osana')setFlag(st,'osanaFriend');if(st.flags)st.flags.secretOsana=false;st.secret=null;st.cheatHeat=0;}
 function checkLife(w,l,yusho,endedIdx){
   const R=rom();
-  if(twoTiming()){const heat=st.cheatHeat||0;
-    if(st.pos>=JURYO&&(R.stage!=='dating'||st.pos>=MAKU)&&Math.random()<.18+heat*.6)queueLife('scoop');
-    else if(Math.random()<.22+heat)queueLife('caught');}
+  // caught fairly soon: 40% the first basho, +20% every basho after (always by the 4th)
+  if(twoTiming()){const heat=st.cheatHeat||0,since=st.b-(st.secretB==null?st.b:st.secretB);
+    if(Math.random()<Math.min(1,.4+heat+.2*since)){if(st.pos>=JURYO&&(R.stage!=='dating'||st.pos>=MAKU)&&Math.random()<.5)queueLife('scoop');else queueLife('caught');}}
   else if(R.stage&&['dating','engaged','married'].includes(R.stage)&&!secretOf()&&!(st.temptCool>st.b)&&Math.random()<.1){st.temptCool=st.b+6;queueLife('tempt');}
   if(!R.stage){if(ageOf(st)<LOVE_AGE)return;
     /* each heroine keeps her own condition, but who comes first is fair: at 18 one heroine is chosen at random
@@ -3048,25 +3056,25 @@ const LIFE={
   caught:()=>{const R=rom(),P=PARTNERS[R.pid],her=P.name.replace(/^.*[・の]/,''),married=R.stage==='married',big=st.pos>=MAKU,sec=secretOf()||'osana',sn=firstName(sec);
     return{t:'修羅場',scene:'date',w:{e:'angry',after:()=>rom().stage?'sulk':'sad'},text:her+'がスマホの通知を見てしまった。「この“'+sn+'”って誰？」'+(married&&big?'翌週、週刊誌に「人気力士、深夜の密会」の見出しが出た。':''),
     ch:[{l:'正直に謝る',f:()=>{if(sec==='osana')setFlag(st,'osanaFriend');endSecret();
-          if(married){R.famMiss=3;R.bond=0;addBuff(st,'power',-2,2,'家庭の危機');if(big){addBuff(st,'money',-.3,6,'週刊誌の報道');if(st.tani){st.tani.miss=3;}}
+          if(married){st.cheatN=(st.cheatN||0)+1;if(st.cheatN>=2){const h=divorce(R);return[h+'は黙って離婚届を置き、家を出ていった。「二度目は、ないって言ったよね」','離婚した'];}R.famMiss=3;R.bond=0;addBuff(st,'power',-2,2,'家庭の危機');if(big){addBuff(st,'money',-.3,6,'週刊誌の報道');if(st.tani){st.tani.miss=3;}}
             return[her+'は長い間黙っていた。「次はないからね」。家の空気が冷えきっている。','取組の力 −2（2場所）・家族の絆リセット・家族サービスを続けて信頼を取り戻そう'+(big?'・報道で1年間ご祝儀 −30%、タニマチも離れかけている':'')];}
           const wasEng=R.stage==='engaged';R.aff=clamp(R.aff-(wasEng?40:30),0,100);if(wasEng&&R.aff<40)R.stage='dating';
           if(R.aff<=0){R.declined.push(R.pid);R.stage=null;R.pid=null;return['「もう信じられない」。'+her+'は去っていった。','別れた'];}
           addBuff(st,'power',-1,1,'自己嫌悪');return['泣かれた。何度も頭を下げて、やっと許してもらえた。','親密度 −'+(wasEng?40:30)+(wasEng&&R.stage==='dating'?'・婚約は白紙に戻った':'')+'・次の場所で取組の力 −1'];}},
         {l:'ごまかす',f:()=>{if(Math.random()<.5){st.cheatHeat=(st.cheatHeat||0)+.2;R.aff=clamp(R.aff-10,0,100);return['「ただの同級生だよ」。'+her+'はそれ以上聞かなかった……今は。','親密度 −10・次にばれたらもっとまずい'];}
-          if(married){R.famMiss=3;R.bond=0;addBuff(st,'power',-3,2,'信頼の崩壊');endSecret();return['うそはすぐにばれた。'+her+'は実家に帰ってしまった。','取組の力 −3（2場所）・家族サービスで迎えに行こう'];}
+          if(married){endSecret();st.cheatN=(st.cheatN||0)+1;if(st.cheatN>=2){const h=divorce(R);return['うそはすぐにばれた。'+h+'は離婚届を置いて出ていった。','離婚した'];}R.famMiss=3;R.bond=0;addBuff(st,'power',-3,2,'信頼の崩壊');return['うそはすぐにばれた。'+her+'は実家に帰ってしまった。','取組の力 −3（2場所）・家族サービスで迎えに行こう'];}
           R.declined.push(R.pid);R.stage=null;R.pid=null;endSecret();return['うそを重ねたことで、決定的に嫌われた。','別れた'];}}]};},
   tempt:()=>{const R=rom(),cur=R.pid,ex=(R.declined||[]).filter(k=>k!==cur&&PARTNERS[k]&&WIMG[k]),others=Object.keys(PARTNERS).filter(k=>k!==cur&&!ex.includes(k)&&WIMG[k]),
       isEx=ex.length&&(Math.random()<.6||!others.length),pid=isEx?pick(ex):pick(others),P=PARTNERS[pid],n=firstName(pid),rel={dating:'恋人',engaged:'婚約者',married:'妻'}[R.stage],cn=firstName(cur);
     return{t:isEx?'元恋人との再会':'二人きりの誘い',kt:'誘惑',scene:'date',w:{pid,e:isEx?'shy':'wink',after:()=>secretOf()===pid?'smile':'sad'},
       text:isEx?'場所後の打ち上げの帰り、昔付き合っていた'+n+'と偶然会った。「久しぶり。……少し、話さない？」\n'+rel+'の'+cn+'の顔が、ふと浮かんだ。':P.how+'という'+P.name+'から、二人きりの食事に誘われた。「'+rel+'さんがいるのは知ってる。でも、一度だけ」\n'+rel+'の'+cn+'の顔が、ふと浮かんだ。',
-      ch:[{l:'こっそり会う',f:()=>{st.secret=pid;st.cheatHeat=0;addBuff(st,'power',1,1,'ときめき');return['連絡先を交換した。胸がざわつく。……'+cn+'には言えない。','二股になった・次の場所で取組の力 +1。ばれると修羅場、関取なら週刊誌に狙われる'];}},
+      ch:[{l:'こっそり会う',f:()=>{st.secret=pid;st.secretB=st.b;st.cheatHeat=0;addBuff(st,'power',1,1,'ときめき');return['連絡先を交換した。胸がざわつく。……'+cn+'には言えない。','二股になった・次の場所で取組の力 +1。ばれると修羅場、関取なら週刊誌に狙われる'];}},
           {l:'「'+(R.stage==='married'?'妻':R.stage==='engaged'?'婚約者':'彼女')+'がいるから」と断る',f:()=>{addBuff(st,'power',1,1,'誠実');if(R.stage!=='married')R.aff=clamp((R.aff||0)+5,0,100);return[n+'は少しさみしそうに笑って、手を振った。','次の場所で取組の力 +1'+(R.stage!=='married'?'・親密度 +5':'')];}}]};},
   scoop:()=>{const R=rom(),her=firstName(R.pid),sec=secretOf(),sn=firstName(sec),rel={dating:'恋人',engaged:'婚約者',married:'妻'}[R.stage],eng=R.stage==='engaged',mar=R.stage==='married',nk=R.pid==='kisha';
     const hit=(heavy)=>{const out=[];addBuff(st,'money',heavy?-.3:-.2,heavy?6:3,'週刊誌の報道');addBuff(st,'power',heavy?-2:-1,2,'集中できない');out.push('ご祝儀 −'+(heavy?30:20)+'%（'+(heavy?'1年':'半年')+'）','取組の力 −'+(heavy?2:1)+'（2場所）');
       if(st.tani){st.tani.miss=Math.max(st.tani.miss||0,heavy?3:2);out.push(heavy?'タニマチが離れていく':'タニマチが「顔を見せんか」と怒っている');}
       if(flag('koenkai')&&heavy){addBuff(st,'money',-.1,6,'後援会の失望');out.push('地元後援会も失望');}
-      if(mar){R.famMiss=3;R.bond=0;out.push(her+'は'+(R.kid?'子どもを連れて':'')+'実家に帰ってしまった（家族サービスで迎えに行こう）');}
+      if(mar){st.cheatN=(st.cheatN||0)+1;if(st.cheatN>=2){divorce(R);out.push('二度目の裏切りに、'+her+'は離婚届を突きつけた。離婚した');}else{R.famMiss=3;R.bond=0;out.push(her+'は'+(R.kid?'子どもを連れて':'')+'実家に帰ってしまった（家族サービスで迎えに行こう・次にばれたら離婚）');}}
       else if(eng&&heavy){R.stage='dating';R.aff=clamp((R.aff||0)-50,0,100);out.push('婚約会見は取りやめ。'+her+'の両親が激怒し、婚約は白紙に');}
       else{R.aff=clamp((R.aff||0)-(heavy?40:25),0,100);out.push('親密度 −'+(heavy?40:25));}
       if(!mar&&R.aff<=0){R.declined.push(R.pid);R.stage=null;R.pid=null;out.push(her+'とは別れた');}
@@ -3111,7 +3119,7 @@ const LIFE={
     ch:[{l:'夜、会いに行く',f:()=>{const R=rom();R.aff=clamp(R.aff+12,0,100);st.fat=Math.min(100,st.fat+20);return['ちゃんと顔を見て話したら、笑ってくれた。','親密度 +12・疲れ +20'];}},
         {l:'稽古を優先する',f:()=>{const R=rom();R.aff=clamp(R.aff-10,0,100);addBuff(st,'growth',.05,2,'集中');return['今は相撲しかない、と自分に言い聞かせた。','親密度 −10・稽古の伸び +5%（2場所）'];}}]}),
   breakup:pid=>({t:'別れ',scene:'date',w:{e:'sad'},text:(rom().dateMiss>=3?pName()+'から「ずっと会えなくて、さみしかった。もう待てない」と言われた。':pName()+'から「少し距離を置きたい」と言われた。'),
-    ch:[{l:'受け入れる',f:()=>{const R=rom();R.declined.push(R.pid);R.stage=null;R.pid=null;addBuff(st,'power',1,1,'悔しさ');return['別れを受け入れた。土俵で答えを出すしかない。','次の場所で力 +1'];}}]}),
+    ch:[{l:'受け入れる',f:()=>{const R=rom();R.declined.push(R.pid);R.stage=null;R.pid=null;return['別れを受け入れた。土俵で答えを出すしかない。','別れた'];}}]}),
   propose:pid=>{const her=pName().replace(/^.*[・の]/,''),yoko=st.pos>=YOKO,parents=flag('fatherShiko')?'後日、地元の両親にあいさつに行くと、父が「いい嫁さんをもらったな」と肩をたたいた。':'後日、地元の両親にあいさつに行くと、父はしばらく黙ってから「しっかりやれよ」とだけ言った。';
     const ok=t=>{const R=rom();R.stage='engaged';R.aff=100;return[t+parents,'婚約した・年の瀬に結婚披露宴'];};
     return{t:'プロポーズ',scene:'date',mark:'ring',w:{e:'surprise',after:()=>rom().stage==='engaged'?'joycry':'smile'},text:(yoko?'横綱になったら、と約束した日から、ずっとこの日を待っていた。':'関取になった今なら、胸を張って言える。')+'婚約指輪を買った。今夜、'+her+'に伝えると決めた。',
@@ -3135,7 +3143,7 @@ function openLife(item){
   $('kEvName').textContent=ev.t;$('kText').textContent=ev.text;
   const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;$('kDone').hidden=true;$('kDone').textContent='部屋に戻る';
   for(const c of ev.ch){const b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=c.l;
-    b.addEventListener('click',()=>{SND.play('pluck');const a0=st.rom?st.rom.aff:0,[story,fx]=c.f();box.innerHTML='';if(kT&&ev.tw&&ev.tw.after)kT.show=ev.tw.after();if(kW&&ev.w){if(ev.w.after)kW.e=ev.w.after(a0);if(ev.w.afterLook)kW.look=ev.w.afterLook();}$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;
+    b.addEventListener('click',()=>{SND.play('pluck');const a0=st.rom?st.rom.aff:0,r0=relSnap();let [story,fx]=c.f();fx=(fx||'')+heartbreak(r0);box.innerHTML='';if(kT&&ev.tw&&ev.tw.after)kT.show=ev.tw.after();if(kW&&ev.w){if(ev.w.after)kW.e=ev.w.after(a0);if(ev.w.afterLook)kW.look=ev.w.afterLook();}$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;
       if(s.lateReturn){s.used=1;s.lateReturn=false;}addLog(ev.t+'：'+story);checkAch();persist();if(s.retiring)$('kDone').textContent='引退会見へ';});box.append(b);}
   const tall=!!((kW&&kW.pid&&kScene!=='tani')||(kT&&kScene==='tani'));$('kCv').style.aspectRatio=tall?'400/300':'';
   show('sKikyo');kCv=makeCanvas($('kCv'),tall?300/400:220/400);kSnow=[];
@@ -3205,7 +3213,7 @@ function openKikyo(){
   $('kEvName').textContent=kEv.t;$('kText').textContent=kEv.text(s);
   const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;$('kDone').hidden=true;
   for(const c of kEv.ch){const b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=typeof c.l==='function'?c.l(s):c.l;
-    b.addEventListener('click',()=>{const [story,fx]=c.f(s);box.innerHTML='';$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;
+    b.addEventListener('click',()=>{const r0=relSnap();let [story,fx]=c.f(s);fx=(fx||'')+heartbreak(r0);box.innerHTML='';$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;
       s.pendingKikyo=false;if(s.lateReturn){s.used=1;s.lateReturn=false;}addLog(kEv.t+'：'+story);persist();});
     box.append(b);}
   $('kCv').style.aspectRatio='';show('sKikyo');kCv=makeCanvas($('kCv'),220/400);kSnow=[];
