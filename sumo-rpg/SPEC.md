@@ -207,6 +207,8 @@
 
 ## 12. 便利機能
 
+- **英語モード**：タイトル右上の「🌐 English」で切りかえ（もう一度押すと日本語）。相撲用語はローマ字（Yokozuna、Yorikiri など）、ご祝儀は Prize money。文章は `en.js` の対訳表で、画面に出るときに訳す。いまは画面まわり（第1段階）まで。イベントの文章は順次英訳
+
 - **オート**：自動で稽古・取組を進める。昇進・優勝・恋愛などで止めるかを選べる。速さも変更可
 - **チュートリアル**：新弟子が入門するたびに最初の案内
 - **音**：タイトルで ON/OFF、BGMと効果音の音量
@@ -225,6 +227,8 @@
 | `faces.js` / `cast.js` | 力士の顔と取組の絵 |
 | `women.js` / `tani.js` | 女性6人・タニマチ4人の絵 |
 | `title.webp`、`bgm/*.mp3` | タイトル画像と音楽 |
+| `en.js` | 英語モードの対訳表 |
+| `tools/make_index.py` | `game.html` から `index.html` を作る（絵のファイルに版番号を付ける） |
 | `tools/build_web.py` | 公開用 `web/` と `yokozuna-web.zip` を作る |
 | `tools/women.py` / `tools/tani.py` | ChatGPTのシートから絵を切り出す |
 | `tools/women_extra.py` / `tools/women_add.py` | 私服シートの追加／新しいヒロインの追加 |

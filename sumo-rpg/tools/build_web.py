@@ -29,7 +29,7 @@ meta=f'''<title>横綱への道</title>
 assert html.count('<title>横綱への道</title>')==1
 html=html.replace('<title>横綱への道</title>',meta)
 open(os.path.join(WEB,'index.html'),'w',encoding='utf-8').write(html)
-for f in ['cast.js','faces.js','women.js','tani.js','title.webp']:shutil.copy(os.path.join(ROOT,f),os.path.join(WEB,f))
+for f in ['cast.js','faces.js','women.js','tani.js','en.js','title.webp']:shutil.copy(os.path.join(ROOT,f),os.path.join(WEB,f))
 shutil.copytree(os.path.join(ROOT,'bgm'),os.path.join(WEB,'bgm'),dirs_exist_ok=True)
 json.dump({'name':'横綱への道','short_name':'横綱への道','start_url':'./','display':'standalone','orientation':'portrait',
   'background_color':'#0d1430','theme_color':'#0d1430','lang':'ja',

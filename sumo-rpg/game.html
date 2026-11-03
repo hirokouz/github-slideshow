@@ -99,6 +99,7 @@ input[type=text]{width:100%;box-sizing:border-box;background:#fffaf0;color:var(-
 .stats{display:grid;gap:9px}
 .stat{display:grid;grid-template-columns:3.6em 1fr 3.4em;gap:10px;align-items:center;font-size:13px}
 .stat .n{font-family:var(--f-mincho);font-weight:800}
+html[lang=en] .stat{grid-template-columns:4.6em 1fr 3.4em;gap:8px}html[lang=en] .stat .n{letter-spacing:0}
 .bar{height:10px;background:rgba(0,0,0,.35);border-radius:5px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.5)}
 .bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#9b6a35,var(--tsuchi),#e3b57a);transition:width .5s ease}
 .bar.fat i{background:linear-gradient(90deg,#7c1d18,#d2463f)}
@@ -317,6 +318,8 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
 #sndBtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:8px;z-index:65;height:34px;border-radius:999px;border:1.5px solid var(--kin);background:rgba(13,20,48,.85);color:var(--kin);font-size:12px;font-weight:800;line-height:1;padding:0 12px 0 8px;display:flex;align-items:center;gap:5px}
 #sndBtn .si{font-size:16px}#sndBtn.wait{animation:sndPulse 1.4s ease-in-out infinite}@keyframes sndPulse{50%{box-shadow:0 0 0 4px rgba(226,176,74,.35)}}
 body:not(.onTitle) #sndBtn{display:none}
+#langBtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 48px);right:8px;z-index:65;height:34px;border-radius:999px;border:1.5px solid var(--kin);background:rgba(13,20,48,.85);color:var(--kin);font-size:12px;font-weight:800;line-height:1;padding:0 12px;display:flex;align-items:center;gap:4px;cursor:pointer}
+body:not(.onTitle) #langBtn{display:none}
 #sndBtn.off,#sndBtn2.off{color:#7d7360;border-color:#5b5246;text-decoration:line-through}
 .acfg input[type=range]{accent-color:var(--kin);height:24px}
 .tutq{margin-left:6px;border:1px solid var(--kin);background:transparent;color:var(--kin);border-radius:999px;font-size:10.5px;padding:1px 8px;letter-spacing:0;font-weight:700;vertical-align:1px}
@@ -475,6 +478,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 
 <div id="toast" role="status" aria-live="polite"></div>
 <button type="button" id="sndBtn" aria-label="音のオンオフ"><span class="si"></span><span class="st"></span></button>
+<button type="button" id="langBtn" aria-label="Language / 言語">🌐 <span id="langLbl">English</span></button>
 <div id="tut" hidden><div class="tut-hole" id="tutHole"></div><div class="tut-box" id="tutBox" role="dialog" aria-live="polite"><div class="tut-who"><span>親</span>親方</div><p id="tutText"></p><div class="tut-ctl"><span id="tutStep"></span><button type="button" id="tutSkip" class="tut-skip">スキップ</button><button type="button" id="tutNext" class="tut-next">次へ</button></div></div></div>
 <div id="autoBar" hidden><span class="dot" aria-hidden="true"></span><span id="autoTxt">オート中</span>
   <select id="autoSpeed" aria-label="速さ"><option value="1">ふつう</option><option value="3" selected>速い</option></select>
@@ -694,8 +698,21 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 <script src="cast.js"></script>
 <script src="women.js"></script>
 <script src="tani.js"></script>
+<script src="en.js"></script>
 <script>
 (()=>{
+/* ---------- language: English mode translates text as it reaches the screen (see en.js) ---------- */
+const LANG=(()=>{try{return localStorage.getItem('sumo-rpg-lang')||'ja';}catch(e){return'ja';}})();
+const EN=LANG==='en'&&window.I18N_EN?window.I18N_EN:null;
+if(EN){document.documentElement.lang='en';document.title=EN.tr(document.title);
+  const C=CanvasRenderingContext2D.prototype;for(const k of ['fillText','strokeText','measureText']){const f=C[k];C[k]=function(t,...a){return f.call(this,EN.tr(t),...a);};}
+  const AT=['aria-label','title','placeholder'];
+  const fix=n=>{if(n.nodeType===3){const v=n.nodeValue,t=EN.tr(v,n.parentElement&&n.parentElement.closest('.stat')?'stat':'');if(t!==v)n.nodeValue=t;return;}if(n.nodeType!==1||n.tagName==='SCRIPT'||n.tagName==='STYLE')return;
+    for(const a of AT){const v=n.getAttribute&&n.getAttribute(a);if(v){const t=EN.tr(v);if(t!==v)n.setAttribute(a,t);}}
+    for(let c=n.firstChild;c;c=c.nextSibling)fix(c);};
+  fix(document.body);
+  new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData')fix(m.target);else if(m.type==='attributes')fix(m.target);else for(const n of m.addedNodes)fix(n);}})
+    .observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:AT});}
 "use strict";
 const $=id=>document.getElementById(id);
 const rnd=(a,b)=>a+Math.random()*(b-a), pick=a=>a[Math.floor(Math.random()*a.length)];
@@ -3364,6 +3381,8 @@ $('hLog1').addEventListener('scroll',e=>{const el=e.target;el.classList.toggle('
 itemBtnEl().addEventListener('click',()=>{if(st){st.itemNew=false;persist();itemBtnEl().classList.remove('new');}renderItems();openSheet('items','道具');});
 function sndUI(){const c=SND.cfg(),b=$('sndBtn'),wait=c.on&&!SND.ready();b.classList.toggle('off',!c.on);b.classList.toggle('wait',wait);b.querySelector('.si').textContent=c.on?'🔊':'🔇';b.querySelector('.st').textContent=wait?'タップで音が鳴る':c.on?'音 ON':'音 OFF';
   $('sndBtn2').textContent=c.on?'🔊':'🔇';$('sndBtn2').classList.toggle('off',!c.on);$('sndOn').checked=c.on;$('sndBgm').value=c.bgm;$('sndSfx').value=c.sfx;}
+{const lb=$('langLbl');if(lb)lb.textContent=LANG==='en'?'日本語':'English';}
+$('langBtn').addEventListener('click',()=>{try{localStorage.setItem('sumo-rpg-lang',LANG==='en'?'ja':'en');}catch(e){}location.reload();});
 let sndWasReady=false;$('sndBtn').addEventListener('pointerdown',()=>{sndWasReady=SND.ready();},true);
 $('sndBtn').addEventListener('click',()=>{const c=SND.cfg();if(c.on&&!sndWasReady){sndUI();return;}c.on=!c.on;SND.save(c);if(c.on)SND.unlock();sndUI();toast(c.on?'音をオンにしました':'音をオフにしました');});
 $('sndBtn2').addEventListener('click',()=>{sndUI();openSheet('snd','音の設定');});
