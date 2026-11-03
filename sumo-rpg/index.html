@@ -382,6 +382,7 @@ body:not(.onTitle) #sndBtn{display:none}
 /* homecoming */
 #kCv{width:100%;aspect-ratio:400/220;display:block;border-radius:10px;box-shadow:0 10px 26px rgba(0,0,0,.4)}
 .kchoices{display:grid;gap:8px}
+.kmbook{grid-column:1 / -1;margin-top:8px}.kmbook div{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.kmbook span{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:#6b6250}.kmbook span.got{color:var(--shiro);border-color:var(--kin)}.kmbook span.rare{background:rgba(226,176,74,.18);color:#ffe08a}
 #kText{white-space:pre-line}
 .kchoices .ghost{background:var(--ai2);font-size:15px;padding:13px 14px}
 @media (max-height:740px){
@@ -644,7 +645,27 @@ const OP_A=['若','大','海','風','雷','錦','春','剛','嶺','蒼','翔','�
 const OP_B=['山','海','川','富士','嵐','浪','ノ花','桜','丸','龍','錦','国','里','岳'];
 const STYLE={oshi:'押し相撲',yotsu:'四つ相撲',waza:'技能派'};
 const BEATS={oshi:'yotsu',yotsu:'waza',waza:'oshi'};
-const KIMARITE={oshi:['押し出し','突き出し','押し倒し'],yotsu:['寄り切り','上手投げ','寄り倒し','下手投げ'],waza:['はたき込み','引き落とし','突き落とし','送り出し']};
+/* kimarite by the winner's style, weighted roughly like real makuuchi frequencies.
+   kind picks the animation: out (step-out), down (falls back), throw, slap (hands down forward).
+   need: [stat, minimum] — strength throws and lifts only happen for a winner strong enough. */
+const KM=[
+  // oshi
+  ['押し出し','oshi','out',30],['突き出し','oshi','out',8],['押し倒し','oshi','down',8],['突き倒し','oshi','down',3],['寄り切り','oshi','out',3],
+  // yotsu
+  ['寄り切り','yotsu','out',30],['寄り倒し','yotsu','down',7],['上手投げ','yotsu','throw',8],['下手投げ','yotsu','throw',5],['小手投げ','yotsu','throw',3],['すくい投げ','yotsu','throw',3],
+  ['上手出し投げ','yotsu','throw',3],['下手出し投げ','yotsu','throw',2],['首投げ','yotsu','throw',1],['吊り出し','yotsu','out',1.6,['chikara',55]],['吊り落とし','yotsu','down',.3,['chikara',70]],
+  ['外掛け','yotsu','down',1],['内掛け','yotsu','down',1],['切り返し','yotsu','down',.6],['渡し込み','yotsu','down',.5],['上手ひねり','yotsu','throw',.5],['下手ひねり','yotsu','throw',.4],
+  ['送り吊り出し','yotsu','out',.2,['chikara',65]],['櫓投げ','yotsu','throw',.05,['chikara',80]],['二丁投げ','yotsu','throw',.08],['河津掛け','yotsu','throw',.05],
+  // waza
+  ['はたき込み','waza','slap',12],['突き落とし','waza','slap',8],['引き落とし','waza','slap',6],['送り出し','waza','out',6],['送り倒し','waza','down',1],['肩透かし','waza','slap',2],
+  ['とったり','waza','slap',1],['引っ掛け','waza','slap',1],['足取り','waza','slap',.5],['蹴返し','waza','slap',.4],['素首落とし','waza','slap',.3],['逆とったり','waza','slap',.2],
+  ['裾払い','waza','slap',.15],['一本背負い','waza','throw',.08,['waza',70]],['居反り','waza','throw',.03,['waza',80]],['うっちゃり','waza','throw',.3,['chikara',50]],
+];
+const HIWAZA=[['勇み足','out'],['腰砕け','down'],['つき手','slap'],['踏み出し','out']];
+const KM_NAMES=[...new Set(KM.map(k=>k[0]))];
+const KM_RARE=new Set(KM.filter(k=>k[3]<=.5).map(k=>k[0]));
+function pickKm(style,stats){const L=KM.filter(k=>k[1]===style&&(!k[4]||(stats[k[4][0]]||0)>=k[4][1]));let r=Math.random()*L.reduce((a,k)=>a+k[3],0);
+  for(const k of L){if((r-=k[3])<=0)return{km:k[0],kind:k[2]};}const k=L[0];return{km:k[0],kind:k[2]};}
 
 /* ---------- banzuke ---------- */
 /* division sizes follow the real banzuke: jonokuchi ~30, jonidan ~100, sandanme 90, makushita 60, juryo 14, maegashira 17 */
@@ -1809,8 +1830,11 @@ function resolve(q){
   const op=power(o.stats,o.kg,ostrat,0,0);
   if(BEATS[s]===ostrat)me+=7;else if(BEATS[ostrat]===s)me-=7;
   const win=Math.random()<1/(1+Math.exp(-(me-op)/5)),mu=BEATS[s]===ostrat?1:BEATS[ostrat]===s?-1:0,gap=me-op-mu*7;
-  const ws=win?s:ostrat,km=pick(KIMARITE[ws]);
-  const kind=ws==='waza'&&km!=='送り出し'?'slap':km.includes('投げ')?'throw':km.includes('倒し')?'down':'out';
+  const ws=win?s:ostrat;let{km,kind}=pickKm(ws,win?st.stats:o.stats),hiwaza=false;
+  // non-techniques: the loser beats himself (a step out, a stumble, a hand down) in a close bout
+  if(Math.abs(me-op)<5&&Math.random()<.03){const h=pick(HIWAZA);km=h[0];kind=h[1];hiwaza=true;}
+  if(win&&!hiwaza){if(!roster.kmBook)roster.kmBook={};const first=!roster.kmBook[km];roster.kmBook[km]=(roster.kmBook[km]||0)+1;
+    if(first&&Object.keys(roster.kmBook).length>1)setTimeout(()=>toast((KM_RARE.has(km)?'珍手！ ':'')+'新しい決まり手「'+km+'」（'+Object.keys(roster.kmBook).length+' / '+KM_NAMES.length+'種）'),900);saveRoster();}
   st.fat=Math.min(100,st.fat+(B.n>7?1.4:2.5));
   if(!st.inj&&Math.random()<.006*Math.max(0,1+deckFx().inj+buff('inj')))injure(pick([1,1,1,2,2,3]),'取組中の不運な倒れ方で');
   if(!st.inj&&(st.tiredB||0)>=1&&Math.random()<(.025*st.tiredB+(st.fat>80?.04:0))*(B.n>7?.5:1)*Math.max(0,1+deckFx().inj+buff('inj'))){injure((st.tiredB||0)>=3?3:2,'たまった疲れで、取組中に');}
@@ -1823,11 +1847,11 @@ function resolve(q){
   else{B.l++;B.marks+='●';st.streak=0;if(o.rival)st.rival.l=(st.rival.l||0)+1;}B.day++;
   if(!st.h2h)st.h2h={};const hh=st.h2h[o.name]||(st.h2h[o.name]={w:0,l:0});win?hh.w++:hh.l++;{const ks=Object.keys(st.h2h);if(ks.length>300)delete st.h2h[ks[0]];}
   if(!B.rec)B.rec=[];B.rec.push({w:win,opp:o.name,km});
-  const why=win?(q==='sharp'?'鋭い立ち合い':mu>0?'相性で有利':gap>6?'地力で圧倒':gap<-6?'格上を破った':'')
+  const why=hiwaza?(win?'相手の'+km+'（非技）':'自分の'+km+'（非技）'):win?(q==='sharp'?'鋭い立ち合い':mu>0?'相性で有利':gap>6?'地力で圧倒':gap<-6?'格上を破った':'')
             :(q==='late'?'立ち遅れ':mu<0?'相性で不利（相手は'+STYLE[ostrat]+'）':gap<-6?'力の差':gap>6?'まさかの取りこぼし':'紙一重');
   checkAch();
   const upset=win&&o.pos-st.pos>=(o.pos>=KOMU?2:10);
-  anim={phase:'clash',t:0,win,km,ws,kind,tq:q,why,qmsg:{sharp:'鋭い！',late:'立ち遅れ…'}[q]||'',TL:TL[kind],dw:win?1:-1,c0:(q==='sharp'?.03:q==='late'?-.03:0),hit:{},freeze:0,upset,thrust:ws==='oshi'};
+  anim={phase:'clash',t:0,win,km,ws,kind,rare:KM_RARE.has(km),tq:q,why,qmsg:{sharp:'鋭い！',late:'立ち遅れ…'}[q]||'',TL:TL[kind],dw:win?1:-1,c0:(q==='sharp'?.03:q==='late'?-.03:0),hit:{},freeze:0,upset,thrust:ws==='oshi'};
   persist();
 }
 /* Choreography modelled on how bouts actually unfold:
@@ -2001,6 +2025,7 @@ function drawBout(t,dt){
     const tq=a.why?'　'+a.why:'';
     g.fillText((a.win?'○ '+st.name:'● '+B.opp.name)+'の勝ち'+tq,W/2,py+ph*.85);g.restore();
     if(a.upset&&a.win)text('座布団が舞う！',H*.42,H*.07,'#e2b04a');
+    else if(a.rare)text('珍しい決まり手！',H*.42,H*.065,'#ffe08a');
   }
 }
 
@@ -2286,6 +2311,9 @@ const ACH=[
   {id:'w1000',  n:'通算1000勝', d:'通算1000勝',              r:2000,c:s=>totalWins(s)>=1000},
   {id:'st20',   n:'20連勝',     d:'20連勝する',              r:400, c:s=>(s.bestStreak||0)>=20},
   {id:'st50',   n:'50連勝',     d:'50連勝する',              r:1500,c:s=>(s.bestStreak||0)>=50},
+  {id:'km15',   n:'技のデパート',d:'決まり手を15種類以上出す', r:300, c:()=>Object.keys(roster.kmBook||{}).length>=15},
+  {id:'km30',   n:'決まり手博士',d:'決まり手を30種類以上出す', r:800, c:()=>Object.keys(roster.kmBook||{}).length>=30},
+  {id:'kmRare', n:'珍手',       d:'珍しい決まり手で勝つ',     r:200, c:()=>Object.keys(roster.kmBook||{}).some(k=>KM_RARE.has(k))},
   {id:'rival10',n:'宿命の対決', d:'宿敵に通算10勝',          r:300, c:s=>(s.rival&&s.rival.w||0)>=10},
   {id:'oyakata',n:'親方',       d:'力士を引退させて親方にする',r:300,c:()=>roster.hall.length>=1},
   {id:'hall3',  n:'名門部屋',   d:'殿堂入りの力士3人',        r:800, c:()=>roster.hall.length>=3},
@@ -2293,8 +2321,10 @@ const ACH=[
 function checkAch(){const got=[];if(!st)return got;
   for(const a of ACH){if(roster.ach[a.id])continue;if(a.c(st)){roster.ach[a.id]=Date.now();roster.money=(roster.money||0)+a.r;got.push(a.n);toast('実績「'+a.n+'」達成！ ご祝儀 +'+a.r);}}
   return got;}
-function renderAch(box){box.innerHTML='';for(const a of ACH){const d=document.createElement('div');d.className='ach'+(roster.ach[a.id]?' got':'');
-  d.innerHTML='<b></b><span></span><i></i>';d.querySelector('b').textContent=a.n;d.querySelector('span').textContent=a.d;d.querySelector('i').textContent=roster.ach[a.id]?'達成':'+'+a.r;box.append(d);}}
+function renderAch(box){box.innerHTML='';const bk=roster.kmBook||{},kb=document.createElement('div');kb.className='kmbook';kb.innerHTML='<p class="label"></p><div></div>';kb.querySelector('p').textContent='決まり手図鑑　'+Object.keys(bk).length+' / '+KM_NAMES.length+'種';
+  for(const n of KM_NAMES){const c=document.createElement('span');c.className=bk[n]?'got'+(KM_RARE.has(n)?' rare':''):'';c.textContent=bk[n]?n+(bk[n]>1?' ×'+bk[n]:''):'？？？';kb.lastChild.append(c);}
+  for(const a of ACH){const d=document.createElement('div');d.className='ach'+(roster.ach[a.id]?' got':'');
+  d.innerHTML='<b></b><span></span><i></i>';d.querySelector('b').textContent=a.n;d.querySelector('span').textContent=a.d;d.querySelector('i').textContent=roster.ach[a.id]?'達成':'+'+a.r;box.append(d);}box.append(kb);}
 
 /* ---------- retirement, hall of fame, stable prestige ---------- */
 function bestRankName(s){return rank(Math.max(s.best||0,s.pos)).div==='前頭'?'前頭':rank(Math.max(s.best||0,s.pos)).div;}
