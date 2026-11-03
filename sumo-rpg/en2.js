@@ -1061,5 +1061,6 @@ window.I18N_EN=window.I18N_EN||{};window.I18N_EN.S={
 "大": "high",
 "ふつう": "medium",
 "やや小": "fairly low",
-"小": "low"
+"小": "low",
+"はいいぞ！」　": " is looking good!\"  "
 };
