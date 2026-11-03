@@ -1608,7 +1608,7 @@ function goalText(){if(st.maezumo)return'前相撲：2勝すれば、来場所�
   const I=st.pos<KOMU?divInfo(st.pos):null,nm=p=>rank(p).name;
   const est=w=>{const r=[];for(let k=0;k<7;k++)r.push(moveBanzuke(st.pos,w,I.d.b-w).p);r.sort((a,b)=>a-b);return r[3];};
   if(st.pos>=YOKO)return'横綱：負け越すと進退問題。2場所続けて休むのも危ない';
-  if(st.pos===OZEKI)return st.kadoban?'カド番：負け越すと大関から陥落する':'綱取りの目安：大関で2場所連続優勝（全能力A以上）';
+  if(st.pos===OZEKI)return st.kadoban?'カド番：負け越すと大関から陥落する':'綱取りの目安：大関で2場所連続優勝（優勝と13勝以上でも可）';
   if(st.pos===SEKI){const l3=st.hist.slice(-2).reduce((a,h)=>a+h.w,0);return'大関取りの目安：三役で3場所33勝（あと '+Math.max(0,33-l3)+'勝）';}
   if(st.pos===KOMU)return'勝ち越せば三役を守れる。10勝で関脇も見える';
   if(I.i===5){const need=I.num<=1?8:I.num<=2?9:I.num<=5?11:12;return'勝ち越しで'+nm(est(8))+'前後へ・三役の目安は'+need+'勝';}
@@ -1643,7 +1643,6 @@ function renderHome(){
     if(st.kg<lo)kd.querySelector('b').classList.add('low');}
   row('疲れ',st.fat,100,Math.round(st.fat),'fat');
   lastGain={};
-  if(st.pos===OZEKI){const lack=Object.keys(st.stats).filter(k=>st.stats[k]<85);if(lack.length){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#e2b04a;margin:0';d.textContent='綱取りには全能力A以上が必要（あと：'+lack.map(k=>STAT_LABEL[k]).join('・')+'）';sb.append(d);}}
   if(st.inj>0){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ff8a80;margin:0';d.textContent=(st.injPart||'')+'の'+INJ_SEV[clamp(st.inj,1,3)]+'：'+(st.inj>=2?'稽古も出場もできない（休場）':'稽古・出場はできるが悪化に注意')+'・あと'+(st.injHeal||st.inj*2)+'回休めば治る';sb.append(d);}
   else if((st.tiredB||0)>=1){const d=document.createElement('p');d.style.cssText='grid-column:1 / -1;font-size:11px;color:#ffb36b;margin:0';d.textContent='疲れがたまっている（'+st.tiredB+'場所連続）：休まないとけがをしやすい';sb.append(d);}
   $('hPower').textContent='伸びしろ '+(g=>g>=1.2?'大':g>=1?'ふつう':g>=.85?'やや小':g>=.6?'小':'わずか')(ageGrowth(ageOf(st)))+'・総合力 '+Math.round((st.stats.oshi+st.stats.chikara+st.stats.waza+st.stats.hayasa)/4+(st.kg-90)*.1);
@@ -2142,9 +2141,8 @@ function endBasho(){
   else if(old===OZEKI){
     if(w<8){if(st.kadoban){p=SEKI;st.kadoban=false;msg='カド番で負け越し、大関から陥落……。';}else{st.kadoban=true;msg='負け越し。次の場所はカド番だ。';}}
     else{st.kadoban=false;const good=yusho||w>=13;const prevGood=prev&&prev.pos===OZEKI&&(prev.yusho||prev.w>=13);
-      const allA=Object.values(st.stats).every(v=>v>=85);
-      if(good&&prevGood&&(yusho||prev.yusho)&&!allA){msg='横審「成績は申し分ないが、力量にまだ穴がある」。綱には全能力A以上が必要だ（'+Object.keys(st.stats).filter(k=>st.stats[k]<85).map(k=>STAT_LABEL[k]+gradeOf(st.stats[k])[0]).join('・')+'）。';}
-      else if(good&&prevGood&&(yusho||prev.yusho)){p=YOKO;msg='横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。';}else if(good)msg='来場所は綱取りの場所だ。';}}
+      // the real yardstick: two straight yusho as ozeki, or a yusho plus a runner-up-level record (13+ wins)
+      if(good&&prevGood&&(yusho||prev.yusho)){p=YOKO;msg='横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。';}else if(good)msg='来場所は綱取りの場所だ。';}}
   if(yusho){st.yusho++;if(old>=MAKU)st.makuYusho++;}
   const when=(Math.floor(st.b/6)+1)+'年目 '+BASHO[st.b%6];
   st.hist.push({when,rank:r.name,pos:old,w,l,yusho,mae:wasMae||undefined,kyu:B.kyu||undefined});
