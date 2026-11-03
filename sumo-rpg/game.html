@@ -1584,7 +1584,7 @@ function buildAiPick(){const box=$('aiPick');box.innerHTML='';
     const im=document.createElement('img');const PF=aiFace(id);ZAN_F.add(PF);im.src=castArtReady()?portrait(PF,'normal',false,160).toDataURL():(m.faces&&m.faces.zan)||m.src;im.alt='';b.append(im);b.addEventListener('click',()=>{draftFace=aiFace(id);facePop=1;buildAiPick();});box.append(b);}}
 function setFaceMode(m){faceMode=m;$('modeAi').classList.toggle('on',m==='ai');$('modeParts').classList.toggle('on',m==='parts');$('aiPick').hidden=m!=='ai';$('faceOpts').hidden=m!=='parts';
   if(m==='ai'&&!draftFace.img)draftFace=randAiFace();if(m==='parts'&&draftFace.img){delete draftFace.img;}buildAiPick();buildFaceOpts();facePop=1;}
-function fillHomes(){const h=$('homeIn');if(h.options.length)return;for(const p of PREFS){const o=document.createElement('option');o.value=p;o.textContent=p+'出身'+(p==='モンゴル'?'（技がはじめからC）':'');h.append(o);}}
+function fillHomes(){const h=$('homeIn');if(h.options.length)return;for(const p of PREFS){const o=document.createElement('option');o.value=p;o.textContent=p+'出身';h.append(o);}}
 function openCreate(){fillHomes();$('homeIn').value=pick(PREFS);const a15=$('a15');if(a15)a15.checked=true;const to=$('tOshi');if(to)to.checked=true;setTimeout(descs,0);$('nameIn').value=pick(NAMES);draftFace=entryIds().length?aiFace(entryIds()[0]):randFace();faceMode=draftFace.img?'ai':'parts';setFaceMode(faceMode);{const H=roster.heir,hn=$('heirNote');hn.hidden=!H;if(H){hn.textContent='二代目として入門　父：'+H.name+'（最高位 '+H.bestName+'）'+(H.mom?'・母：'+firstName(H.mom):'');$('nameIn').value=H.name[0]+pick(OP_B).slice(-1);$('homeIn').value=H.home||$('homeIn').value;}}show('sCreate');facePrev=makeCanvas($('facePrev'),1);}
 function buildFaceOpts(){
   const box=$('faceOpts');box.innerHTML='';
@@ -1612,7 +1612,7 @@ function enter(){
   st.best=st.pos;st.home=$('homeIn').value||st.home;st.rival=makeRival(st);st.rival.face=oppFace();st.rival.home=pick(PREFS);
   rollPotential(st);
   // grew up wrestling Mongolian bokh: technique starts at C
-  if(st.home==='モンゴル'){st.stats.waza=Math.max(st.stats.waza,55+rnd(0,4));st.cap.waza=Math.max(st.cap.waza,st.stats.waza+30);addLog('モンゴル相撲（ブフ）で鍛えた体さばきで、技ははじめからCだ。');}
+  if(st.home==='モンゴル'){st.stats.waza=Math.max(st.stats.waza,55+rnd(0,4));st.cap.waza=Math.max(st.cap.waza,st.stats.waza+30);addLog('子どものころからモンゴル相撲（ブフ）で鍛えてきた。');}
   if(roster.itemPool&&Object.keys(roster.itemPool).length){st.items=roster.itemPool;roster.itemPool={};addLog('部屋で預かっていた秘伝書を受け取った。');}
   st.maezumo=age!==22;st.school=true;addBuff(st,'growth',.15,3,'相撲教習所');
   if(roster.sonOf&&!roster.heir){roster.heir={name:roster.sonOf,best:JURYO,bestName:'十両',stat:'oshi',height:st.height,home:roster.sonHome};roster.sonOf=null;}
