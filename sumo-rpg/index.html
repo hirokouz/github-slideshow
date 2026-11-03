@@ -1048,11 +1048,12 @@ const listFace=s=>{if(!(s.b<6&&s.pos<JURYO&&s.face))return s.face;const c={...s.
 function isZan(F){if(cur==='sCreate'&&F===draftFace)return true;if(F&&ZAN_F.has(F))return true;return !!(st&&st.b<6&&st.pos<JURYO&&(F===st.face||(st.rival&&F===st.rival.face)));}
 /* the illustrated faces were drawn at slightly different sizes; [eyeY, eye-to-chin] in the
    256px source, so every portrait is rescaled to eyes near 110 and an ~80px eye-to-chin face */
-const FACE_FIT={n1:{zan:[100,65],chon:[115,85],oicho:[100,75]},n2:{zan:[85,70],chon:[100,85],oicho:[100,80]},n3:{zan:[75,70],chon:[75,70],oicho:[100,70]},
-  n4:{zan:[110,80],chon:[110,85],oicho:[115,90]},n5:{zan:[100,60],chon:[100,65],oicho:[100,70]}};
-function drawFit(x,im,N,fit){if(!fit){x.drawImage(im,0,0,N,N);return;}const k=N/256,sc=Math.max(1,80/fit[1]);
+// [eyeY, eye-to-chin, faceCentreX] measured on each 256px source image
+const FACE_FIT={n1:{zan:[100,65,130],chon:[115,85,131],oicho:[100,75,130]},n2:{zan:[85,70,131],chon:[100,85,142],oicho:[100,80,136]},n3:{zan:[75,70,134],chon:[75,70,134],oicho:[100,70,134]},
+  n4:{zan:[110,80,138],chon:[110,85,136],oicho:[115,90,136]},n5:{zan:[100,60,132],chon:[100,65,134],oicho:[100,70,138]}};
+function drawFit(x,im,N,fit){if(!fit){x.drawImage(im,0,0,N,N);return;}const k=N/256,cxF=fit[2]||128,sc=Math.max(1,80/fit[1],128/(256-cxF),128/cxF);
   // never shrink (that would leave gaps at the shoulders); keep the eyes on one line
-  const w=256*sc*k,ey=Math.max(110*k-fit[0]*sc*k,N-w);x.drawImage(im,128*k-128*sc*k,Math.min(0,ey),w,w);}
+  const w=256*sc*k,ey=Math.max(110*k-fit[0]*sc*k,N-w),ex=clamp(128*k-cxF*sc*k,N-w,0);x.drawImage(im,ex,Math.min(0,ey),w,w);}
 function portrait(F,expr,oicho,N){
   const o=aiReady(F);
   if(o){const k=EXMAP[expr]||'normal';let im=o.ex[k]&&o.ex[k].complete&&o.ex[k].naturalWidth?o.ex[k]:o.img;let hk='';
