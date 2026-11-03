@@ -1908,7 +1908,7 @@ function drawMini(g,W,H,t,a,text){
   if(a.flash&&a.flash.t>0)text(a.flash.early?'早い！':a.flash.ok?'よし！':'ミス',H*.4,H*.08,a.flash.ok?'#ffe08a':'#ff9a8a');}
 const TL={out:{imp:.16,drive:1.0,edge:1.45,land:1.8,end:2.5},down:{imp:.16,drive:1.0,edge:1.4,land:1.75,end:2.6},throw:{imp:.16,drive:1.0,edge:1.3,land:1.62,end:2.45},slap:{imp:.16,drive:.72,edge:1.02,land:1.28,end:2.1}};
 function resolve(q,mini,force){
-  const o=B.opp,s=B.strat;
+  const o=B.opp,s=B.strat,pa=anim;
   const ostrat=Math.random()<.65?o.style:pick(['oshi','yotsu','waza']);
   const D=deckFx();let me=(o.rival&&spouse()==='imouto'?2:0)+power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q])+D.power+(q!=='late'?D.tachi+(flag('senseiTachi')?1:0):0)+buff('power');
   const op=power(o.stats,o.kg,ostrat,0,0);
@@ -1918,6 +1918,7 @@ function resolve(q,mini,force){
   // close loss after a mini game: a last stand at the straw (tawara)
   if(!force&&!win&&mini!=null&&!autoMode&&Math.random()<.45&&me-op>-14){startEdge(q,mini,me-op);return;}
   const ws=win?s:ostrat;let{km,kind}=pickKm(ws,win?st.stats:o.stats),hiwaza=false;
+  if(force==='lose'){({km,kind}=pick([{km:'寄り切り',kind:'out'},{km:'押し出し',kind:'out'}]));}
   if(force==='win'){({km,kind}=pick([{km:'うっちゃり',kind:'throw'},{km:'突き落とし',kind:'slap'},{km:'逆とったり',kind:'slap'}]));}
   // non-techniques: the loser beats himself (a step out, a stumble, a hand down) in a close bout
   if(!force&&Math.abs(me-op)<5&&Math.random()<.03){const h=pick(HIWAZA);km=h[0];kind=h[1];hiwaza=true;}
@@ -1941,6 +1942,8 @@ function resolve(q,mini,force){
   checkAch();
   const upset=win&&o.pos-st.pos>=(o.pos>=KOMU?2:10);
   anim={phase:'clash',t:0,win,km,ws,kind,rare:KM_RARE.has(km)||force==='win',tq:q,why,qmsg:{sharp:'鋭い！',late:'立ち遅れ…'}[q]||'',TL:TL[kind],dw:win?1:-1,c0:(q==='sharp'?.03:q==='late'?-.03:0),hit:{},freeze:0,upset,thrust:ws==='oshi'};
+  // after a mini game the two are already locked together: carry on from the clinch, not from a fresh charge
+  if(mini!=null){const L=anim.TL;anim.t=force==='lose'&&kind==='out'?L.edge-.05:L.imp+.005;anim.c0=force==='win'?-.24:pa&&pa.c0!=null?pa.c0:anim.c0;anim.fromMini=true;}
   persist();
 }
 /* Choreography modelled on how bouts actually unfold:
