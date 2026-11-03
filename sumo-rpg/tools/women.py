@@ -4,7 +4,7 @@ from PIL import Image, ImageFilter
 from collections import deque
 sys.path.insert(0,'.');from cast import components, uri
 SRC=sys.argv[1] if __name__=="__main__" else None;OUT=sys.argv[2] if __name__=="__main__" else None
-IDS=['osana','reijo','eiyo','imouto','deshi']
+IDS=['osana','reijo','eiyo','imouto','deshi']  # kisha (奈央子) is added afterwards by women_add.py
 EX=['normal','smile','shy','joycry','worry','sulk','angry','sad','closed','surprise','wink','serious']
 SC=['casual','date','yukata','shiromuku','dress','baby']
 def wmask(img):

@@ -1629,7 +1629,7 @@ function enter(){
     if(H.height)st.height=Math.round(clamp(H.height+rnd(-3,4),168,200));if(fb>=MAKU)st.kgMax+=10;st.kgRate=+(st.kgRate*1.1).toFixed(2);
     st.home=H.home||st.home;addBuff(st,'growth',.1,999,'父の血');
     const mom={osana:()=>addBuff(st,'power',1,999,'母ゆずりの勝負強さ'),reijo:()=>addBuff(st,'money',.2,999,'母の実家の後援会'),eiyo:()=>{addBuff(st,'inj',-.25,999,'母の献立');st.kgRate=+(st.kgRate*1.15).toFixed(2);},
-      imouto:()=>{setFlag(st,'heirImouto');addLog('母・千夏ゆずりの負けん気：勝ち越しをかけた一番に強い（取組の力 +5）。宿敵との取組でも力 +2');},deshi:()=>addBuff(st,'growth',.08,999,'母の励まし')}[H.mom];if(mom)mom();
+      imouto:()=>{setFlag(st,'heirImouto');addLog('母・千夏ゆずりの負けん気：勝ち越しをかけた一番に強い（取組の力 +5）。宿敵との取組でも力 +2');},deshi:()=>addBuff(st,'growth',.08,999,'母の励まし'),kisha:()=>{setFlag(st,'heirKisha');addLog('母・奈央子の取材ノートを受け継いだ：初めて当たる相手との取組で力 +1');}}[H.mom];if(mom)mom();
     if(H.items&&Object.keys(H.items).length){st.items=Object.assign(st.items||{},H.items);addLog('父から、秘伝書を受け継いだ。');}
     st.nisei=true;st.heir={father:H.name,fatherBest:fb,fatherBestName:H.bestName,mom:H.mom,stat:H.stat};
     addLog('父・'+H.name+'（最高位 '+H.bestName+'）の背中を追って入門した。');st.lifeQ=st.lifeQ||[];st.lifeQ.push({kind:'nisei_press'});roster.heir=null;}
@@ -1711,7 +1711,7 @@ function speakerOf(t){const R=st.rom,pn=R&&R.pid?firstName(R.pid):null;
   if(pn&&t.includes(pn)){const im=wImg(R.pid,'exprs',/会えない|さみし|別れ/.test(t)?'sad':/結婚|うれし|誕生/.test(t)?'joycry':'smile');if(im)return{who:'partner',img:im};return{who:'partner',k:PARTNERS[R.pid].k};}
   if(/父/.test(t))return{k:'父'};if(/母/.test(t))return{k:'母'};
   return{img:portrait(st.face,/けが|痛め|負け|悔し|陥落/.test(t)?'lose':/勝ち越し|昇進|優勝|上がった/.test(t)?'happy':'normal',st.pos>=JURYO,128)};}
-const PERSONA={osana:'明るくて世話焼き。泣き虫だったころから、ずっと励ましてくれる',reijo:'おっとりしたお嬢さま。芯が強く、後援会の人たちにも好かれている',eiyo:'食事の管理はおまかせ。体のことになると、ちょっとこわい',imouto:'兄ゆずりの負けず嫌い。兄との取組の日は、どっちを応援するか悩む',deshi:'朝稽古のあと、いつも黙々と手伝っている。笑うと目が細くなる'};
+const PERSONA={kisha:'落ち着いた聞き上手。取材ノートには、誰よりも細かく相撲のことが書いてある',osana:'明るくて世話焼き。泣き虫だったころから、ずっと励ましてくれる',reijo:'おっとりしたお嬢さま。芯が強く、後援会の人たちにも好かれている',eiyo:'食事の管理はおまかせ。体のことになると、ちょっとこわい',imouto:'兄ゆずりの負けず嫌い。兄との取組の日は、どっちを応援するか悩む',deshi:'朝稽古のあと、いつも黙々と手伝っている。笑うと目が細くなる'};
 function openWho(who){const box=$('hWho');if(!box||!who)return;box.innerHTML='';const src=im=>im?(im.src||(im.toDataURL?im.toDataURL():'')):'';
   /* a paged gallery: face close-up, full body, wedding pictures... swipe or tap the arrows */
   const gallery=pages=>{pages=pages.filter(p=>p[1]);const g=document.createElement('div');g.className='wgal';if(!pages.length)return g;let at=0;
@@ -2066,7 +2066,7 @@ function resolve(q,mini,force){
   const o=B.opp,s=B.strat,pa=anim;
   const ostrat=Math.random()<.65?o.style:pick(['oshi','yotsu','waza']);
   const kachi=kachiBout();
-  const D=deckFx();let me=(kachi?5:0)+(st.nisei&&st.niseiBold&&st.b<12&&(st.lstreak||0)>=2?-1.5:0)+(flag('heirImouto')&&o.rival?2:0)+(tsunaTori(st)&&!tsunaOK(st)?-3:0)+(o.rival&&spouse()==='imouto'?2:0)+power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q])+D.power+(q!=='late'?D.tachi+(flag('senseiTachi')?1:0):0)+buff('power');
+  const D=deckFx();let me=(kachi?5:0)+(st.nisei&&st.niseiBold&&st.b<12&&(st.lstreak||0)>=2?-1.5:0)+(flag('heirImouto')&&o.rival?2:0)+(tsunaTori(st)&&!tsunaOK(st)?-3:0)+(o.rival&&spouse()==='imouto'?2:0)+(!(st.h2h||{})[o.name]?(spouse()==='kisha'?2:flag('heirKisha')?1:0):0)+power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q])+D.power+(q!=='late'?D.tachi+(flag('senseiTachi')?1:0):0)+buff('power');
   const op=power(o.stats,o.kg,ostrat,0,0);
   if(BEATS[s]===ostrat)me+=7;else if(BEATS[ostrat]===s)me-=7;
   if(mini!=null)me+=(mini-.5)*14;
@@ -2866,6 +2866,7 @@ const PARTNERS={
   reijo:{k:'綾',name:'後援会長の娘・綾乃',how:'地元後援会の集まりで出会った',fx:'ご祝儀 +20%（ずっと）'},
   eiyo:{k:'真',name:'管理栄養士の真緒',how:'部屋のちゃんこ番を手伝いに来た管理栄養士',fx:'ちゃんこで体重が増えやすく、けがをしにくい'},
   imouto:{k:'千',name:'宿敵の妹・千夏',how:'宿敵が紹介してくれた妹',fx:'宿敵との取組で力 +2'},
+  kisha:{k:'奈',name:'相撲記者の奈央子',how:'新入幕の取材に来た相撲記者',fx:'初めて当たる相手との取組で力 +2（取材ノートの研究）'},
   deshi:{k:'紗',name:'部屋の手伝いの紗季',how:'朝稽古のあと、いつも部屋を手伝っている',fx:'稽古の伸び +10%（ずっと）'},
 };
 /* what she wears depends on the season of the coming basho (Jan..Nov) */
@@ -2884,9 +2885,9 @@ function checkLife(w,l,yusho,endedIdx){
   const R=rom();
   if(flag('secretOsana')&&hasP(st)&&Math.random()<.22+(st.cheatHeat||0)){queueLife('caught');}
   if(!R.stage){if(ageOf(st)<LOVE_AGE)return;
-    const cand=[['osana',(flag('osana')||flag('partner'))&&!flag('osanaFriend')],['reijo',flag('koenkai')],['eiyo',(st.chankoN||0)>=20],['imouto',st.rival&&(st.rival.w||0)>=5],['deshi',(st.trainN||0)>=60]]
+    const cand=[['osana',(flag('osana')||flag('partner'))&&!flag('osanaFriend')],['reijo',flag('koenkai')],['eiyo',(st.chankoN||0)>=20],['imouto',st.rival&&(st.rival.w||0)>=5],['deshi',(st.trainN||0)>=60],['kisha',(st.best||0)>=MAKU]]
       .filter(([k,ok])=>ok&&!R.declined.includes(k));
-    if(cand.length&&Math.random()<.6)queueLife('meet',cand[0][0]);return;}
+    if(cand.length&&Math.random()<.6)queueLife('meet',pick(cand)[0]);return;}
   if(R.stage==='crush'){
     R.aff=clamp(R.aff+(w>l?6:2)+(yusho?10:0),0,100);
     if(st.b>R.metB&&R.aff>=30&&!(R.confCool>st.b))queueLife('confess',R.pid);
@@ -2915,6 +2916,7 @@ function applySpouse(pid){
   if(pid==='reijo')addBuff(st,'money',.2,999,'妻・綾乃の人脈');
   if(pid==='eiyo')addBuff(st,'inj',-.3,999,'妻・真緒の献立');
   if(pid==='deshi')addBuff(st,'growth',.1,999,'妻・紗季の励まし');
+  if(pid==='kisha')addLog('妻・奈央子の取材ノート：初めて当たる相手との取組で力 +2');
 }
 const TANIS=[
   {id:'taisho',name:'ちゃんこ屋「大関」の大将',short:'大将',say:'「あんたの相撲が気に入った。腹いっぱい食わせたる。今度うちの店に来な」',bye:'「最近ちっとも店に顔を出さんな。わしはもう、ほかの若いのを応援するわ」'},
@@ -3019,7 +3021,7 @@ const LIFE={
     ch:[{l:'「横綱を目指します」と宣言する',f:()=>{addBuff(st,'growth',.1,6,'関取の誓い');return['フラッシュが一斉にたかれた。翌朝のスポーツ紙に大きく載った。','十両昇進・1年間、稽古の伸び +10%'];}},
         {l:'両親に電話する',f:()=>{const v=earn(300);if(R&&pd&&R.stage!=='married')R.aff=clamp(R.aff+10,0,100);addBuff(st,'power',1,1,'親孝行');return['電話の向こうで、母が声をつまらせた。父は「よくやった」とだけ言った。','十両昇進・ご祝儀 +'+v+'・次の場所で取組の力 +1'+(pd&&R.stage!=='married'?'・'+pd.name.replace(/^.*[・の]/,'')+'の親密度 +10':'')];}},
         {l:'師匠と兄弟子に頭を下げる',f:()=>{addBuff(st,'inj',-.3,6,'付け人がついた');st.fat=0;return['「ここからが本当の勝負だ」と師匠。付け人もつき、身の回りが楽になった。','十両昇進・疲れが全快・1年間けがをしにくい（−30%）'];}}]};},
-  confess:pid=>{const P=PARTNERS[pid],her=P.name.replace(/^.*[・の]/,''),place={osana:'地元の堤防',reijo:'後援会の帰り道',eiyo:'ちゃんこ屋の閉店後',imouto:'駅までの帰り道',deshi:'稽古場の前'}[pid]||'帰り道';
+  confess:pid=>{const P=PARTNERS[pid],her=P.name.replace(/^.*[・の]/,''),place={osana:'地元の堤防',reijo:'後援会の帰り道',eiyo:'ちゃんこ屋の閉店後',imouto:'駅までの帰り道',deshi:'稽古場の前',kisha:'記者クラブの帰り道'}[pid]||'帰り道';
     const seki=st.pos>=JURYO,yes=aff=>{const R=rom();R.stage='dating';R.aff=aff;R.dateMiss=0;R.dateThis=true;return aff;};
     return{t:'告白',scene:'date',mark:'heart',w:{e:'shy',after:()=>rom().stage==='dating'?(rom().aff>=40?'joycry':'smile'):'worry'},text:'何度も会ううちに、'+her+'のことばかり考えるようになった。'+place+'で二人きりになった。胸の鼓動が、立ち合いの前よりうるさい。',
     ch:[{l:'「好きです。付き合ってください」',f:()=>{const R=rom();if(Math.random()<(seki?.55+R.aff/100:.15+R.aff/200)){yes(40);return[her+'は目を丸くして、それから笑った。「……私も、ずっと待ってた」',her+'と交際を始めた（親密度 40）'];}
