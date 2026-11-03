@@ -3108,7 +3108,7 @@ function drawLifeScene(g,W,H,t,dt){
   if(!kSolo){g.save();g.beginPath();g.arc(two?W*.3:W*.36,H*.52,S*.42,0,6.283);g.fillStyle='#f3eadb';g.fill();g.clip();g.drawImage(pf,(two?W*.3:W*.36)-S*.5,H*.52-S*.45,S,S);g.restore();}
   const pid=st.rom&&st.rom.pid,P=kScene==='tani'?{k:'谷'}:PARTNERS[pid];const cx=kSolo?W*.5:two?W*.7:W*.64,cy=H*.52,r=S*.42;
   const wp=kScene!=='tani'&&kW&&kW.pid,defLook=st.rom&&st.rom.stage==='married'?'casual':'date',lk=kW&&(kW.look||(kScene==='date'?defLook:null)),full=wp&&lk&&wImg(wp,'looks',lk),bust=wp&&!full&&wImg(wp,'exprs',kW.e),bub=wp&&full&&!kW.look&&wImg(wp,'exprs',kW.e);
-  if(full){const h=H*.9,w=h*full.naturalWidth/full.naturalHeight,cw=Math.max(w*1.18,h*.5),ch=H*.96;paperCard(g,cx-cw/2,H*.02,cw,ch);g.fillStyle='rgba(0,0,0,.12)';g.beginPath();g.ellipse(cx,H*.935,w*.4,H*.018,0,0,6.283);g.fill();g.drawImage(full,cx-w/2,H*.94-h,w,h);
+  if(full){const h=H*.9,w=h*full.naturalWidth/full.naturalHeight,cw=w*1.28,ch=H*.96;paperCard(g,cx-cw/2,H*.02,cw,ch);g.fillStyle='rgba(0,0,0,.12)';g.beginPath();g.ellipse(cx,H*.935,w*.4,H*.018,0,0,6.283);g.fill();g.drawImage(full,cx-w/2,H*.94-h,w,h);
     if(bub){const br=H*.17,bx=W-br-10,by=br+12;g.save();g.beginPath();g.arc(bx,by,br,0,6.283);g.fillStyle='#fffaf0';g.fill();g.clip();const bw=br*2.3,bh=bw*bub.naturalHeight/bub.naturalWidth;g.drawImage(bub,bx-bw/2,by+br*1.05-bh,bw,bh);g.restore();g.strokeStyle='#c9707f';g.lineWidth=2.5;g.beginPath();g.arc(bx,by,br,0,6.283);g.stroke();}}
   else{g.fillStyle=wed?'#fffaf0':'#f7e6ea';g.beginPath();g.arc(cx,cy,r,0,6.283);g.fill();
     if(bust){g.save();g.beginPath();g.arc(cx,cy,r,0,6.283);g.clip();const bw=r*2.25,bh=bw*bust.naturalHeight/bust.naturalWidth;g.drawImage(bust,cx-bw/2,cy+r*1.02-bh,bw,bh);g.restore();}
