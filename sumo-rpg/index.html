@@ -1042,7 +1042,9 @@ const okImg=im=>im&&im.complete&&im.naturalWidth>0?im:null;
 function wImg(pid,kind,key){const o=WIMG[pid];return o?okImg(o[kind][key])||(kind==='exprs'?okImg(o.exprs.normal):null):null;}
 const EXMAP={blink:'blink',sleep:'blink',happy:'happy',win:'happy',lose:'lose',strain:'strain',surprise:'surprise',normal:'normal'};
 function aiReady(F){const o=F&&F.img&&AIF[F.img];return o&&o.img.complete&&o.img.naturalWidth>0?o:null;}
-const ZAN_F=new WeakSet(); // faces of first-year rikishi drawn outside their own career (title list)
+const ZAN_F=new WeakSet(); // throwaway face copies that must be drawn with zanbara hair
+// the title list draws a first-year rikishi with zanbara: mark a copy, never the rikishi's own face object
+const listFace=s=>{if(!(s.b<6&&s.pos<JURYO&&s.face))return s.face;const c={...s.face};ZAN_F.add(c);return c;};
 function isZan(F){if(cur==='sCreate'&&F===draftFace)return true;if(F&&ZAN_F.has(F))return true;return !!(st&&st.b<6&&st.pos<JURYO&&(F===st.face||(st.rival&&F===st.rival.face)));}
 /* the illustrated faces were drawn at slightly different sizes; [eyeY, eye-to-chin] in the
    256px source, so every portrait is rescaled to eyes near 110 and an ~80px eye-to-chin face */
@@ -1394,14 +1396,14 @@ function castArtReady(){for(const id of castIds()){const o=AIF[id];if(!o||!o.img
 function refreshTitleFaces(){
   // art may still be loading on the first paint; redraw the faces once it has arrived
   if(cur!=='sTitle')return;if(!castArtReady()){if(titleWait++<60)setTimeout(refreshTitleFaces,250);return;}titleWait=0;
-  document.querySelectorAll('#roster img[data-rk]').forEach(im=>{const s=roster.list[im.dataset.rk];if(s&&s.b<6&&s.pos<JURYO&&s.face)ZAN_F.add(s.face);if(s)try{im.src=portrait(s.face,'normal',s.pos>=JURYO,160).toDataURL();}catch(e){}});
+  document.querySelectorAll('#roster img[data-rk]').forEach(im=>{const s=roster.list[im.dataset.rk];if(s)try{im.src=portrait(listFace(s),'normal',s.pos>=JURYO,160).toDataURL();}catch(e){}});
   document.querySelectorAll('img[data-hall]').forEach(im=>{const h=roster.hall[+im.dataset.hall];if(h)try{im.src=portrait(h.face,'normal',h.oicho,96).toDataURL();}catch(e){}});}
 function renderTitle(){
   setTimeout(refreshTitleFaces,0);loadRoster();sndUI();const box=$('roster');box.innerHTML='';
   const ids=Object.keys(roster.list).sort((a,b)=>(roster.list[b].touched||0)-(roster.list[a].touched||0));
   $('rosterLabel').hidden=!ids.length;
   for(const id of ids){const s=roster.list[id],card=document.createElement('div');card.className='washi rk-card'+(id===roster.active?' active':'');
-    if(s.b<6&&s.pos<JURYO&&s.face)ZAN_F.add(s.face);const img=document.createElement('img');img.alt=s.name+'の顔';img.dataset.rk=id;try{img.src=portrait(s.face,'normal',s.pos>=JURYO,160).toDataURL();}catch(e){}
+    const img=document.createElement('img');img.alt=s.name+'の顔';img.dataset.rk=id;try{img.src=portrait(listFace(s),'normal',s.pos>=JURYO,160).toDataURL();}catch(e){}
     const info=document.createElement('div');info.style.minWidth='0';
     const nm=document.createElement('div');nm.className='nm';nm.textContent=s.name;
     const rk=document.createElement('div');rk.className='rk';rk.textContent=s.maezumo?'前相撲':side(s.pos)+' '+rank(s.pos).name+(s.pos===YOKO?'':'');
