@@ -50,7 +50,7 @@ const X={
   // home
   '東':'East','西':'West','体と技':'Body & skills','？ 遊び方':'? How to play','遊び方を見る':'How to play','本場所へ':'To the basho','星取':'Record','記録':'History','カード':'Cards','ガチャ':'Gacha','力士':'Rikishi','道具':'Items','オート':'Auto',
   '閉じる':'Close','部屋の話':'Stable news','実績':'Achievements','付けたカードの効果が、稽古と取組に効く（3枚まで）。':'Equipped cards boost training and bouts (up to 3).','いま効いている出来事':'Active effects','最高位':'Best rank','あなたの力士':'Your rikishi',
-  '音を鳴らす':'Sound on','BGMと効果音（スマホは画面を一度タップすると鳴り始めます）':'Music & effects (on phones, tap the screen once to start)','BGMの音量':'Music volume','効果音の音量':'Effects volume','音の設定':'Sound','音のオンオフ':'Sound on/off','タップで音が鳴る':'Tap for sound','音 ON':'Sound ON','音 OFF':'Sound OFF',
+  '音を鳴らす':'Sound on','BGMと効果音（スマホは画面を一度タップすると鳴り始めます）':'Music & effects (on phones, tap the screen once to start)','BGMの音量':'Music volume','効果音の音量':'Effects volume','音の設定':'Sound','音・言語の設定':'Sound & language','音のオンオフ':'Sound on/off','タップで音が鳴る':'Tap for sound','音 ON':'Sound ON','音 OFF':'Sound OFF',
   'オートで育成を進めます。止めたいタイミングを選んでください（いくつでも）。':'Auto plays for you. Choose when it should stop (any number).','昇進したら':'On promotion','優勝したら':'On a championship','恋愛・結婚':'Romance','告白・プロポーズなど':'Confessions, proposals…','全イベント':'Every event','タニマチ・教習所も':'Patrons, school too','年末の帰省':'Year-end trip home','けがをしたら':'On injury','場所数で止める':'Stop after','1場所':'1 basho','3場所':'3 basho','1年':'1 year','この設定でオート開始':'Start auto','オート中':'Auto','ふつう':'Normal','速い':'Fast','停止':'Stop','スキップ':'Skip','次へ':'Next','続ける':'Continue','はじめる':'Start',
   '道具は、ガチャで引いた力士本人の持ち物。使うとこの力士の能力が上がる。引退すると消える（二代目の息子には受け継がれる）。':'Items belong to the rikishi who drew them. Using one raises his stats. They vanish when he retires (his son inherits them).',
   '道具はまだない。ご祝儀ガチャで「秘伝書」「極意書」が出ることがある。':'No items yet. Secret and master scrolls can come from the prize-money gacha.',
@@ -213,7 +213,7 @@ const R=[
 /* ---------- main ---------- */
 const cache=new Map();
 function tr(s,ctx){if(s==null)return s;s=String(s);if(!J.test(s))return s;
-  if(s.trim().length===1)return ctx==='stat'&&G[s.trim()]?G[s.trim()]:s; // single kanji: icons, except the stat names
+  if(s.trim().length===1){const k=s.trim();return k==='東'||k==='西'?s.replace(k,X[k]):ctx==='stat'&&G[k]?G[k]:s;} // single kanji are icons, except East/West and the stat names
   const c=cache.get(s);if(c!==undefined)return c;
   const lead=s.match(/^\s*/)[0],trail=s.match(/\s*$/)[0],core=s.trim();let out=null;
   if(X[core]!=null)out=X[core];
