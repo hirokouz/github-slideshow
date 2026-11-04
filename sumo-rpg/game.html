@@ -2126,7 +2126,7 @@ function resolve(q,mini,force){
     if(o.pos>=OZEKI)B.beatTop=true;if(s==='waza')B.wazaWins=(B.wazaWins||0)+1;
     if(o.pos===YOKO&&st.pos>=MAKU&&st.pos<KOMU){st.kinboshi=(st.kinboshi||0)+1;B.earn+=earn(100);toast(Tj('金星！ 横綱を破った（ご祝儀 +100）'));}
     if(o.rival){st.rival.w=(st.rival.w||0)+1;B.earn+=earn(50);if(B.kessen){B.kessenR=true;st.kessenWin=(st.kessenWin||0)+1;}else toast(Tj('宿敵 ')+o.name+Tj(' に勝った！'));}
-    {const SM={30:Tj('30連勝！'),50:Tj('50連勝！ 記者が部屋に押しかけている'),63:Tj('63連勝！ 歴代2位の記録に並んだ'),69:Tj('69連勝！ 双葉山の不滅の大記録に並んだ'),70:Tj('70連勝！ ついに双葉山の69連勝を超えた！')}[st.streak];if(SM){toast(SM);addLog(SM);}}}
+    {const SM={30:Tj('30連勝！'),50:Tj('50連勝！ 記者が部屋に押しかけている'),63:Tj('63連勝！ 歴代2位の記録に並んだ'),69:Tj('69連勝！ 不滅といわれた史上最多の連勝記録に並んだ'),70:Tj('70連勝！ ついに史上最多の連勝記録を塗り替えた！')}[st.streak];if(SM){toast(SM);addLog(SM);}}}
   else{B.l++;B.marks+='●';if(st.streak>=20)addLog(st.streak+Tj('連勝で止まった。'));st.streak=0;if(o.rival){st.rival.l=(st.rival.l||0)+1;if(B.kessen)B.kessenR=false;}}B.day++;
   if(!st.h2h)st.h2h={};const hh=st.h2h[o.name]||(st.h2h[o.name]={w:0,l:0});win?hh.w++:hh.l++;{const ks=Object.keys(st.h2h);if(ks.length>300)delete st.h2h[ks[0]];}
   if(!B.rec)B.rec=[];B.rec.push({w:win,opp:o.name,km});
@@ -2681,7 +2681,7 @@ const ACH=[
   {id:'oyakoYoko',n:'親子横綱',  d:'父も子も横綱になる',       r:2000,c:s=>!!(s.nisei&&s.heir&&s.heir.fatherBest>=YOKO&&(s.best||0)>=YOKO)},
   {id:'renpa3', n:'三連覇',     d:'幕内優勝3連覇',            r:1000,c:s=>renpa(s)>=3},
   {id:'kessen', n:'横綱決戦',   d:'千秋楽の横綱決戦で宿敵に勝つ', r:1000,c:s=>(s.kessenWin||0)>=1},
-  {id:'st69',   n:'不滅の記録', d:'70連勝する（双葉山超え）',  r:3000,c:s=>(s.bestStreak||0)>=70},
+  {id:'st69',   n:'不滅の記録', d:'70連勝する（史上最多の連勝記録を更新）',  r:3000,c:s=>(s.bestStreak||0)>=70},
   {id:'y46',    n:'史上最多',   d:'幕内優勝46回',              r:5000,c:s=>s.makuYusho>=46},
   {id:'rival10',n:'宿命の対決', d:'宿敵に通算10勝',          r:300, c:s=>(s.rival&&s.rival.w||0)>=10},
   {id:'oyakata',n:'親方',       d:'幕内経験のある力士を引退させて親方にする',r:300,c:()=>roster.hall.some(h=>h.path==='親方'||h.path==='二代目を送り出す'&&h.bestPos>=MAKU)},
@@ -3042,7 +3042,7 @@ const LIFE={
     text:Tj('宿敵・')+Rv.name+Tj('の横綱昇進が決まった。入門した日に同じ土俵で向き合ったふたりが、東西の横綱に並ぶ。\n伝達式のあと、電話が鳴った。\n「やっと追いついたぞ。これからは毎場所、千秋楽の結びで待ってる」'),
     ch:[{l:Tj('「望むところだ」'),f:()=>{addBuff(st,'power',1,3,Tj('東西横綱'));return[Tj('電話の向こうで、宿敵が笑った。'),Tj('半年間、取組の力 +1・千秋楽に横綱決戦')];}},
         {l:Tj('「綱の重さは、おれのほうが知っている」'),f:()=>{addBuff(st,'growth',.1,3,Tj('先輩横綱の意地'));Rv.edge=(Rv.edge||0)+.3;return[Tj('「言ってくれるじゃないか」宿敵の声に熱がこもった。'),Tj('半年間、稽古の伸び +10%・宿敵も燃えている')];}}]};},
-  record:arg=>{const n=+arg,T={10:[Tj('優勝10回'),Tj('幕内優勝10回。新聞は「大横綱の仲間入り」と大きく書いた。')],20:[Tj('優勝20回'),Tj('幕内優勝20回。歴代でも、数えるほどしかいない領域だ。')],32:[Tj('優勝32回'),Tj('幕内優勝32回。昭和の大横綱・大鵬に並んだ。')],45:[Tj('史上最多に並ぶ'),Tj('幕内優勝45回。史上最多・白鵬の記録に並んだ！ 国技館が総立ちになった。')],46:[Tj('史上最多 更新'),Tj('幕内優勝46回。ついに史上最多記録を更新した！ 相撲の歴史に名前が刻まれた。')]}[n]||[Tj('優勝')+n+Tj('回'),Tj('幕内優勝')+n+Tj('回。')];
+  record:arg=>{const n=+arg,T={10:[Tj('優勝10回'),Tj('幕内優勝10回。新聞は「大横綱の仲間入り」と大きく書いた。')],20:[Tj('優勝20回'),Tj('幕内優勝20回。歴代でも、数えるほどしかいない領域だ。')],32:[Tj('優勝32回'),Tj('幕内優勝32回。昭和の伝説の大横綱に並ぶ数字だ。')],45:[Tj('史上最多に並ぶ'),Tj('幕内優勝45回。史上最多の記録に並んだ！ 国技館が総立ちになった。')],46:[Tj('史上最多 更新'),Tj('幕内優勝46回。ついに史上最多記録を更新した！ 相撲の歴史に名前が刻まれた。')]}[n]||[Tj('優勝')+n+Tj('回'),Tj('幕内優勝')+n+Tj('回。')];
     return{t:T[0],kt:Tj('記録'),scene:'juryo',banner:T[0],text:T[1]+Tj('\n記者「次の目標は？」'),
     ch:[{l:Tj('「記録より、一番一番です」'),f:()=>{addBuff(st,'power',1,3,Tj('一番一番'));return[Tj('謙虚な言葉に、拍手が起きた。'),Tj('半年間、取組の力 +1')];}},
         {l:Tj('「まだまだ勝ち続けます」'),f:()=>{addBuff(st,'growth',.12,3,Tj('記録への挑戦'));const v=earn(300);return[Tj('翌朝のスポーツ紙は一面だった。'),Tj('半年間、稽古の伸び +12%・ご祝儀 +')+v];}}]};},

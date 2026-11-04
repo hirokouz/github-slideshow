@@ -553,9 +553,7 @@ window.I18N_EN=window.I18N_EN||{};window.I18N_EN.S={
 "優勝20回": "20 titles",
 "幕内優勝20回。歴代でも、数えるほどしかいない領域だ。": "20 Makuuchi titles. Only a handful in history have reached this.",
 "優勝32回": "32 titles",
-"幕内優勝32回。昭和の大横綱・大鵬に並んだ。": "32 Makuuchi titles. Level with Taihō, the great Yokozuna of the Shōwa era.",
 "史上最多に並ぶ": "Level with the record",
-"幕内優勝45回。史上最多・白鵬の記録に並んだ！ 国技館が総立ちになった。": "45 Makuuchi titles. Level with Hakuhō's all-time record! The Kokugikan rose to its feet.",
 "史上最多 更新": "New all-time record",
 "幕内優勝46回。ついに史上最多記録を更新した！ 相撲の歴史に名前が刻まれた。": "46 Makuuchi titles. He has finally broken the all-time record! His name is written into sumo history.",
 "回。": " titles.",
@@ -1074,5 +1072,10 @@ window.I18N_EN=window.I18N_EN||{};window.I18N_EN.S={
 "人のデータです。いまのデータは上書きされて消えます。よければもう一度押してください。": " rikishi. Your current data will be overwritten. Tap again to confirm.",
 "読み込みました。再読み込みします…": "Loaded. Reloading…",
 "このブラウザではコードを読めません。新しいブラウザで開いてください。": "This browser can't read the code. Please open it in an up-to-date browser.",
-"引き継ぎコードが正しくありません。全部コピーできているか確かめてください。": "That transfer code isn't valid. Check that you copied all of it."
+"引き継ぎコードが正しくありません。全部コピーできているか確かめてください。": "That transfer code isn't valid. Check that you copied all of it.",
+"69連勝！ 不滅といわれた史上最多の連勝記録に並んだ": "69 straight wins! Level with the \"unbreakable\" all-time winning streak",
+"70連勝！ ついに史上最多の連勝記録を塗り替えた！": "70 straight wins! A new all-time winning-streak record!",
+"70連勝する（史上最多の連勝記録を更新）": "Win 70 in a row (a new all-time streak record)",
+"幕内優勝32回。昭和の伝説の大横綱に並ぶ数字だ。": "32 Makuuchi titles — the mark of a legendary Shōwa-era Yokozuna.",
+"幕内優勝45回。史上最多の記録に並んだ！ 国技館が総立ちになった。": "45 Makuuchi titles. Level with the all-time record! The Kokugikan rose to its feet."
 };
