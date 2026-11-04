@@ -1062,5 +1062,17 @@ window.I18N_EN=window.I18N_EN||{};window.I18N_EN.S={
 "ふつう": "medium",
 "やや小": "fairly low",
 "小": "low",
-"はいいぞ！」　": " is looking good!\"  "
+"はいいぞ！」　": " is looking good!\"  ",
+"コピーしました（": "Copied (",
+"文字）。LINEやメモに貼って、新しい端末で読み込んでください。": " characters). Paste it into a message or note and load it on the new device.",
+"下の欄にコードを出しました。長押しで全部選んでコピーしてください。": "The code is in the box below. Long-press, select all and copy it.",
+"コードを作れませんでした。": "Couldn't create the code.",
+"ファイル「": "Saved to \"",
+"」に保存しました。": "\".",
+"保存できませんでした。": "Couldn't save.",
+"力士 ": "Data for ",
+"人のデータです。いまのデータは上書きされて消えます。よければもう一度押してください。": " rikishi. Your current data will be overwritten. Tap again to confirm.",
+"読み込みました。再読み込みします…": "Loaded. Reloading…",
+"このブラウザではコードを読めません。新しいブラウザで開いてください。": "This browser can't read the code. Please open it in an up-to-date browser.",
+"引き継ぎコードが正しくありません。全部コピーできているか確かめてください。": "That transfer code isn't valid. Check that you copied all of it."
 };

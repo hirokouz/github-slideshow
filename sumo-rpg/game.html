@@ -409,6 +409,9 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 .hrec .hm{margin-left:auto;font-size:12px;color:var(--kin);flex:none}
 .recseg{display:grid;grid-template-columns:repeat(2,1fr);gap:4px}.recseg button{padding:7px 4px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--shiro);font-size:13px;font-weight:700}.recseg button.on{background:var(--kin);color:#2a1700;border-color:var(--kin)}
 .heirnote{margin:0;font-size:12.5px;font-weight:700;color:#7a1f1f;background:linear-gradient(90deg,rgba(226,176,74,.35),rgba(226,176,74,0));padding:4px 8px;border-left:3px solid #c9932c;border-radius:2px}
+.xfer{display:grid;gap:8px;margin-top:10px}.xfer p.muted{font-size:12.5px;margin:0}.xfer .label{margin:4px 0 0}.xrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.xrow button{font-size:13px;padding:10px 6px}
+#xIn{width:100%;box-sizing:border-box;font-size:12px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--shiro);padding:8px;resize:vertical;font-family:ui-monospace,monospace}
+.xmsg{font-size:12.5px;margin:0;min-height:1.2em;color:var(--kin)}.xmsg.err{color:#ff8a7a}.xrow button.armed{background:#9a2b25;color:#fff;border-color:#9a2b25}
 .resetbtn{font-size:12px;padding:8px;color:#d98a7f;border-color:rgba(217,138,127,.5)}.resetbtn.armed{background:#9a2b25;color:#fff;border-color:#9a2b25}
 .tbars{display:inline-flex;gap:2px}.tbars i{width:9px;height:12px;border-radius:2px;border:1.5px solid #8a6d3b;background:transparent}.tbars i.used{background:linear-gradient(#e2b04a,#b07d22);border-color:#b07d22}
 .turns{row-gap:6px;padding-bottom:2px}.turns .itembtn{margin-left:auto}
@@ -501,6 +504,17 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
     <div class="row" style="justify-content:space-between"><span class="purse">ご祝儀<b id="tMoney">0</b></span><button class="ghost" id="tGacha" style="width:auto">ご祝儀ガチャ</button></div>
     <div class="panel"><details class="more"><summary><span class="label">殿堂（引退した力士たち）</span><span class="muted" style="font-size:12px" id="tPrestige"></span></summary><div class="hall" id="tHall" style="margin-top:10px"></div></details></div>
     <div class="panel"><details class="more"><summary><span class="label">実績（部屋の歴代）</span><span class="muted" style="font-size:12px" id="tAchN"></span></summary><div class="achs" id="tAch" style="margin-top:10px"></div></details></div>
+    <div class="panel"><details class="more" id="xferBox"><summary><span class="label">データの引き継ぎ（機種変更）</span></summary>
+      <div class="xfer">
+        <p class="muted">保存データはこのブラウザの中だけにあります。別のスマホやブラウザで続きを遊ぶときは、ここで「引き継ぎコード」を作って、新しいほうで読み込んでください。</p>
+        <p class="label">この端末のデータを出す</p>
+        <div class="xrow"><button type="button" class="ghost" id="xCopy">コードをコピー</button><button type="button" class="ghost" id="xSave">ファイルに保存</button></div>
+        <p class="label">ほかの端末のデータを読み込む</p>
+        <textarea id="xIn" rows="3" placeholder="ここに引き継ぎコードを貼り付け" aria-label="引き継ぎコード"></textarea>
+        <div class="xrow"><button type="button" class="ghost" id="xLoad">コードから読み込む</button><button type="button" class="ghost" id="xFile">ファイルから読み込む</button></div>
+        <input type="file" id="xFileIn" accept=".txt,text/plain" hidden>
+        <p class="xmsg" id="xMsg" aria-live="polite"></p>
+      </div></details></div>
     <button type="button" class="ghost resetbtn" id="resetBtn">データをすべて消して最初から</button>
     <p class="muted" style="font-size:12.5px;text-align:center">稽古は1場所ごとに5回。幕下以下は7番、十両から上は15番。勝ち越せば番付が上がる。</p>
   </section>
@@ -3381,6 +3395,35 @@ function autoStep(){
 }
 $('autoBtn').addEventListener('click',()=>{if(autoGrow)autoStop(Tj('オート成長を止めました'));else openAutoCfg();});
 $('autoGo').addEventListener('click',startAutoFromCfg);
+/* ---------- save transfer: the whole stable as one text code (deflate + base64url) ---------- */
+{const PRE='YKZ1.',PRE0='YKZ0.',msg=(t,err)=>{const m=$('xMsg');m.textContent=t;m.classList.toggle('err',!!err);};
+  const b64=u8=>{let s='';for(let i=0;i<u8.length;i+=0x8000)s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');};
+  const unb64=t=>{t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';const s=atob(t),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u;};
+  const pipe=async(u8,stream)=>new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(stream)).arrayBuffer());
+  async function makeCode(){if(st&&roster.list[st.id])persist();saveRoster();
+    const data={v:1,at:Date.now(),roster:JSON.parse(localStorage.getItem(ROSTER_KEY)||'null')||roster,lang:LANG};
+    const raw=new TextEncoder().encode(JSON.stringify(data));
+    if(typeof CompressionStream!=='undefined'){try{return PRE+b64(await pipe(raw,new CompressionStream('deflate-raw')));}catch(e){}}
+    return PRE0+b64(raw);}
+  async function readCode(t){t=(t||'').replace(/\s+/g,'');const i=t.indexOf('YKZ');if(i<0)throw new Error('code');t=t.slice(i);
+    let raw;if(t.startsWith(PRE)){if(typeof DecompressionStream==='undefined')throw new Error('browser');raw=await pipe(unb64(t.slice(PRE.length)),new DecompressionStream('deflate-raw'));}
+    else if(t.startsWith(PRE0))raw=unb64(t.slice(PRE0.length));else throw new Error('code');
+    const d=JSON.parse(new TextDecoder().decode(raw));if(!d||!d.roster||typeof d.roster.list!=='object')throw new Error('code');return d;}
+  const count=r=>Object.keys(r.list||{}).length;
+  $('xCopy').addEventListener('click',async()=>{try{const c=await makeCode();let ok=false;try{await navigator.clipboard.writeText(c);ok=true;}catch(e){}
+      if(!ok){const ta=$('xIn');ta.value=c;ta.focus();ta.select();try{ok=document.execCommand('copy');}catch(e){}}
+      msg(ok?Tj('コピーしました（')+c.length+Tj('文字）。LINEやメモに貼って、新しい端末で読み込んでください。'):Tj('下の欄にコードを出しました。長押しで全部選んでコピーしてください。'));}catch(e){msg(Tj('コードを作れませんでした。'),true);}});
+  $('xSave').addEventListener('click',async()=>{try{const c=await makeCode(),d=new Date(),n='yokozuna-save-'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'.txt';
+      const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/plain'}));a.download=n;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);msg(Tj('ファイル「')+n+Tj('」に保存しました。'));}catch(e){msg(Tj('保存できませんでした。'),true);}});
+  let pend=null,armT=null;
+  async function load(text,btn){try{const d=await readCode(text);
+      if(count(roster)&&pend!==text){pend=text;btn.classList.add('armed');msg(Tj('力士 ')+count(d.roster)+Tj('人のデータです。いまのデータは上書きされて消えます。よければもう一度押してください。'));clearTimeout(armT);armT=setTimeout(()=>{pend=null;btn.classList.remove('armed');},8000);return;}
+      localStorage.setItem(ROSTER_KEY,JSON.stringify(d.roster));localStorage.removeItem(KEY);if(d.lang)localStorage.setItem('sumo-rpg-lang',d.lang);
+      msg(Tj('読み込みました。再読み込みします…'));setTimeout(()=>location.reload(),600);}
+    catch(e){msg(e.message==='browser'?Tj('このブラウザではコードを読めません。新しいブラウザで開いてください。'):Tj('引き継ぎコードが正しくありません。全部コピーできているか確かめてください。'),true);}}
+  $('xLoad').addEventListener('click',()=>load($('xIn').value,$('xLoad')));
+  $('xFile').addEventListener('click',()=>$('xFileIn').click());
+  $('xFileIn').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const t=await f.text();e.target.value='';load(t,$('xFile'));});}
 {const rb=$('resetBtn');let step=0,tm=null;rb.addEventListener('click',()=>{clearTimeout(tm);step++;
   if(step===1){rb.classList.add('armed');rb.textContent=Tj('本当に消す？ 力士・ご祝儀・カード・実績がすべて消える（もう一度押す）');tm=setTimeout(()=>{step=0;rb.classList.remove('armed');rb.textContent=Tj('データをすべて消して最初から');},5000);return;}
   try{localStorage.removeItem(ROSTER_KEY);localStorage.removeItem(KEY);}catch(e){}location.reload();});}

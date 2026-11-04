@@ -38,6 +38,8 @@ const X={
   '横綱への道':'Road to Yokozuna','序ノ口の新弟子から、稽古と本場所で番付を上げていく。':'Start as a Jonokuchi recruit and climb the banzuke through training and tournaments.','めざすは綱を締めるその日。':'Aim for the day you tie the rope.',
   '部屋の力士':'Rikishi in the stable','新弟子として入門する':'Join as a new recruit','新しい力士を入門させる':'Recruit a new rikishi','ご祝儀':'Prize money','ご祝儀ガチャ':'Prize-money gacha','殿堂（引退した力士たち）':'Hall of fame (retired rikishi)',
   '実績（部屋の歴代）':'Achievements (all-time)','データをすべて消して最初から':'Erase all data and start over','稽古は1場所ごとに5回。幕下以下は7番、十両から上は15番。勝ち越せば番付が上がる。':'5 training sessions per basho. 7 bouts up to Makushita, 15 from Jūryō. A winning record moves you up.',
+  'データの引き継ぎ（機種変更）':'Transfer data (new device)','保存データはこのブラウザの中だけにあります。別のスマホやブラウザで続きを遊ぶときは、ここで「引き継ぎコード」を作って、新しいほうで読み込んでください。':'Your save lives only in this browser. To continue on another phone or browser, create a transfer code here and load it on the new one.',
+  'この端末のデータを出す':'Export this device\'s data','コードをコピー':'Copy code','ファイルに保存':'Save to file','ほかの端末のデータを読み込む':'Load data from another device','ここに引き継ぎコードを貼り付け':'Paste a transfer code here','引き継ぎコード':'Transfer code','コードから読み込む':'Load from code','ファイルから読み込む':'Load from file',
   'まだいない。幕内まで上がった力士は、引退すると親方になって部屋の格が上がる。':'None yet. A rikishi who reached Makuuchi becomes a stablemaster on retiring and raises the stable\'s standing.',
   '入門届　しこ名':'Entry form — Shikona','おまかせ':'Random','力士を選ぶ（新弟子）':'Choose your rikishi','イラストから選ぶ':'Pick an illustration','パーツで作る':'Build from parts','入門の年齢':'Age at entry',
   '15歳':'15','中学卒業':'After junior high','18歳':'18','高校卒業':'After high school','22歳':'22','大学卒業':'After university','体つき':'Build','押し相撲':'Pusher','四つ相撲':'Belt fighter','技能派':'Technician','入門する':'Join the stable',
