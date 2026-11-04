@@ -99,9 +99,11 @@ input[type=text]{width:100%;box-sizing:border-box;background:#fffaf0;color:var(-
 .stats{display:grid;gap:9px}
 .stat{display:grid;grid-template-columns:3.6em 1fr 3.4em;gap:10px;align-items:center;font-size:13px}
 .stat .n{font-family:var(--f-mincho);font-weight:800}
+/* English: headings use a Latin brush font (kanji icons fall back to Yuji Boku) */
+html[lang=en]{--f-brush:"Kaushan Script","Yuji Boku","Hiragino Mincho ProN","Yu Mincho",serif}
 html[lang=en] .stat{grid-template-columns:4.6em 1fr 3.4em;gap:8px}
 /* English: vertical name plates read sideways in Latin letters, so set them horizontally and smaller */
-html[lang=en] .vplate{writing-mode:horizontal-tb;font-size:13px;min-height:0;line-height:1.2;padding:2px 0;max-width:7em;white-space:normal}html[lang=en] .rside{min-width:0}html[lang=en] .rbz .change{gap:4px;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}html[lang=en] .rbz .vplate .dvb{font-size:9.5px;padding:0 4px}html[lang=en] .rbz .vplate{font-size:11px;font-family:var(--f-mincho);font-weight:800;overflow-wrap:normal;word-break:normal;max-width:100%;text-align:center}html[lang=en] .rbz .vplate>*{display:block;white-space:normal}html[lang=en] .rbz .mv{overflow-wrap:anywhere}html[lang=en] .rside .hoshi{display:flex;flex-wrap:wrap;gap:1px 0}html[lang=en] .rbz .mv{font-size:14px}html[lang=en] #rBig.result-big{font-size:22px;line-height:1.1;overflow-wrap:anywhere}html[lang=en] .stat .n{letter-spacing:0}
+html[lang=en] .vplate{writing-mode:horizontal-tb;font-size:13px;min-height:0;line-height:1.2;padding:2px 0;max-width:7em;white-space:normal}html[lang=en] .rside{min-width:0}html[lang=en] .rbz .change{gap:4px;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}html[lang=en] .rbz .vplate .dvb{font-size:9.5px;padding:0 4px}html[lang=en] .rbz .vplate{font-size:11px;font-family:var(--f-mincho);font-weight:800;overflow-wrap:normal;word-break:normal;max-width:100%;text-align:center}html[lang=en] .rbz .vplate>*{display:block;white-space:normal}html[lang=en] .rbz .mv{overflow-wrap:anywhere}html[lang=en] .rside .hoshi{display:flex;flex-wrap:wrap;gap:1px 0}html[lang=en] .rbz .mv{font-size:14px}html[lang=en] #rBig.result-big{font-size:26px;line-height:1.1;overflow-wrap:anywhere}html[lang=en] .stat .n{letter-spacing:0}
 .bar{height:10px;background:rgba(0,0,0,.35);border-radius:5px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.5)}
 .bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#9b6a35,var(--tsuchi),#e3b57a);transition:width .5s ease}
 .bar.fat i{background:linear-gradient(90deg,#7c1d18,#d2463f)}
@@ -726,7 +728,10 @@ const EN=LANG==='en'&&window.I18N_EN?window.I18N_EN:null;
 /* Tj(): story & message text. Japanese mode returns the text as is; English mode looks it up in en2.js (I18N_EN.S) */
 const Tj=EN?(x=>(EN.S&&EN.S[x]!=null)?EN.S[x]:x):(x=>x);
 if(EN){document.documentElement.lang='en';document.title=EN.tr(document.title);
-  const C=CanvasRenderingContext2D.prototype;for(const k of ['fillText','strokeText','measureText']){const f=C[k];C[k]=function(t,...a){return f.call(this,EN.tr(t),...a);};}
+  {const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap';document.head.append(l);}
+  const C=CanvasRenderingContext2D.prototype;
+  {const fd=Object.getOwnPropertyDescriptor(C,'font');if(fd&&fd.set)Object.defineProperty(C,'font',{configurable:true,get(){return fd.get.call(this);},set(v){fd.set.call(this,String(v).replace(/"Yuji Boku"/g,'"Kaushan Script","Yuji Boku"'));}});}
+  for(const k of ['fillText','strokeText','measureText']){const f=C[k];C[k]=function(t,...a){return f.call(this,EN.tr(t),...a);};}
   const AT=['aria-label','title','placeholder'];
   const fix=n=>{if(n.nodeType===3){const v=n.nodeValue,t=EN.tr(v,n.parentElement&&n.parentElement.closest('.stat')?'stat':'');if(t!==v)n.nodeValue=t;return;}if(n.nodeType!==1||n.tagName==='SCRIPT'||n.tagName==='STYLE')return;
     for(const a of AT){const v=n.getAttribute&&n.getAttribute(a);if(v){const t=EN.tr(v);if(t!==v)n.setAttribute(a,t);}}

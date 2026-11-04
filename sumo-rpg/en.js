@@ -155,6 +155,7 @@ function gloss(s){
 const RK=r=>gloss(r);
 const R=[
   [/^入門(\d+)年目$/,m=>'Year '+m[1]],
+  [/^([▲▼]) (\d+)枚(上昇|下降)$/,m=>m[1]+' '+m[2]+(m[2]==='1'?' rank ':' ranks ')+(m[3]==='上昇'?'up':'down')],
   [/^([○●]) (.+)の勝ち　(.+)$/,m=>m[1]+' '+(nameEN(m[2])||m[2])+' wins · '+tr(m[3])],
   [/^([○●]) (.+)の勝ち$/,m=>m[1]+' '+(nameEN(m[2])||m[2])+' wins'],
   [/^(\d+)歳・入門(\d+)年目・(\d+)勝(\d+)敗$/,m=>'Age '+m[1]+' · Year '+m[2]+' · '+m[3]+'–'+m[4]],
@@ -239,7 +240,7 @@ function mixed(s){if(!PK)PK=Object.keys(X).filter(k=>k.length>=2&&k.length<=90).
   s=names(s);for(const k of GK)if(k.length>=2&&s.includes(k))s=s.split(k).join(G[k]);
   // leftover particles between a name and English
   s=s.replace(/your (?:wife|fiancée|girlfriend)\u306e([A-Z][A-Za-z\u014d\u016b\u0101]+)/g,'$1').replace(/([A-Za-z\u014d\u016b\u0101])\u306e(?=[ A-Za-z])/g,"$1's ").replace(/([A-Za-z\u014d\u016b\u0101)])[\u306f\u304c\u3092\u306b\u3068](?=[ A-Za-z"\u201c(])/g,'$1 ').replace(/([A-Za-z\u014d\u016b\u0101])\u3055\u3093/g,'$1');
-  s=s.replace(/」「/g,'", "').replace(/(押し|力|技|速さ|体重|疲れ)\s?([+−\-]\s?\d)/g,(m,k,n)=>G[k]+' '+n);
+  s=s.replace(/(\d+)枚(?= ?(up|down))/g,(m,n)=>n+(n==='1'?' rank':' ranks')).replace(/」「/g,'", "').replace(/(押し|力|技|速さ|体重|疲れ)\s?([+−\-]\s?\d)/g,(m,k,n)=>G[k]+' '+n);
   return s.replace(/(\d+)勝(\d+)敗/g,'$1–$2').replace(/(\d+)勝/g,'$1 wins').replace(/(\d+)敗/g,'$1 losses').replace(/(\d+)歳/g,'$1').replace(/：/g,': ').replace(/・/g,' · ').replace(/、/g,', ').replace(/。/g,'. ').replace(/（/g,' (').replace(/）/g,')').replace(/「/g,'"').replace(/」/g,'"').replace(/　/g,' ').replace(/！/g,'!').replace(/？/g,'?').replace(/…/g,'…').replace(/ {2,}/g,' ').replace(/ ([,.!?)])/g,'$1').replace(/([.!?]) "(\s|$)/g,'$1"$2');}
 /* story fragments from en2.js, longest first (short or empty ones are too ambiguous to splice into old text) */
 let FR=null,FRK=null;function EN_S(){if(FR)return true;const S=window.I18N_EN&&window.I18N_EN.S;if(!S)return false;FR={};for(const k in S)if(k.length>=3&&S[k])FR[k]=S[k];FRK=Object.keys(FR).sort((a,b)=>b.length-a.length);return true;}
