@@ -5,6 +5,7 @@
 - 遊ぶ場所：`index.html`（単体で動く）／公開版 https://yokozuna.j2prco.workers.dev/
 - 保存：ブラウザの中に自動保存（LINEとChromeなど、ブラウザが違うとデータは別）
 - 画像：ChatGPTで作った絵（力士・女性・タニマチ）、音楽：Sunoで作った3曲（タイトル・稽古場・取組）
+- 音楽はSunoの有料プランで作成（商用利用可）
 
 ---
 
