@@ -1,6 +1,6 @@
 # Build the public release folder sumo-rpg/web/ (upload this folder to any static host).
 # usage: python3 tools/build_web.py [https://your-site.example/]   (site URL makes share previews work)
-# live site: https://yokozuna.j2prco.workers.dev/
+# live site: https://yokozuna.pages.dev/ (Cloudflare Pages; was yokozuna.j2prco.workers.dev)
 import sys, shutil, json, os, zipfile
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)));WEB=os.path.join(ROOT,'web')
 site=(sys.argv[1].rstrip('/')+'/') if len(sys.argv)>1 else ''
