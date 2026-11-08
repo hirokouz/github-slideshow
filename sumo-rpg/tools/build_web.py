@@ -21,7 +21,7 @@ meta=f'''<title>横綱への道</title>
 <meta property="og:type" content="website">
 <meta property="og:title" content="横綱への道">
 <meta property="og:description" content="{desc}">
-<meta property="og:image" content="{site}og-image.jpg?v=2">
+<meta property="og:image" content="{site}og-image.jpg?v=3">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 {f'<meta property="og:url" content="{site}">' if site else ''}
