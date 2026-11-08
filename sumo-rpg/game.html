@@ -722,6 +722,9 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 </div>
 
 <script>
+/* older Safari (iOS 15 and earlier) has no canvas roundRect: without this the home portrait threw on every frame and the animation loop died */
+if(window.CanvasRenderingContext2D&&!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+  r=Math.max(0,Math.min(+(Array.isArray(r)?r[0]:r)||0,Math.abs(w)/2,Math.abs(h)/2));this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();};
 /* boot (runs before the big art files): count the visit at once, so people who leave while loading are seen too,
    and show on the start button that the game is still getting ready */
 (()=>{try{const on=/(^|\.)yokozuna-sumo\.pages\.dev$/.test(location.hostname),lang=localStorage.getItem('sumo-rpg-lang')||'ja';
@@ -729,6 +732,9 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
   let s0=localStorage.getItem('ykz-src');if(!s0){const f=(new URL(location.href).searchParams.get('from')||'').toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,32);let r='';try{r=document.referrer?new URL(document.referrer).hostname.replace(/^www\./,''):'';}catch(e){}
     s0=f||(r&&!/yokozuna-sumo\.pages\.dev$/.test(r)?r:'direct');localStorage.setItem('ykz-src',s0);}
   if(on&&navigator.sendBeacon)navigator.sendBeacon('https://yokozuna-hit.j2prco.workers.dev/e',new Blob([JSON.stringify({vid,src:s0,ev:'land',detail:'',lang})],{type:'text/plain'}));
+  // script errors go to the usage log too (each message once, at most 3 per visit), so breakage on players' phones is seen
+  const seen=new Set();addEventListener('error',e=>{try{const m=String(e.message||'error').replace(/^Uncaught /,'').slice(0,44)+' @'+(e.lineno||0);if(!on||!navigator.sendBeacon||seen.has(m)||seen.size>=3)return;seen.add(m);
+    navigator.sendBeacon('https://yokozuna-hit.j2prco.workers.dev/e',new Blob([JSON.stringify({vid,src:s0,ev:'err',detail:m,lang})],{type:'text/plain'}));}catch(x){}});
   const nb=document.getElementById('newBtn'),w=lang==='en'?'Loading…':'準備中…';if(nb){nb.dataset.label=nb.textContent;nb.disabled=true;nb.classList.add('booting');nb.textContent=w;}
   window.__boot=p=>{const n=document.getElementById('newBtn');if(n&&n.classList.contains('booting'))n.textContent=w+' '+p+'%';};}catch(e){window.__boot=()=>{};}})();
 </script>
@@ -3448,6 +3454,7 @@ function drawKikyo(t,dt){
 /* ---------- loop ---------- */
 let last=performance.now();
 function loop(now){
+  requestAnimationFrame(loop); // first, so one drawing error can never stop the game
   const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000;
   if(facePop>0)facePop=Math.max(0,facePop-dt*4);
   if(cur==='sTitle')drawHero(t);
@@ -3456,7 +3463,6 @@ function loop(now){
   else if(cur==='sBout'){updateBout(dt);drawBout(t,dt);drawProfFace(t);}
   else if(cur==='sResult')drawResult(t,dt);
   else if(cur==='sKikyo')drawKikyo(t,dt);
-  requestAnimationFrame(loop);
 }
 addEventListener('resize',()=>{crowdCache=null;if(cur==='sTitle')hero=makeCanvas($('heroCv'),2/3);if(cur==='sCreate')facePrev=makeCanvas($('facePrev'),1);
   if(cur==='sHome'&&avatar){const a=avatar.act;avatar=makeCanvas($('avatar'),102/84);avatar.act=a;}if(cur==='sKikyo')kCv=makeCanvas($('kCv'),220/400);if(cur==='sBout'){ring=makeCanvas($('ring'),330/400);faceCv=makeCanvas($('bFace'),1);}if(cur==='sResult'&&rc)rc=makeCanvas($('rCv'),4/3);});
@@ -3592,7 +3598,7 @@ $('autoGo').addEventListener('click',startAutoFromCfg);
   $('xFileIn').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const t=await f.text();e.target.value='';load(t,$('xFile'));});}
 {const rb=$('resetBtn');let step=0,tm=null;rb.addEventListener('click',()=>{clearTimeout(tm);step++;
   if(step===1){rb.classList.add('armed');rb.textContent=Tj('本当に消す？ 力士・ご祝儀・カード・実績がすべて消える（もう一度押す）');tm=setTimeout(()=>{step=0;rb.classList.remove('armed');rb.textContent=Tj('データをすべて消して最初から');},5000);return;}
-  try{localStorage.removeItem(ROSTER_KEY);localStorage.removeItem(KEY);}catch(e){}location.reload();});}
+  LOG('reset');try{localStorage.removeItem(ROSTER_KEY);localStorage.removeItem(KEY);}catch(e){}location.reload();});}
 $('hLog1').addEventListener('scroll',e=>{const el=e.target;el.classList.toggle('end',el.scrollTop+el.clientHeight>=el.scrollHeight-2);});
 itemBtnEl().addEventListener('click',()=>{if(st){st.itemNew=false;persist();itemBtnEl().classList.remove('new');}renderItems();openSheet('items',Tj('道具'));});
 function sndUI(){const c=SND.cfg(),b=$('sndBtn'),wait=c.on&&!SND.ready();b.classList.toggle('off',!c.on);b.classList.toggle('wait',wait);b.querySelector('.si').textContent=c.on?'🔊':'🔇';b.querySelector('.st').textContent=wait?Tj('タップで音が鳴る'):c.on?Tj('音 ON'):Tj('音 OFF');

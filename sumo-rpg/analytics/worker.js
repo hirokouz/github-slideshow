@@ -5,7 +5,7 @@
    個人情報は保存しない：vid は端末ごとのランダムな番号、IP は保存しない
    バインディング：DB（D1 yokozuna-analytics）　シークレット：ADMIN_KEY（管理画面の合言葉） */
 const ORIGIN_RE = /^https:\/\/([a-z0-9-]+\.)?yokozuna-sumo\.pages\.dev$/;
-const EVENTS = new Set(['land', 'open', 'start', 'basho', 'promo', 'retire', 'lang', 'share', 'life', 'kikyo', 'gacha', 'auto', 'tut']);
+const EVENTS = new Set(['land', 'open', 'start', 'basho', 'promo', 'retire', 'lang', 'share', 'life', 'kikyo', 'gacha', 'auto', 'tut', 'err', 'reset']);
 // SNS の参照元（アプリ内ブラウザやリンク短縮のホスト名）を SNS 名にまとめる。?from= の値はそのまま
 const SNS = [[/^(t\.co|(mobile\.)?(x|twitter)\.com)$/, 'x'], [/(^|\.)instagram\.com$/, 'instagram'], [/(^|\.)facebook\.com$|^fb\.me$/, 'facebook'],
   [/(^|\.)threads\.(net|com)$/, 'threads'], [/(^|\.)tiktok\.com$/, 'tiktok'], [/(^|\.)line\.me$/, 'line'], [/(^|\.)youtube\.com$|^youtu\.be$/, 'youtube'],
@@ -77,7 +77,7 @@ const LIFE_LABEL = { juryo: '十両昇進', nyumaku: '新入幕', ozeki_up: '大
 const actLab = (ev, d) => { const t = String(d || ''), i = t.indexOf('/'), k = i < 0 ? t : t.slice(0, i), c = i < 0 ? '' : t.slice(i + 1), j = c.indexOf(':'), pick = !c ? '' : j < 0 ? '・選択' + c : '・「' + c.slice(j + 1) + '」';
   if (ev === 'life') { const [a, b] = k.split(':'); return (LIFE_LABEL[a] || a) + (b ? '（' + (LIFE_LABEL[b] || b) + '）' : '') + pick; }
   if (ev === 'kikyo') return '帰省「' + k + '」' + pick; if (ev === 'gacha') return 'ガチャ ' + k + '回引き'; if (ev === 'auto') return 'オートを使った'; if (ev === 'tut') return k === 'done' ? '遊び方の説明を最後まで見た' : '遊び方の説明を飛ばした（' + k.replace('skip:', '') + '枚目）'; return d; };
-const EV_LABEL = { life: 'イベント', kikyo: '帰省', gacha: 'ガチャ', auto: 'オート', tut: '説明', land: '来た', open: '動いた', start: '入門', basho: '場所', promo: '昇進', retire: '引退', lang: '言語', share: 'シェア' };
+const EV_LABEL = { life: 'イベント', kikyo: '帰省', gacha: 'ガチャ', auto: 'オート', tut: '説明', land: '来た', open: '動いた', start: '入門', basho: '場所', promo: '昇進', retire: '引退', lang: '言語', share: 'シェア', err: 'エラー', reset: 'データ消去' };
 /* 場所の記録「東幕下12枚目 5-2 優勝｜押A88 力B79 技A90 速S102 158kg」（古い記録は「幕下 5-2」だけ）を分ける */
 const DIVS_J = ['前相撲', '序ノ口', '序二段', '三段目', '幕下', '十両', '前頭', '小結', '関脇', '大関', '横綱'];
 const bp = d => { const [a, g] = String(d || '').split('｜'), m = a.match(/^(東|西)?(前相撲|序ノ口|序二段|三段目|幕下|十両|前頭|小結|関脇|大関|横綱)(\d+枚目)?\s*(.*)$/) || [];
