@@ -57,34 +57,80 @@ async function stats(env, days) {
 }
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-function table(title, note, rows, cols) {
-  const head = cols.map(c => `<th>${esc(c[1])}</th>`).join('');
-  const body = rows.length ? rows.map(r => '<tr>' + cols.map(c => `<td>${esc(typeof c[2] === 'function' ? c[2](r) : r[c[0]])}</td>`).join('') + '</tr>').join('') : `<tr><td colspan="${cols.length}" class="none">まだ記録がありません</td></tr>`;
-  return `<section><h2>${esc(title)}</h2>${note ? `<p class="note">${esc(note)}</p>` : ''}<div class="wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div></section>`;
-}
 const pct = (a, b) => b ? Math.round(a * 100 / b) + '%（' + a + '/' + b + '）' : '—';
 const SRC_LABEL = { kokoshinro: '甲子園台帳のバナー', 'kokoshinro.com': '甲子園台帳のリンク', direct: '直接・不明。LINE などのアプリ内からも多い',
   share: 'プレイヤーのシェア・スマホの共有', share_x: 'プレイヤーのシェア・X', x: 'X', instagram: 'Instagram', ig: 'Instagram', facebook: 'Facebook', fb: 'Facebook',
   threads: 'Threads', tiktok: 'TikTok', line: 'LINE', youtube: 'YouTube', bluesky: 'Bluesky', note: 'note', reddit: 'Reddit' };
-const SRC = s => { const b = String(s || '').split('_')[0], l = SRC_LABEL[s] || (b !== s && SRC_LABEL[b] && SRC_LABEL[b] + '・' + s.slice(b.length + 1)); return l ? s + '（' + l + '）' : s; };
+const srcLab = s => { const b = String(s || '').split('_')[0]; return SRC_LABEL[s] || (b !== s && SRC_LABEL[b] && SRC_LABEL[b] + '・' + s.slice(b.length + 1)) || ''; };
 const SHARE_LABEL = { juryo: '十両昇進', nyumaku: '新入幕', ozeki: '大関昇進', yokozuna: '横綱昇進', yusho: '幕内優勝', retire: '引退', sheet: 'スマホの共有（文章のみ）', sheet_img: 'スマホの共有（画像つき）', save: '画像を保存', x: 'X' };
 const shareLab = d => String(d || '').split('/').map(x => SHARE_LABEL[x] || x).join('・');
+const EV_LABEL = { open: '開いた', start: '入門', basho: '場所', promo: '昇進', retire: '引退', lang: '言語', share: 'シェア' };
+const PROMO = { juryo: '十両', makuuchi: '幕内', ozeki: '大関', yokozuna: '横綱' };
+const jst = iso => { const t = new Date(new Date(iso).getTime() + 9 * 3600e3).toISOString(); return t.slice(5, 7).replace(/^0/, '') + '/' + t.slice(8, 10).replace(/^0/, '') + ' ' + t.slice(11, 16); };
+/* phone-first admin page: summary numbers, one card per source (people → how far they got → came back), daily bars, shares, recent log */
 function page(d, key) {
-  const k = encodeURIComponent(key);
-  const tabs = [7, 30, 90].map(n => `<a href="?key=${k}&days=${n}" class="${n === d.days ? 'on' : ''}">過去${n}日</a>`).join('');
-  return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>横綱への道 利用状況</title>
-<style>:root{--bg:#f7f4ec;--fg:#1d1a16;--mut:#6b6458;--line:#ddd3bf;--acc:#9a2b25}@media (prefers-color-scheme:dark){:root{--bg:#141826;--fg:#f1ead8;--mut:#a59d8c;--line:#333a52;--acc:#e2b04a}}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 system-ui,-apple-system,"Hiragino Sans","Yu Gothic",sans-serif}main{max-width:900px;margin:0 auto;padding:16px}
-h1{font-size:20px;margin:4px 0}h2{font-size:16px;margin:24px 0 6px;color:var(--acc)}.note{color:var(--mut);font-size:13px;margin:0 0 6px}.tabs a{display:inline-block;margin:6px 6px 0 0;padding:4px 10px;border:1px solid var(--line);border-radius:999px;color:var(--fg);text-decoration:none;font-size:13px}.tabs a.on{background:var(--acc);border-color:var(--acc);color:#fff}
-.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13.5px}th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;white-space:nowrap}th{color:var(--mut);font-weight:600}td.none{color:var(--mut)}</style></head>
-<body><main><h1>横綱への道 利用状況</h1><p class="note">${esc(d.since)} 〜 ${esc(d.until)}（日本時間）。人数は端末ごとに数えています（同じ人でもスマホとパソコンなら2人）。</p><div class="tabs">${tabs}</div>
-${table('流入元ごとの人数', '期間内にゲームを開いた人数。「新しく来た人」は期間内に初めて来た人。', d.sources, [['src', '流入元', r => SRC(r.src)], ['users', '人数'], ['new_users', '新しく来た人'], ['opens', '開いた回数']])}
-${table('どこまで遊んだか', '期間内に来た人のうち、その段階まで進んだ人数。', d.funnel, [['src', '流入元', r => SRC(r.src)], ['users', '来た人'], ['started', '入門した'], ['played_basho', '場所を戦った'], ['juryo', '十両'], ['makuuchi', '幕内'], ['ozeki', '大関'], ['yokozuna', '横綱']])}
-${table('また来たか（継続率）', '期間内に初めて来た人のうち、翌日／7日以降にもう一度開いた割合。まだ日数がたっていない人は分母に入れていません。', d.retention, [['src', '流入元', r => SRC(r.src)], ['new_users', '初めて来た人'], ['n', '翌日も来た', r => pct(r.came_next_day, r.eligible_next_day)], ['n7', '7日以降も来た', r => pct(r.came_after_7days, r.eligible_7days)]])}
-${table('場所をどれくらい戦ったか', '期間内に終えた場所の数。', d.basho, [['src', '流入元', r => SRC(r.src)], ['basho', '場所数'], ['players', '遊んだ人'], ['per_player', '1人あたり']])}
-${table('シェアされた回数', '昇進・優勝・引退の画面の「この記録をシェアする」。スマホの共有は、共有先を選んで送ったときだけ数える。「画像を保存」と「X」はボタンを押した回数。シェアから来た人は流入元 share／share_x に出る。', d.shares, [['detail', '場面・方法', r => shareLab(r.detail)], ['shares', '回数'], ['users', '人数']])}
-${table('日ごとの利用者', '', d.daily, [['day', '日付'], ['src', '流入元', r => SRC(r.src)], ['users', '人数']])}
-${table('最近の記録（50件）', 'open=開いた／start=入門／basho=場所を終えた／promo=昇進／retire=引退／lang=言語を切りかえ／share=シェア', d.recent, [['created_at', '日時（日本時間）', r => new Date(new Date(r.created_at).getTime() + 9 * 3600e3).toISOString().replace('T', ' ').slice(0, 16)], ['src', '流入元'], ['ev', '記録'], ['detail', '内容'], ['lang', '言語'], ['vid', '端末']])}
+  const k = encodeURIComponent(key), n = v => Number(v) || 0;
+  const tabs = [7, 30, 90].map(x => `<a href="?key=${k}&days=${x}"${x === d.days ? ' class="on" aria-current="page"' : ''}>${x}日</a>`).join('');
+  const by = (rows, f) => Object.fromEntries((rows || []).map(r => [r.src, r]));
+  const F = by(d.funnel), R = by(d.retention), B = by(d.basho);
+  const tot = { users: 0, fresh: 0, started: 0, shares: 0 };
+  for (const s of d.sources) { tot.users += n(s.users); tot.fresh += n(s.new_users); }
+  for (const f of d.funnel) tot.started += n(f.started);
+  for (const s of d.shares) tot.shares += n(s.shares);
+  const kpi = [['利用者', tot.users, '人'], ['新しく来た人', tot.fresh, '人'], ['入門した人', tot.started, '人'], ['シェア', tot.shares, '回']]
+    .map(([l, v, u]) => `<div class="kpi"><span class="kl">${l}</span><span class="kv">${v}<small>${u}</small></span></div>`).join('');
+  const steps = [['started', '入門'], ['played_basho', '場所'], ['juryo', '十両'], ['makuuchi', '幕内'], ['ozeki', '大関'], ['yokozuna', '横綱']];
+  const cards = d.sources.length ? d.sources.map(s => {
+    const f = F[s.src] || {}, r = R[s.src], b = B[s.src], base = n(f.users) || n(s.users);
+    const st = steps.map(([c, l]) => { const v = n(f[c]); return `<li class="${v ? '' : 'z'}"><span>${l}</span><b>${v}</b><i style="--w:${base ? Math.round(v * 100 / base) : 0}%"></i></li>`; }).join('');
+    const ret = r ? `<p class="sub">また来た　翌日 ${pct(n(r.came_next_day), n(r.eligible_next_day))}　7日以降 ${pct(n(r.came_after_7days), n(r.eligible_7days))}</p>` : '';
+    const bs = b ? `<p class="sub">場所 ${n(b.basho)}回・1人あたり ${b.per_player}</p>` : '';
+    const lab = srcLab(s.src);
+    return `<article class="src"><header><div><h3>${esc(s.src)}</h3>${lab ? `<p class="lab">${esc(lab)}</p>` : ''}</div><div class="big">${n(s.users)}<small>人</small></div></header>
+      <p class="sub">新しく来た ${n(s.new_users)}人・開いた ${n(s.opens)}回</p><ul class="steps">${st}</ul>${ret}${bs}</article>`;
+  }).join('') : '<p class="none">まだ記録がありません。ゲームを開いた人がいると、ここに流入元ごとに出ます。</p>';
+  const days = {}; for (const r of d.daily) { const x = days[r.day] || (days[r.day] = { n: 0, top: [] }); x.n += n(r.users); x.top.push(r.src + ' ' + r.users); }
+  const dk = Object.keys(days).sort().reverse(), mx = Math.max(1, ...dk.map(x => days[x].n));
+  const daily = dk.length ? `<ul class="bars">${dk.map(x => `<li><span class="d">${x.slice(5).replace('-', '/').replace(/^0/, '')}</span><span class="bar"><i style="--w:${Math.round(days[x].n * 100 / mx)}%"></i></span><b>${days[x].n}</b><span class="t">${esc(days[x].top.join('・'))}</span></li>`).join('')}</ul>` : '<p class="none">まだ記録がありません。</p>';
+  const shares = d.shares.length ? `<ul class="list">${d.shares.map(s => `<li><span>${esc(shareLab(s.detail))}</span><b>${n(s.shares)}回</b><small>${n(s.users)}人</small></li>`).join('')}</ul>` : '<p class="none">まだシェアはありません。昇進・優勝・引退の画面の「この記録をシェアする」で数えます。</p>';
+  const TYPE = { oshi: '押し相撲', yotsu: '四つ相撲', waza: '技能派' };
+  const li = r => `<li><span class="tm">${jst(r.created_at)}</span><span class="ev">${EV_LABEL[r.ev] || esc(r.ev)}</span><span class="dt">${esc(r.ev === 'promo' ? (PROMO[r.detail] || r.detail) : r.ev === 'share' ? shareLab(r.detail) : r.ev === 'start' ? String(r.detail || '').split('/').map(x => TYPE[x] || x).join('・') : r.detail)}</span><span class="who">${esc(r.src)}・${esc(r.vid)}${r.lang && r.lang !== 'ja' ? '・' + esc(r.lang) : ''}</span></li>`;
+  const recent = d.recent.length ? `<ul class="log">${d.recent.slice(0, 15).map(li).join('')}</ul>` + (d.recent.length > 15 ? `<details><summary>もっと見る（${d.recent.length - 15}件）</summary><ul class="log">${d.recent.slice(15).map(li).join('')}</ul></details>` : '') : '<p class="none">まだ記録がありません。</p>';
+  return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><title>横綱への道 利用状況</title>
+<style>
+:root{--bg:#f6f3ec;--card:#fffdf8;--fg:#1d1a16;--mut:#6f675a;--line:#e3dac8;--acc:#9a2b25;--gold:#b8862a;--bar:#d9b45a;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#10131f;--card:#181c2c;--fg:#f1ead8;--mut:#a59d8c;--line:#2c3248;--acc:#e2b04a;--gold:#e2b04a;--bar:#8a6a2a;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,-apple-system,"Hiragino Sans","Yu Gothic",sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:720px;margin:0 auto;padding:12px max(14px,env(safe-area-inset-right)) 40px max(14px,env(safe-area-inset-left));display:grid;gap:18px}
+.top{position:sticky;top:0;z-index:2;background:var(--bg);padding:10px 0 8px;margin:-12px 0 0;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0}.tabs{display:flex;gap:6px}.tabs a{padding:6px 12px;border:1px solid var(--line);border-radius:999px;color:var(--fg);text-decoration:none;font-size:14px;background:var(--card)}.tabs a.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.period{font-size:12.5px;color:var(--mut);margin:0}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}@media (min-width:600px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:2px}.kl{font-size:12.5px;color:var(--mut)}.kv{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}.kv small,.big small{font-size:13px;font-weight:600;margin-left:2px;color:var(--mut)}
+h2{font-size:15px;margin:4px 0 -6px;color:var(--acc)}
+.src{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:8px}
+.src header{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.src h3{margin:0;font-size:16px;word-break:break-all}.lab{margin:0;font-size:12.5px;color:var(--mut)}
+.big{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.1}
+.sub{margin:0;font-size:12.5px;color:var(--mut)}
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}@media (min-width:600px){.steps{grid-template-columns:repeat(6,1fr)}}
+.steps li{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:8px;padding:5px 8px;display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px}
+.steps li b{font-size:16px;font-variant-numeric:tabular-nums}.steps li i{position:absolute;left:0;bottom:0;height:3px;width:var(--w);background:var(--gold)}.steps li.z{opacity:.45}
+.bars,.list,.log{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.bars li{display:grid;grid-template-columns:44px 1fr 32px;gap:8px;align-items:center;font-size:13px}.bars .bar{height:12px;background:var(--line);border-radius:6px;overflow:hidden}.bars .bar i{display:block;height:100%;width:var(--w);background:var(--bar)}
+.bars b{text-align:right;font-variant-numeric:tabular-nums}.bars .t{grid-column:2/4;font-size:11.5px;color:var(--mut);margin-top:-4px;word-break:break-all}
+.list li{display:flex;gap:10px;align-items:baseline;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px}.list li span{flex:1;min-width:0}.list small{color:var(--mut)}
+.log li{display:grid;grid-template-columns:auto auto 1fr;gap:2px 10px;border-bottom:1px solid var(--line);padding:6px 0;font-size:13.5px}
+.log .tm{color:var(--mut);font-variant-numeric:tabular-nums}.log .ev{font-weight:700}.log .dt{min-width:0;word-break:break-all}.log .who{grid-column:1/-1;font-size:11.5px;color:var(--mut)}
+details summary{cursor:pointer;color:var(--acc);font-size:13.5px;padding:8px 0}
+.none{margin:0;color:var(--mut);font-size:13.5px;background:var(--card);border:1px dashed var(--line);border-radius:10px;padding:12px}
+</style></head><body><main>
+<div class="top"><h1>横綱への道 利用状況</h1><nav class="tabs" aria-label="期間">${tabs}</nav></div>
+<p class="period">${esc(d.since)} 〜 ${esc(d.until)}（日本時間）。人数は端末ごと（同じ人でもスマホとパソコンなら2人）。</p>
+<section class="kpis" aria-label="期間の合計">${kpi}</section>
+<h2>流入元ごと</h2>${cards}
+<h2>日ごとの利用者</h2>${daily}
+<h2>シェア</h2>${shares}
+<h2>最近の記録</h2>${recent}
 </main></body></html>`;
 }
 
