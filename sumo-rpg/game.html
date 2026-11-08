@@ -2487,7 +2487,10 @@ function endBasho(){
   const top=old>=JURYO;let yusho=!top?w===7:(w>=14||(w===13&&Math.random()<.4)||(w===12&&Math.random()<.1));
   if(B.kessenR===true&&w>=12)yusho=true;
   if(B.kessenR===false){yusho=false;const Rv=st.rival;Rv.yushoN=(Rv.yushoN||0)+1;ex.push(Tj('横綱決戦に敗れ、宿敵・')+Rv.name+Tj('が優勝した……'));}
-  let tsunaBlocked=false;if(yusho&&!wasMae&&tsunaTori(st)&&!tsunaOK(st)){yusho=false;tsunaBlocked=true;}
+  // at ozeki and yokozuna the other contenders are the strongest men in the sport: the further his all-round strength is below A,
+  // the more often someone else ends level with him and wins the play-off. Never forced: a 15-0 always takes the Cup.
+  let playoffLost=false;if(yusho&&!wasMae&&old>=OZEKI&&w<B.n&&B.kessenR!==true){const def=Object.values(st.stats).reduce((a,v)=>a+Math.max(0,TSUNA_MIN-v),0);if(def>0&&Math.random()<Math.min(.65,def/50)){yusho=false;playoffLost=true;}}
+  const tsunaBlocked=playoffLost&&tsunaTori(st);if(playoffLost&&!tsunaBlocked)ex.push(Tj('千秋楽、優勝決定戦で敗れて賜杯を逃した。'));
   const prev=st.hist[st.hist.length-1];
   if(wasMae){p=w>=3?posOf(0,17,Math.random()<.5):w>=2?posOf(0,20):w>=1?posOf(0,23):posOf(0,25,false);yusho=false;st.maezumo=false;msg=w>=2?Tj('新序出世！ 来場所から序ノ口に名前が載る。'):Tj('前相撲を終えた。来場所は序ノ口の下位から。');}
   else if(old<KOMU){const mv=moveBanzuke(old,w,l);p=mv.p;if(mv.msg)msg=mv.msg;}
@@ -2500,11 +2503,12 @@ function endBasho(){
   else if(old===OZEKI){
     if(w<8){if(st.kadoban){p=SEKI;st.kadoban=false;st.ozekiBack=st.b+1;msg=Tj('カド番で負け越し、大関から陥落……。来場所10勝すれば大関に戻れる。');}else{st.kadoban=true;msg=Tj('負け越し。次の場所はカド番だ。');}}
     else{st.kadoban=false;var tsunaShort=false;const good=yusho||w>=13;const prevGood=prev&&prev.pos===OZEKI&&(prev.yusho||prev.w>=13);
-      // yokozuna: every stat A or better, and as ozeki two straight basho of a yusho or 13+ wins, at least one of them a yusho
-      // (yusho then 13 wins counts just like 13 wins then yusho: a runner-up / play-off loss after a title is 'a record equal to a yusho').
-      // without the strength the second yusho never comes (lost in a play-off), so results are never "wasted"
-      if(good&&prevGood&&(yusho||prev.yusho)&&tsunaOK(st)){p=YOKO;msg=Tj('横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。');}
-      else if(good&&prevGood&&prev.yusho&&!tsunaOK(st)){tsunaShort=true;msg=Tj('横綱審議委員会は「力がまだ足りない」と推薦を見送った。');}
+      // yokozuna: two straight yusho as ozeki always; or a yusho plus a 13+ win basho (either order: a runner-up / play-off loss
+      // next to a title is 'a record equal to a yusho'), which the council accepts only with every stat A or better.
+      // weak stats are not blocked by force: they just make the title rarer (play-off losses above)
+      const renpa2=yusho&&prev&&prev.pos===OZEKI&&prev.yusho;
+      if(renpa2||(good&&prevGood&&(yusho||prev.yusho)&&tsunaOK(st))){p=YOKO;msg=Tj('横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。');}
+      else if(good&&prevGood&&(yusho||prev.yusho)){tsunaShort=true;msg=Tj('横綱審議委員会は「力がまだ足りない」と推薦を見送った。');}
       else if(tsunaBlocked)msg=Tj('千秋楽、優勝決定戦で敗れて賜杯を逃した……。綱は、あと一歩で遠のいた。');
       else if(good)msg=Tj('来場所は綱取りの場所だ。');}
     st.ozekiN=(st.ozekiN||0)+1;

@@ -140,6 +140,7 @@ window.I18N_EN=window.I18N_EN||{};window.I18N_EN.S={
 "カド番で負け越し、大関から陥落……。来場所10勝すれば大関に戻れる。": "A losing record as kadoban — he drops from Ōzeki… Ten wins next basho brings him back.",
 "負け越し。次の場所はカド番だ。": "Make-koshi. Next basho he is kadoban.",
 "横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。": "Promoted to Yokozuna! He wears the rope for the ring entry at Meiji Shrine. In bouts he keeps his usual belt; the rope is for the ring entry only.",
+"千秋楽、優勝決定戦で敗れて賜杯を逃した。": "On senshūraku he lost the play-off and missed the Cup.",
 "千秋楽、優勝決定戦で敗れて賜杯を逃した……。綱は、あと一歩で遠のいた。": "On senshūraku he lost the play-off and missed the Cup… The rope slipped just out of reach.",
 "来場所は綱取りの場所だ。": "Next basho is a tsuna-tori basho.",
 "横綱決戦を制して優勝！": "He won the Yokozuna showdown and the title!",
