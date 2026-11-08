@@ -124,16 +124,21 @@ h2{font-size:15px;margin:4px 0 -6px;color:var(--acc)}
 .log li{display:grid;grid-template-columns:auto auto 1fr;gap:2px 10px;border-bottom:1px solid var(--line);padding:6px 0;font-size:13.5px}
 .log .tm{color:var(--mut);font-variant-numeric:tabular-nums}.log .ev{font-weight:700}.log .dt{min-width:0;word-break:break-all}.log .who{grid-column:1/-1;font-size:11.5px;color:var(--mut)}
 details summary{cursor:pointer;color:var(--acc);font-size:13.5px;padding:8px 0}
+.reload{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(env(safe-area-inset-bottom,0px) + 16px);z-index:5;display:flex;align-items:center;gap:6px;padding:12px 18px;border:0;border-radius:999px;background:var(--acc);color:#fff;font:700 15px/1 system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.28);cursor:pointer}
+.reload:focus-visible{outline:3px solid var(--fg);outline-offset:2px}.reload.busy{opacity:.7}
+.updated{font-size:12px;color:var(--mut);margin:0}
 .none{margin:0;color:var(--mut);font-size:13.5px;background:var(--card);border:1px dashed var(--line);border-radius:10px;padding:12px}
 </style></head><body><main>
 <div class="top"><h1>横綱への道 利用状況</h1><nav class="tabs" aria-label="期間">${tabs}</nav></div>
+<p class="updated">${jst(new Date().toISOString())} 時点（日本時間）</p>
+<button type="button" class="reload" id="reload" onclick="this.classList.add('busy');this.textContent='更新中…';location.reload()">↻ 更新</button>
 <p class="period">${esc(d.since)} 〜 ${esc(d.until)}（日本時間）。人数は端末ごと（同じ人でもスマホとパソコンなら2人）。</p>
 <section class="kpis" aria-label="期間の合計">${kpi}</section>
 <h2>流入元ごと</h2>${cards}
 <h2>日ごとの利用者</h2>${daily}
 <h2>シェア</h2>${shares}
 <h2>最近の記録</h2>${recent}
-</main></body></html>`;
+<div style="height:64px"></div></main></body></html>`;
 }
 
 export default {
