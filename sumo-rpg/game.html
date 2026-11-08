@@ -752,32 +752,62 @@ function shareMsg(k,s){const T=x=>EN?EN.tr(x):x,nm=T(s.name),age=ageOf(s),W=tota
     yusho:nm+(Y>1?' won the Makuuchi championship (#'+Y+')!':' won his first Makuuchi championship!'),retire:nm+' retired at '+age+'. Highest rank '+bn+', career record '+W+'-'+L+(Y?', '+Y+' Makuuchi title'+(Y>1?'s':''):'')+'.'}[k]+' #横綱への道 #sumo';
   return {juryo:nm+'、'+age+'歳で十両昇進！ ついに関取の仲間入り。',nyumaku:nm+'、'+age+'歳で新入幕！',ozeki:nm+'、'+age+'歳で大関昇進！',yokozuna:nm+'、'+age+'歳で横綱昇進！ 通算'+W+'勝'+L+'敗。',
     yusho:nm+(Y>1?'、幕内優勝'+Y+'回目！':'、幕内初優勝！'),retire:nm+'、'+age+'歳で引退。最高位'+bn+'・通算'+W+'勝'+L+'敗'+(Y?'・幕内優勝'+Y+'回':'')+'。'}[k]+' #横綱への道 #相撲';}
-/* the share card: a 1080×1080 picture of the moment (banner, portrait, shikona, rank and record, game name and address) */
+/* the share card: a 1080×1080 picture of the moment, made to make friends want to play — banner, the rikishi centred in a
+   gold ring, shikona and rank, three record chips (how many basho it took, career record, titles) and an invitation strip */
 const SH_LAB={juryo:['十両昇進','Jūryō!'],nyumaku:['新入幕','Makuuchi!'],ozeki:['大関昇進','Ōzeki!'],yokozuna:['横綱昇進','Yokozuna!'],yusho:['幕内優勝','Champion!'],retire:['引退','Farewell']};
+/* where the head is inside a portrait canvas: bounding box of the non-background pixels in the upper part (hair + face) */
+function headBox(c){const N=c.width,d=c.getContext('2d').getImageData(0,0,N,N).data,bgR=d[0],bgG=d[1],bgB=d[2];
+  const far=(x,y)=>{const i=(y*N+x)*4;return d[i+3]>40&&(Math.abs(d[i]-bgR)+Math.abs(d[i+1]-bgG)+Math.abs(d[i+2]-bgB))>60;};
+  // column profile over the hair-and-face band; the head is the run of busy columns around the busiest one near the middle
+  const Y1=Math.round(N*.6),col=new Array(N).fill(0);for(let x=0;x<N;x++)for(let y=0;y<Y1;y+=2)if(far(x,y))col[x]++;
+  const sm=col.map((_,x)=>{let t=0,n=0;for(let j=Math.max(0,x-4);j<=Math.min(N-1,x+4);j++){t+=col[j];n++;}return t/n;});
+  let pk=-1,pv=0;for(let x=Math.round(N*.2);x<N*.8;x++){const v=sm[x]*(1-Math.abs(x-N/2)/N);if(v>pv){pv=v;pk=x;}}if(pk<0)return null;
+  const th=sm[pk]*.18;let x0=pk,x1=pk;while(x0>0&&sm[x0-1]>th)x0--;while(x1<N-1&&sm[x1+1]>th)x1++;
+  let y0=0;outer:for(;y0<Y1;y0++)for(let x=x0;x<=x1;x+=2)if(far(x,y0))break outer;
+  return x1-x0>N*.15?{x0,x1,y0,y1:Y1,bg:'rgb('+bgR+','+bgG+','+bgB+')',rgb:bgR+','+bgG+','+bgB}:null;}
+function roundRect(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
 async function shareCard(k,s){
   try{await Promise.all(['700 96px "Yuji Boku"','700 40px "Zen Kaku Gothic New"','80px "Kaushan Script"'].map(f=>document.fonts.load(f)));}catch(e){}
   { // wait for the painted face (and its expressions) so the card never falls back to the old drawn face
     const o=s.face&&s.face.img&&AIF[s.face.img];if(o){const ims=[o.img,...Object.values(o.ex||{}),...Object.values(o.faces||{})];for(const h in (o.exprs||{}))ims.push(...Object.values(o.exprs[h]));
       await Promise.race([Promise.all(ims.filter(i=>i&&i.decode).map(i=>i.decode().catch(()=>{}))),new Promise(r=>setTimeout(r,4000))]);}}
   const W=1080,H=1080,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
-  const T=x=>EN?EN.tr(x):x,best=Math.max(s.best||0,s.pos),ret=k==='retire',pos=ret?best:s.pos,oi=pos>=JURYO,Y=s.makuYusho||0;
+  const T=x=>EN?EN.tr(x):x,best=Math.max(s.best||0,s.pos),ret=k==='retire',pos=ret?best:s.pos,oi=pos>=JURYO,Y=s.makuYusho||0,nB=s.hist.filter(h=>!h.mae).length;
   const W0=totalWins(s),L0=s.hist.reduce((a,h)=>a+h.l-(h.kyu||0),0),brush=EN?'"Kaushan Script","Yuji Boku",serif':'"Yuji Boku","Hiragino Mincho ProN",serif',goth='"Zen Kaku Gothic New","Hiragino Sans",sans-serif';
-  const bg=g.createLinearGradient(0,0,0,H);if(ret){bg.addColorStop(0,'#141a36');bg.addColorStop(1,'#4a3420');}else{bg.addColorStop(0,'#4a0d12');bg.addColorStop(.75,'#b07a22');bg.addColorStop(1,'#d6a640');}g.fillStyle=bg;g.fillRect(0,0,W,H);
-  const cx=W/2,cy=500;g.save();g.translate(cx,cy);for(let i=0;i<24;i++){g.rotate(Math.PI/12);g.fillStyle=ret?'rgba(255,230,180,.05)':'rgba(255,228,160,.11)';g.beginPath();g.moveTo(0,0);g.lineTo(90,-W);g.lineTo(-90,-W);g.fill();}g.restore();
-  softSpot(g,cx,cy,420,'255,226,160',ret?.18:.32);
-  let seed=7;const rr=()=>(seed=(seed*16807)%2147483647)/2147483647;g.fillStyle=ret?'rgba(255,240,210,.35)':'rgba(255,220,130,.85)';for(let i=0;i<70;i++){const x=rr()*W,y=rr()*860;g.save();g.translate(x,y);g.rotate(rr()*6);g.fillRect(-4,-7,8,14);g.restore();}
-  g.textAlign='center';g.textBaseline='alphabetic';g.shadowColor='rgba(0,0,0,.45)';g.shadowBlur=14;
-  g.fillStyle='#fff3d0';g.font=(EN?'110px ':'700 128px ')+brush;g.fillText(SH_LAB[k][EN?1:0],cx,150);g.shadowBlur=0;
-  const R=245,S=R/.4;g.save();g.beginPath();g.arc(cx,cy,R,0,6.283);g.fillStyle='#f3eadb';g.fill();g.clip();g.drawImage(portrait(s.face,ret?'normal':'happy',oi,512),cx-S*.5,cy-S*.44,S,S);g.restore();
+  // background: crimson to gold for celebrations, night to earth for a farewell; rays, glow and confetti
+  const bg=g.createLinearGradient(0,0,0,H);if(ret){bg.addColorStop(0,'#141a36');bg.addColorStop(1,'#4a3420');}else{bg.addColorStop(0,'#5a0f16');bg.addColorStop(.7,'#b07a22');bg.addColorStop(1,'#d6a640');}g.fillStyle=bg;g.fillRect(0,0,W,H);
+  const cx=W/2,cy=430,R=215;g.save();g.translate(cx,cy);for(let i=0;i<24;i++){g.rotate(Math.PI/12);g.fillStyle=ret?'rgba(255,230,180,.05)':'rgba(255,228,160,.12)';g.beginPath();g.moveTo(0,0);g.lineTo(80,-W);g.lineTo(-80,-W);g.fill();}g.restore();
+  softSpot(g,cx,cy,400,'255,226,160',ret?.2:.38);
+  let seed=7;const rr=()=>(seed=(seed*16807)%2147483647)/2147483647;g.fillStyle=ret?'rgba(255,240,210,.35)':'rgba(255,220,130,.9)';for(let i=0;i<60;i++){const x=rr()*W,y=rr()*700;if(Math.hypot(x-cx,y-cy)<R+30)continue;g.save();g.translate(x,y);g.rotate(rr()*6);g.fillRect(-4,-8,8,16);g.restore();}
+  g.textAlign='center';g.textBaseline='alphabetic';
+  // banner
+  g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=16;g.fillStyle='#fff3d0';g.font=(EN?'104px ':'700 120px ')+brush;g.fillText(SH_LAB[k][EN?1:0]+(k==='yusho'&&Y>1?(EN?' ×'+Y:' '+Y+'回目'):''),cx,140);g.shadowBlur=0;
+  // portrait, centred on the head found in the picture
+  const pc=portrait(s.face,ret?'normal':'happy',oi,512);let hb=null;try{hb=pc.isAi?headBox(pc):null;}catch(e){}
+  g.save();g.shadowColor='rgba(0,0,0,.45)';g.shadowBlur=30;g.beginPath();g.arc(cx,cy,R,0,6.283);g.fillStyle=hb?hb.bg:'#f3eadb';g.fill();g.restore();
+  g.save();g.beginPath();g.arc(cx,cy,R,0,6.283);g.clip();
+  if(hb){const sc=Math.max(2*R*.66/(hb.x1-hb.x0),2*R*1.04/512),D=512*sc,hx=(hb.x0+hb.x1)/2*sc,top=hb.y0*sc,cl=(v,lo,hi)=>Math.min(hi,Math.max(lo,v)); // keep the picture's edges outside the ring
+    g.drawImage(pc,cl(cx-hx,cx+R-D,cx-R),cl(cy-R*.9-top,cy+R-D,cy-R),D,D);
+    const fe=g.createRadialGradient(cx,cy,R*.74,cx,cy,R);fe.addColorStop(0,'rgba('+hb.rgb+',0)');fe.addColorStop(.55,'rgba('+hb.rgb+',.85)');fe.addColorStop(1,'rgba('+hb.rgb+',1)');g.fillStyle=fe;g.fillRect(cx-R,cy-R,2*R,2*R);}
+  else{const S=R/.4;g.drawImage(pc,cx-S*.5,cy-S*.44,S,S);}
+  g.restore();
   g.strokeStyle='#f0c860';g.lineWidth=12;g.beginPath();g.arc(cx,cy,R,0,6.283);g.stroke();g.strokeStyle='rgba(120,70,10,.6)';g.lineWidth=3;g.beginPath();g.arc(cx,cy,R+9,0,6.283);g.stroke();
-  const nm=T(s.name);g.fillStyle='#fffaf0';g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=12;let fs=EN?92:110;g.font=(EN?'':'700 ')+fs+'px '+brush;while(g.measureText(nm).width>W-160&&fs>50){fs-=6;g.font=(EN?'':'700 ')+fs+'px '+brush;}g.fillText(nm,cx,860);g.shadowBlur=0;
-  const sub=EN?T(rank(pos).name)+(ret?' (highest)':'')+' · age '+ageOf(s):(ret?'最高位 ':'')+rank(pos).name+'・'+ageOf(s)+'歳';
-  g.font='700 40px '+goth;g.fillStyle='#ffe7a8';g.fillText(sub,cx,920);
-  const rec=EN?'Career '+W0+'-'+L0+(Y?' · '+Y+' title'+(Y>1?'s':''):''):'通算 '+W0+'勝'+L0+'敗'+(Y?'・幕内優勝 '+Y+'回':'');
-  g.font='500 34px '+goth;g.fillStyle='rgba(255,250,240,.92)';g.fillText(rec,cx,968);
-  g.fillStyle='rgba(8,10,24,.72)';g.fillRect(0,H-82,W,82);g.fillStyle='#e2b04a';g.fillRect(0,H-82,W,3);
-  g.textAlign='left';g.fillStyle='#e2b04a';g.font=(EN?'44px ':'700 46px ')+brush;g.fillText(EN?'Road to Yokozuna':'横綱への道',36,H-26);
-  g.textAlign='right';g.fillStyle='#f3eadb';g.font='500 28px '+goth;g.fillText((EN?'Sumo RPG · ':'相撲育成RPG・')+'yokozuna-sumo.pages.dev',W-36,H-30);
+  // shikona and rank
+  const nm=T(s.name);g.fillStyle='#fffaf0';g.shadowColor='rgba(0,0,0,.55)';g.shadowBlur=12;let fs=EN?88:104;const nf=()=>(EN?'':'700 ')+fs+'px '+brush;g.font=nf();while(g.measureText(nm).width>W-200&&fs>50){fs-=6;g.font=nf();}g.fillText(nm,cx,cy+R+112);g.shadowBlur=0;
+  g.font='700 38px '+goth;g.fillStyle='#ffe7a8';g.fillText(EN?T(rank(pos).name)+(ret?' (highest)':'')+' · age '+ageOf(s):(ret?'最高位 ':'')+rank(pos).name+'・'+ageOf(s)+'歳',cx,cy+R+164);
+  // three record chips
+  const chips=[EN?[nB+' basho',ret?'career':'since debut']:[nB+'場所',ret?'土俵生活':'入門から'],EN?[W0+'-'+L0,'career record']:[W0+'勝'+L0+'敗','通算成績'],EN?[Y+'',Y===1?'Makuuchi title':'Makuuchi titles']:[Y+'回','幕内優勝']];
+  const cw=286,ch=104,gap=24,y0=cy+R+196,x0=cx-(cw*3+gap*2)/2;
+  chips.forEach(([v,l],i)=>{const x=x0+i*(cw+gap);roundRect(g,x,y0,cw,ch,18);g.fillStyle='rgba(12,14,32,.62)';g.fill();g.strokeStyle='rgba(240,200,96,.7)';g.lineWidth=2;g.stroke();
+    let f2=48;g.font='800 '+f2+'px '+goth;while(g.measureText(v).width>cw-30&&f2>28){f2-=4;g.font='800 '+f2+'px '+goth;}g.fillStyle='#ffd978';g.fillText(v,x+cw/2,y0+56);
+    g.font='500 24px '+goth;g.fillStyle='rgba(255,246,228,.85)';g.fillText(l,x+cw/2,y0+88);});
+  // invitation strip
+  const by=H-120;g.fillStyle='rgba(8,10,24,.82)';g.fillRect(0,by,W,120);g.fillStyle='#e2b04a';g.fillRect(0,by,W,4);
+  g.textAlign='left';g.fillStyle='#e2b04a';g.font=(EN?'46px ':'700 50px ')+brush;g.fillText(EN?'Road to Yokozuna':'横綱への道',40,by+58);
+  g.font='500 25px '+goth;g.fillStyle='rgba(255,246,228,.9)';g.fillText(EN?'Sumo RPG · free · plays in your browser':'相撲育成RPG・無料・登録なしですぐ遊べる',40,by+98);
+  const cta=EN?'Can you make Yokozuna?':'あなたは綱を締められるか',url='yokozuna-sumo.pages.dev';g.textAlign='right';
+  g.font='800 30px '+goth;const pw=g.measureText(cta).width+48;roundRect(g,W-40-pw,by+20,pw,50,25);g.fillStyle='#e2b04a';g.fill();g.fillStyle='#1a1430';g.fillText(cta,W-64,by+56);
+  g.font='600 24px '+goth;g.fillStyle='#f3eadb';g.fillText('▶ '+url,W-48,by+102);
   return new Promise(r=>c.toBlob(r,'image/jpeg',.9));}
 let SH=null;
 async function doShare(){const k=shareKind;if(!k||!st)return;const s=st,text=shareMsg(k,s);
