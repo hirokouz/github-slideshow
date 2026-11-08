@@ -326,6 +326,9 @@ body:not(.onTitle) #sndBtn{display:none}
 .langrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.langrow button.on{background:var(--kin);color:#2a1700;border-color:var(--kin)}
 #langBtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:8px;z-index:65;height:34px;border-radius:999px;border:1.5px solid var(--kin);background:rgba(13,20,48,.85);color:var(--kin);font-size:12px;font-weight:800;line-height:1;padding:0 12px;display:flex;align-items:center;gap:4px;cursor:pointer}
 body:not(.onTitle) #langBtn{display:none}
+#updBar{position:fixed;left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));top:calc(env(safe-area-inset-top,0px) + 8px);margin:0 auto;max-width:520px;z-index:80;display:flex;align-items:center;gap:8px;padding:6px 6px 6px 16px;border-radius:999px;background:#f3eadb;color:#1a1612;border:1.5px solid var(--kin);box-shadow:0 8px 24px rgba(0,0,0,.45);font:600 14px/1.3 "Zen Kaku Gothic New",sans-serif}
+#updBar[hidden]{display:none}#updBar button{border:0;border-radius:999px;padding:8px 16px;background:#b3261e;color:#fff;font:700 14px/1 "Zen Kaku Gothic New",sans-serif;cursor:pointer;white-space:nowrap}
+#updBar .x{background:transparent;color:#6f675a;padding:8px 6px;font-size:16px}
 #sndBtn.off,#sndBtn2.off{color:#7d7360;border-color:#5b5246;text-decoration:line-through}
 .acfg input[type=range]{accent-color:var(--kin);height:24px}
 .tutq{margin-left:6px;border:1px solid var(--kin);background:transparent;color:var(--kin);border-radius:999px;font-size:10.5px;padding:1px 8px;letter-spacing:0;font-weight:700;vertical-align:1px}
@@ -487,6 +490,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 </style>
 
 <div id="toast" role="status" aria-live="polite"></div>
+<div id="updBar" role="status" hidden><span id="updTxt" style="flex:1;min-width:0"></span><button type="button" id="updGo"></button><button type="button" class="x" id="updX" aria-label="close">×</button></div>
 <button type="button" id="sndBtn" aria-label="音のオンオフ"><span class="si"></span><span class="st"></span></button>
 <button type="button" id="langBtn" aria-label="Language / 言語">🌐 <span id="langLbl">English</span></button>
 <div id="tut" hidden><div class="tut-hole" id="tutHole"></div><div class="tut-box" id="tutBox" role="dialog" aria-live="polite"><div class="tut-who"><span>親</span>親方</div><p id="tutText"></p><div class="tut-ctl"><span id="tutStep"></span><button type="button" id="tutSkip" class="tut-skip">スキップ</button><button type="button" id="tutNext" class="tut-next">次へ</button></div></div></div>
@@ -3623,6 +3627,17 @@ addEventListener('keydown',e=>{if(e.code==='Space'&&anim&&anim.phase==='tachi'){
 
 renderTitle();requestAnimationFrame(loop);
 // switched language in the middle of play: come straight back to the training room
+/* new version: the build stamps BUILD and web/version.txt with the same hash. Checked at start, every 5 minutes and when the
+   player comes back to the tab (at most once a minute). When a newer one is online, offer an update,
+   only on the home or title screen (never mid-bout); the player is saved and comes back to the same rikishi after the reload */
+{const BUILD='__BUILD__';let ready=false,dismissed=false,lastCheck=0;
+  const check=()=>{if(BUILD.startsWith('__')||ready||!navigator.onLine||Date.now()-lastCheck<60e3)return;lastCheck=Date.now();
+    fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(/^[0-9a-f]{6,}$/.test(v)&&v!==BUILD)ready=true;}).catch(()=>{});};
+  const bar=$('updBar');$('updTxt').textContent=Tj('新しいバージョンがあります');$('updGo').textContent=Tj('更新する');
+  $('updGo').addEventListener('click',()=>{try{if(st&&cur!=='sTitle'){persist();sessionStorage.setItem('sumo-rpg-resume',st.id);}}catch(e){}location.reload();});
+  $('updX').addEventListener('click',()=>{dismissed=true;bar.hidden=true;});
+  setInterval(()=>{if(Date.now()-lastCheck>5*60e3)check();bar.hidden=!(ready&&!dismissed&&(cur==='sHome'||cur==='sTitle')&&$('sheet').hidden&&$('tut').hidden);},1500);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check();});}
 try{const rid=sessionStorage.getItem('sumo-rpg-resume');if(rid){sessionStorage.removeItem('sumo-rpg-resume');if(roster.list[rid])play(rid);}}catch(e){}
 })();
 </script>

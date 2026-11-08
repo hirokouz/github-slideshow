@@ -28,6 +28,10 @@ meta=f'''<title>横綱への道</title>
 <meta name="twitter:card" content="summary_large_image">'''
 assert html.count('<title>横綱への道</title>')==1
 html=html.replace('<title>横綱への道</title>',meta)
+# version stamp: the game compares its BUILD with version.txt online and offers an update when they differ
+import hashlib;assert html.count("'__BUILD__'")==1
+ver=hashlib.sha256(html.encode('utf-8')).hexdigest()[:12];html=html.replace("'__BUILD__'","'"+ver+"'")
+open(os.path.join(WEB,'version.txt'),'w').write(ver+'\n')
 open(os.path.join(WEB,'index.html'),'w',encoding='utf-8').write(html)
 for f in ['cast.js','faces.js','women.js','tani.js','en.js','en2.js','title.webp']:shutil.copy(os.path.join(ROOT,f),os.path.join(WEB,f))
 shutil.copytree(os.path.join(ROOT,'bgm'),os.path.join(WEB,'bgm'),dirs_exist_ok=True)
@@ -39,7 +43,7 @@ json.dump({'id':'./','name':'横綱への道','short_name':'横綱への道','st
            {'src':'icon-maskable-512.png','sizes':'512x512','type':'image/png','purpose':'maskable'}]},
   open(os.path.join(WEB,'manifest.webmanifest'),'w',encoding='utf-8'),ensure_ascii=False,indent=1)
 # cache the big art files for a day on hosts that read _headers (Cloudflare Pages / Netlify)
-open(os.path.join(WEB,'_headers'),'w').write('/*.js\n  Cache-Control: public, max-age=86400\n/*.png\n  Cache-Control: public, max-age=604800\n')
+open(os.path.join(WEB,'_headers'),'w').write('/*.js\n  Cache-Control: public, max-age=86400\n/*.png\n  Cache-Control: public, max-age=604800\n/version.txt\n  Cache-Control: no-store\n')
 z=os.path.join(ROOT,'yokozuna-web.zip')
 with zipfile.ZipFile(z,'w',zipfile.ZIP_DEFLATED) as zz:
     for dp,dn,fn in os.walk(WEB):
