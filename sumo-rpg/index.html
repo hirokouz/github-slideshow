@@ -753,7 +753,7 @@ if(window.CanvasRenderingContext2D&&!CanvasRenderingContext2D.prototype.roundRec
 <script src="cast.js?v=03024ef888"></script>
 <script>__boot(95)</script>
 <script src="en.js?v=31a2c8e1f3"></script>
-<script src="en2.js?v=13c37fec25"></script>
+<script src="en2.js?v=e7f08f6fac"></script>
 <script>
 (()=>{
 {const n=document.getElementById('newBtn');if(n&&n.classList.contains('booting')){n.textContent=n.dataset.label;n.disabled=false;n.classList.remove('booting');}}
@@ -3635,14 +3635,18 @@ renderTitle();requestAnimationFrame(loop);
 // switched language in the middle of play: come straight back to the training room
 /* new version: the build stamps BUILD and web/version.txt with the same hash. Checked at start, every 5 minutes and when the
    player comes back to the tab (at most once a minute). When a newer one is online, offer an update,
-   only on the home or title screen (never mid-bout); the player is saved and comes back to the same rikishi after the reload */
-{const BUILD='__BUILD__';let ready=false,dismissed=false,lastCheck=0;
+   on any screen. Pressed mid-bout or mid-event, it waits until the bout is decided (results are saved as each bout ends) or the
+   event is answered, then reloads; the player comes back to the same rikishi (mid-basho: the same day of the basho) */
+{const BUILD='__BUILD__';let ready=false,dismissed=false,lastCheck=0,want=false;
   const check=()=>{if(BUILD.startsWith('__')||ready||!navigator.onLine||Date.now()-lastCheck<60e3)return;lastCheck=Date.now();
     fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(/^[0-9a-f]{6,}$/.test(v)&&v!==BUILD)ready=true;}).catch(()=>{});};
   const bar=$('updBar');$('updTxt').textContent=Tj('新しいバージョンがあります');$('updGo').textContent=Tj('更新する');
-  $('updGo').addEventListener('click',()=>{try{if(st&&cur!=='sTitle'){persist();sessionStorage.setItem('sumo-rpg-resume',st.id);}}catch(e){}location.reload();});
+  // safe = nothing half-done would be lost: not inside a bout that is being fought, not inside an event or the gacha
+  const safe=()=>cur!=='sKikyo'&&cur!=='sGacha'&&!(cur==='sBout'&&anim&&!['intro','ready','done'].includes(anim.phase));
+  const go=()=>{try{if(st&&cur!=='sTitle'&&cur!=='sCreate'){persist();sessionStorage.setItem('sumo-rpg-resume',st.id);}}catch(e){}location.reload();};
+  $('updGo').addEventListener('click',()=>{if(safe())return go();want=true;$('updTxt').textContent=cur==='sBout'?Tj('この取組が終わったら更新します'):Tj('区切りがついたら更新します');$('updGo').hidden=true;});
   $('updX').addEventListener('click',()=>{dismissed=true;bar.hidden=true;});
-  setInterval(()=>{if(Date.now()-lastCheck>5*60e3)check();bar.hidden=!(ready&&!dismissed&&(cur==='sHome'||cur==='sTitle')&&$('sheet').hidden&&$('tut').hidden);},1500);
+  setInterval(()=>{if(want&&safe())return go();if(Date.now()-lastCheck>5*60e3)check();bar.hidden=!(ready&&!dismissed&&cur!=='sCreate'&&$('tut').hidden);},700);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check();});}
 try{const rid=sessionStorage.getItem('sumo-rpg-resume');if(rid){sessionStorage.removeItem('sumo-rpg-resume');if(roster.list[rid])play(rid);}}catch(e){}
 })();

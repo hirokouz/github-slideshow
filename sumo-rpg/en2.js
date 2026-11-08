@@ -650,6 +650,8 @@ window.I18N_EN=window.I18N_EN||{};window.I18N_EN.S={
 "翌朝から、いちばん苦手な稽古を真っ先にやることにした。": "From the next morning, he did his weakest training first.",
 "横綱・大関に勝ちきるには全能力A以上が目安（足りないのは ": "To beat the Ōzeki and Yokozuna you need about A in every stat (missing: ",
 "新しいバージョンがあります": "A new version is available",
+"この取組が終わったら更新します": "Updating after this bout",
+"区切りがついたら更新します": "Updating at the next break",
 "更新する": "Update",
 "綱取りはならなかった。": "The bid for the rope fell short.",
 "）・1年間、稽古の伸び +15%": ") · training gains +15% for a year",
