@@ -1,22 +1,39 @@
 {
+ "id": "./",
  "name": "横綱への道",
  "short_name": "横綱への道",
- "start_url": "./",
+ "start_url": "./?from=pwa",
+ "scope": "./",
  "display": "standalone",
  "orientation": "portrait",
  "background_color": "#0d1430",
  "theme_color": "#0d1430",
  "lang": "ja",
+ "dir": "ltr",
+ "categories": [
+  "games",
+  "sports",
+  "entertainment"
+ ],
+ "description": "新弟子として入門し、稽古と本場所で番付を上げて横綱をめざす相撲育成RPG。宿敵・タニマチ・恋と結婚・引退と断髪式まで。無料・登録なし。",
  "icons": [
   {
    "src": "icon-192.png",
    "sizes": "192x192",
-   "type": "image/png"
+   "type": "image/png",
+   "purpose": "any"
   },
   {
    "src": "icon-512.png",
    "sizes": "512x512",
-   "type": "image/png"
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
   }
  ]
 }

@@ -60,7 +60,8 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&am
 const pct = (a, b) => b ? Math.round(a * 100 / b) + '%（' + a + '/' + b + '）' : '—';
 const SRC_LABEL = { kokoshinro: '甲子園台帳のバナー', 'kokoshinro.com': '甲子園台帳のリンク', direct: '直接・不明。LINE などのアプリ内からも多い',
   share: 'プレイヤーのシェア・スマホの共有', share_x: 'プレイヤーのシェア・X', x: 'X', instagram: 'Instagram', ig: 'Instagram', facebook: 'Facebook', fb: 'Facebook',
-  threads: 'Threads', tiktok: 'TikTok', line: 'LINE', youtube: 'YouTube', bluesky: 'Bluesky', note: 'note', reddit: 'Reddit' };
+  threads: 'Threads', tiktok: 'TikTok', line: 'LINE', youtube: 'YouTube', bluesky: 'Bluesky', note: 'note', reddit: 'Reddit',
+  android: 'Android アプリ', pwa: 'ホーム画面のアイコンから', freem: 'ふりーむ！', plicy: 'PLiCy', itch: 'itch.io' };
 const srcLab = s => { const b = String(s || '').split('_')[0]; return SRC_LABEL[s] || (b !== s && SRC_LABEL[b] && SRC_LABEL[b] + '・' + s.slice(b.length + 1)) || ''; };
 const SHARE_LABEL = { juryo: '十両昇進', nyumaku: '新入幕', ozeki: '大関昇進', yokozuna: '横綱昇進', yusho: '幕内優勝', retire: '引退', sheet: 'スマホの共有（文章のみ）', sheet_img: 'スマホの共有（画像つき）', save: '画像を保存', x: 'X' };
 const shareLab = d => String(d || '').split('/').map(x => SHARE_LABEL[x] || x).join('・');

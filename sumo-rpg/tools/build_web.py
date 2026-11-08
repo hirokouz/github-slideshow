@@ -31,9 +31,12 @@ html=html.replace('<title>横綱への道</title>',meta)
 open(os.path.join(WEB,'index.html'),'w',encoding='utf-8').write(html)
 for f in ['cast.js','faces.js','women.js','tani.js','en.js','en2.js','title.webp']:shutil.copy(os.path.join(ROOT,f),os.path.join(WEB,f))
 shutil.copytree(os.path.join(ROOT,'bgm'),os.path.join(WEB,'bgm'),dirs_exist_ok=True)
-json.dump({'name':'横綱への道','short_name':'横綱への道','start_url':'./','display':'standalone','orientation':'portrait',
-  'background_color':'#0d1430','theme_color':'#0d1430','lang':'ja',
-  'icons':[{'src':'icon-192.png','sizes':'192x192','type':'image/png'},{'src':'icon-512.png','sizes':'512x512','type':'image/png'}]},
+# start_url carries ?from=pwa so home-screen / app launches are counted; the Android app (TWA) is set to ?from=android
+json.dump({'id':'./','name':'横綱への道','short_name':'横綱への道','start_url':'./?from=pwa','scope':'./','display':'standalone','orientation':'portrait',
+  'background_color':'#0d1430','theme_color':'#0d1430','lang':'ja','dir':'ltr','categories':['games','sports','entertainment'],
+  'description':'新弟子として入門し、稽古と本場所で番付を上げて横綱をめざす相撲育成RPG。宿敵・タニマチ・恋と結婚・引退と断髪式まで。無料・登録なし。',
+  'icons':[{'src':'icon-192.png','sizes':'192x192','type':'image/png','purpose':'any'},{'src':'icon-512.png','sizes':'512x512','type':'image/png','purpose':'any'},
+           {'src':'icon-maskable-512.png','sizes':'512x512','type':'image/png','purpose':'maskable'}]},
   open(os.path.join(WEB,'manifest.webmanifest'),'w',encoding='utf-8'),ensure_ascii=False,indent=1)
 # cache the big art files for a day on hosts that read _headers (Cloudflare Pages / Netlify)
 open(os.path.join(WEB,'_headers'),'w').write('/*.js\n  Cache-Control: public, max-age=86400\n/*.png\n  Cache-Control: public, max-age=604800\n')

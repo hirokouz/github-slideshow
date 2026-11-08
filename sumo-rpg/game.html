@@ -744,6 +744,8 @@ const LOG=(()=>{const on=/(^|\.)yokozuna-sumo\.pages\.dev$/.test(location.hostna
   return (ev,detail)=>{if(!on||!vid)return;try{const b=JSON.stringify({vid,src,ev,detail:detail==null?'':String(detail).slice(0,60),lang:LANG});
     if(!(navigator.sendBeacon&&navigator.sendBeacon(EP,new Blob([b],{type:'text/plain'}))))fetch(EP,{method:'POST',body:b,keepalive:true,mode:'cors'}).catch(()=>{});}catch(e){}};})();
 LOG('open');
+/* offline copy + installable app (Android TWA / home screen): only on the public site */
+if('serviceWorker' in navigator&&/(^|\.)yokozuna-sumo\.pages\.dev$/.test(location.hostname))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 /* ---------- share a milestone (promotion, makuuchi yusho, retirement): the phone's share sheet, else X.
    The link carries ?from=share (share sheet) or ?from=share_x so the log can count visitors brought by shares. ---------- */
 const SITE='https://yokozuna-sumo.pages.dev/';let shareKind=null;
