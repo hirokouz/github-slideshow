@@ -2519,8 +2519,8 @@ function endBasho(){
   if(B.kessenR===true&&yusho)ex.unshift(Tj('横綱決戦を制して優勝！'));
   const when=(Math.floor(st.b/6)+1)+Tj('年目 ')+BASHO[st.b%6];
   st.hist.push({when,rank:r.name,pos:old,w,l,yusho,mae:wasMae||undefined,kyu:B.kyu||undefined});
-  // usage log: exact rank (always Japanese), record, then each stat's grade and value and the body weight, e.g. 東幕下12枚目 5-2｜押A88 力B79 技A90 速S102 158kg
-  {const I=divInfo(old),rk=wasMae?'前相撲':old>=KOMU?SAN[old-KOMU]:I?(I.east?'東':'西')+I.d.n+I.num+'枚目':r.div,gs=['oshi','chikara','waza','hayasa'].map((k,i)=>'押力技速'[i]+gradeOf(st.stats[k]).replace(' ','')).join(' ');
+  // usage log: division (always Japanese), record, then each stat's grade and value and the body weight, e.g. 幕下 5-2｜押A88 力B79 技A90 速S102 158kg
+  {const rk=wasMae?'前相撲':r.div,gs=['oshi','chikara','waza','hayasa'].map((k,i)=>'押力技速'[i]+gradeOf(st.stats[k]).replace(' ','')).join(' ');
    LOG('basho',rk+' '+w+'-'+l+(yusho?' 優勝':'')+(B.kyu?' 休'+B.kyu:'')+'｜'+gs+' '+Math.round(st.kg)+'kg');}
   if(w>l)B.earn=(B.earn||0)+earn(30);if(yusho)B.earn=(B.earn||0)+earn(old>=MAKU?300:150);
   // sansho for maegashira, komusubi and sekiwake
