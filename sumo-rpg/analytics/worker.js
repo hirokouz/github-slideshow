@@ -13,7 +13,7 @@ const SNS = [[/^(t\.co|(mobile\.)?(x|twitter)\.com)$/, 'x'], [/(^|\.)instagram\.
 const normSrc = s => { for (const [re, n] of SNS) if (re.test(s)) return n; return s; };
 const day = (d = new Date()) => new Date(d.getTime() + 9 * 3600e3).toISOString().slice(0, 10); // 日本時間の日付
 const clean = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f<>]/g, '').slice(0, n);
-/* 端末のまとめ（ユーザーのプロフィール users.dev に入れる）：「iOS 15.2・Xアプリ｜JP｜NTT DOCOMO」。User-Agent と接続元の国・通信会社だけで、IP は残さない */
+/* 端末のまとめ（来た・動いたの記録に毎回残し、ユーザーのプロフィール users.dev には最新を入れる。画面に出すのはプロフィールだけ）：「iOS 15.2・Xアプリ｜JP｜NTT DOCOMO」。User-Agent と接続元の国・通信会社だけで、IP は残さない */
 function devSum(request) {
   const ua = String(request.headers.get('User-Agent') || ''), cf = request.cf || {}; let m, os = '不明';
   if ((m = ua.match(/(?:iPhone|CPU) OS (\d+)[_.](\d+)/))) os = (/iPad/.test(ua) ? 'iPadOS ' : 'iOS ') + m[1] + '.' + m[2];
@@ -179,7 +179,7 @@ function page(d, key) {
   const AG = { tut: '遊び方の説明', life: 'イベントと選んだ答え', kikyo: '帰省のイベント', gacha: 'ガチャ', auto: 'オート' };
   const acts = (d.acts || []).length ? ['tut', 'life', 'kikyo', 'gacha', 'auto'].filter(e => d.acts.some(a => a.ev === e)).map(e => `<details class="acts"${e === 'tut' || e === 'life' ? ' open' : ''}><summary>${AG[e]}（${d.acts.filter(a => a.ev === e).reduce((t, a) => t + n(a.n), 0)}回）</summary><ul class="list">${d.acts.filter(a => a.ev === e).slice(0, 30).map(a => `<li><span>${esc(actLab(a.ev, a.detail))}</span><b>${n(a.n)}回</b><small>${n(a.users)}人</small></li>`).join('')}</ul></details>`).join('') : '<p class="none">まだ記録がありません。イベントで選んだ答え、帰省、ガチャ、オート、遊び方の説明を数えます。</p>';
   const TYPE = { oshi: '押し相撲', yotsu: '四つ相撲', waza: '技能派' };
-  const li = r => `<li><span class="tm">${jst(r.created_at)}</span><span class="ev">${EV_LABEL[r.ev] || esc(r.ev)}</span><span class="dt">${r.ev === 'basho' ? bashoHtml(r.detail) : esc(r.ev === 'promo' ? (PROMO[r.detail] || r.detail) : r.ev === 'share' ? shareLab(r.detail) : ['life', 'kikyo', 'gacha', 'auto', 'tut'].includes(r.ev) ? actLab(r.ev, r.detail) : r.ev === 'start' ? String(r.detail || '').split('/').map(x => TYPE[x] || x).join('・') : r.detail)}</span><span class="who">${esc(r.src)}・${esc(r.vid)}${r.lang && r.lang !== 'ja' ? '・' + esc(r.lang) : ''}</span></li>`;
+  const li = r => `<li><span class="tm">${jst(r.created_at)}</span><span class="ev">${EV_LABEL[r.ev] || esc(r.ev)}</span><span class="dt">${r.ev === 'basho' ? bashoHtml(r.detail) : r.ev === 'land' || r.ev === 'open' ? '' : esc(r.ev === 'promo' ? (PROMO[r.detail] || r.detail) : r.ev === 'share' ? shareLab(r.detail) : ['life', 'kikyo', 'gacha', 'auto', 'tut'].includes(r.ev) ? actLab(r.ev, r.detail) : r.ev === 'start' ? String(r.detail || '').split('/').map(x => TYPE[x] || x).join('・') : r.detail)}</span><span class="who">${esc(r.src)}・${esc(r.vid)}${r.lang && r.lang !== 'ja' ? '・' + esc(r.lang) : ''}</span></li>`;
   const recent = d.recent.length ? `<ul class="log">${d.recent.slice(0, 15).map(li).join('')}</ul>` + (d.recent.length > 15 ? `<details><summary>もっと見る（${d.recent.length - 15}件）</summary><ul class="log">${d.recent.slice(15).map(li).join('')}</ul></details>` : '') : '<p class="none">まだ記録がありません。</p>';
   return HEAD('横綱への道 利用状況') + `<div class="top"><h1>横綱への道 利用状況</h1><nav class="tabs" aria-label="期間">${tabs}</nav></div>
 <nav class="views" aria-label="表示"><a class="on" aria-current="page">全体</a><a href="?key=${k}&days=${d.days}&view=users">ユーザー別</a></nav>
@@ -240,7 +240,7 @@ async function userPage(env, vid, key, days) {
   let lastDay = '', items = '';
   for (const x of rows) { const dd = jst(x.created_at).split(' ')[0]; if (dd !== lastDay) { if (items) items += '</ul>'; items += `<p class="daysep">${dd}</p><ul class="log">`; lastDay = dd; }
     const det = x.ev === 'promo' ? (PROMO[x.detail] || x.detail) : x.ev === 'share' ? shareLab(x.detail) : ['life', 'kikyo', 'gacha', 'auto', 'tut'].includes(x.ev) ? actLab(x.ev, x.detail) : x.ev === 'start' ? startLab(x.detail) : x.detail;
-    items += `<li><span class="tm">${jst(x.created_at).split(' ')[1]}</span><span class="ev">${EV_LABEL[x.ev] || esc(x.ev)}</span><span class="dt">${x.ev === 'basho' ? bashoHtml(x.detail) : esc(det)}</span></li>`; }
+    items += `<li><span class="tm">${jst(x.created_at).split(' ')[1]}</span><span class="ev">${EV_LABEL[x.ev] || esc(x.ev)}</span><span class="dt">${x.ev === 'basho' ? bashoHtml(x.detail) : x.ev === 'land' || x.ev === 'open' ? '' : esc(det)}</span></li>`; }
   if (items) items += '</ul>';
   return HEAD('横綱への道 ' + esc(String(vid).slice(0, 6))) + `<div class="top"><h1>端末 ${esc(String(vid).slice(0, 6))}</h1><a class="back" href="?key=${k}&days=${days}&view=users">← ユーザー別へ</a></div>
 <button type="button" class="reload" onclick="this.classList.add('busy');this.textContent='更新中…';location.reload()">↻ 更新</button>
@@ -265,7 +265,7 @@ export default {
         const src = /^[a-z0-9_.:-]{1,40}$/i.test(String(b.src || '')) ? normSrc(String(b.src).toLowerCase()) : 'other';
         const now = new Date();
         ctx.waitUntil(env.DB.prepare('INSERT INTO events (vid, src, ev, detail, lang, created_at, day) VALUES (?1,?2,?3,?4,?5,?6,?7)')
-          .bind(vid, src, ev, clean(b.detail, 60), clean(b.lang, 5), now.toISOString(), day(now)).run().catch(e => console.log('insert failed', e && e.message)));
+          .bind(vid, src, ev, ev === 'land' || ev === 'open' ? devSum(request) : clean(b.detail, 60), clean(b.lang, 5), now.toISOString(), day(now)).run().catch(e => console.log('insert failed', e && e.message)));
         // プロフィール：来た・動いたときに端末の情報を最新にする（1端末1行）
         if (ev === 'land' || ev === 'open') ctx.waitUntil(env.DB.prepare(`INSERT INTO users (vid, src, dev, first_at, last_at) VALUES (?1,?2,?3,?4,?4)
             ON CONFLICT(vid) DO UPDATE SET dev = excluded.dev, last_at = excluded.last_at`).bind(vid, src, devSum(request), now.toISOString()).run().catch(e => console.log('user upsert failed', e && e.message)));
