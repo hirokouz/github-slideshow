@@ -1,10 +1,14 @@
--- D1 database: yokozuna-analytics  (already created; this file is for re-creating it)
-CREATE TABLE IF NOT EXISTS visits (
+-- D1: yokozuna-analytics（作成済み）。作り直すときに使う
+CREATE TABLE IF NOT EXISTS events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  from_source TEXT NOT NULL,      -- value of ?from= (lowercase a-z 0-9 _ -, otherwise 'other')
-  path TEXT,                      -- page path
-  visited_at TEXT NOT NULL,       -- UTC ISO time
-  visit_date TEXT NOT NULL,       -- JST date YYYY-MM-DD
-  visitor_hash TEXT NOT NULL      -- SHA-256(salt|JST date|IP|UA), first 32 hex chars. No raw IP stored
+  vid TEXT NOT NULL,          -- 端末ごとのランダムな番号（ゲームが localStorage に作る。個人とは結びつかない）
+  src TEXT NOT NULL,          -- 最初に来たときの流入元（?from= の値、なければ参照元サイト名、どちらもなければ direct）
+  ev TEXT NOT NULL,           -- open / start / basho / promo / retire / lang
+  detail TEXT,                -- 内容（basho: 段と勝敗、promo: juryo/makuuchi/ozeki/yokozuna、retire: 最高位 など）
+  lang TEXT,                  -- ja / en
+  created_at TEXT NOT NULL,   -- UTC
+  day TEXT NOT NULL           -- 日本時間の日付 YYYY-MM-DD
 );
-CREATE INDEX IF NOT EXISTS idx_visits_date_from ON visits(visit_date, from_source);
+CREATE INDEX IF NOT EXISTS idx_events_day_src ON events(day, src);
+CREATE INDEX IF NOT EXISTS idx_events_vid ON events(vid, day);
+CREATE INDEX IF NOT EXISTS idx_events_ev ON events(ev, detail);

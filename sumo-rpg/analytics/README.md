@@ -1,40 +1,30 @@
-# 流入元カウンター（?from=）
+# 利用状況の記録と管理画面
 
-> **いまは使っていない（未設定）。** Worker `yokozuna-hit` の作成とD1のバインディング設定が必要なため、現在は Web Analytics の参照元で確認している。使うときは、game.html に合図を送るコード（コミット b42d58f を参照）を戻し、下の手順で Worker を公開する。D1 `yokozuna-analytics` は作成済み。
+「横綱への道」の公開サイト（yokozuna-sumo.pages.dev）で、どこから来た人が、どこまで遊んでいるかを記録して、管理画面で見る。
 
-`https://yokozuna-sumo.pages.dev/?from=kokoshinro` のように `?from=` 付きで来た訪問を、日ごと・流入元ごとに数える。
+## 記録するもの（個人情報なし）
+- 端末ごとのランダムな番号（ゲームが localStorage に作る。名前・IP・セーブデータは送らない）
+- 最初に来たときの流入元：`?from=` の値（甲子園台帳のバナーは `kokoshinro`）→ なければ参照元のサイト名（例 `kokoshinro.com`）→ どちらもなければ `direct`
+- 出来事：`open`（開いた）、`start`（入門）、`basho`（場所を終えた：段と勝敗）、`promo`（juryo / makuuchi / ozeki / yokozuna）、`retire`（引退：最高位）、`lang`（言語の切りかえ）
+- 送るのは公開サイトで動いているときだけ。タイトル画面の下に、記録していることを表示している
 
-## しくみ
-- ゲームのページ（game.html の先頭）が、`?from=` があるときだけ、Worker `yokozuna-hit` に1回だけ合図を送る（同じタブの再読み込みでは送らない）。送ったあと、アドレスバーから `?from=` を消す。
-- Worker が D1 `yokozuna-analytics` の `visits` に書き込む（`ctx.waitUntil` で非同期。ページの表示は止まらない）。
-- 生のIPは保存しない。`visitor_hash = SHA-256(VISITOR_SALT | JSTの日付 | IP | User-Agent)` の先頭32文字だけ。同じ人は1日1人として数える。
-- `from` の値は英数字・`_`・`-` の32文字まで。それ以外は `other`。ほかのサイトに貼るバナーも `?from=名前` を付ければ同じように数えられる。
-- Pages はダッシュボードのドラッグ＆ドロップで公開しているため、Pages Functions（`functions/`）は使えない（Cloudflareの既知の制限）。そのため計測は別の Worker にした。
-
-## ファイル
-| ファイル | 内容 |
+## 構成
+| もの | 内容 |
 |---|---|
-| `hit-worker.js` | Worker のコード（`POST /hit` で記録、`GET /stats?days=7&key=…` で集計） |
-| `schema.sql` | D1 のテーブル定義（作成済み） |
-| `queries.sql` | 過去7日の流入元別「訪問数」「ユニーク人数」などのSQL |
-| `wrangler.toml` | コマンドで公開する場合の設定（ダッシュボードで公開するなら不要） |
+| ゲーム（game.html の `LOG(...)`） | 出来事を `https://yokozuna-hit.j2prco.workers.dev/e` に送る（sendBeacon） |
+| Worker `yokozuna-hit`（`worker.js`） | 受け取って D1 に保存（`ctx.waitUntil`）。`/admin?key=…` で管理画面、`/stats?key=…` で JSON |
+| D1 `yokozuna-analytics`（ID `68feff66-e5fd-4699-a5d1-6162e0d46689`） | 表 `events`（`schema.sql`）。作成済み |
 
-## D1
-- データベース名：`yokozuna-analytics`（ID `68feff66-e5fd-4699-a5d1-6162e0d46689`、場所 APAC）— 作成済み・テーブル作成済み
-- コマンドで作り直す場合：`npx wrangler d1 create yokozuna-analytics` → `npx wrangler d1 execute yokozuna-analytics --remote --file=schema.sql`
-
-## Worker の公開（ダッシュボード）
-1. Workers & Pages →「作成」→ Worker を作成。名前は **`yokozuna-hit`**（ゲーム側の送り先が `https://yokozuna-hit.j2prco.workers.dev/hit` なので、この名前にする）→ デプロイ
-2. 「コードを編集」→ `hit-worker.js` の中身を全部貼り付け →「デプロイ」
-3. 「設定」→「バインディング」→「追加」→ D1 データベース。変数名 **`DB`**、データベース **`yokozuna-analytics`**
-4. 「設定」→「変数とシークレット」→ シークレットを2つ追加
-   - `VISITOR_SALT`：長いランダムな文字列（一度決めたら変えない。変えると同じ人の判定がリセットされる）
-   - `STATS_KEY`：集計を見るときの合言葉
-5. コマンドの場合：`npx wrangler deploy`（このフォルダで）→ `npx wrangler secret put VISITOR_SALT` / `STATS_KEY`
+## Worker の公開（まだ）
+- 名前：`yokozuna-hit`（ゲームの送り先がこの名前）
+- コード：`worker.js`
+- バインディング：D1 `yokozuna-analytics` を変数名 `DB` で
+- シークレット：`ADMIN_KEY`（管理画面の合言葉）
+- コマンドの場合：このフォルダで `npx wrangler deploy` → `npx wrangler secret put ADMIN_KEY`（`wrangler.toml` 用意済み）
 
 ## 見方
-- ブラウザで `https://yokozuna-hit.j2prco.workers.dev/stats?days=7&key=（STATS_KEY）`
-- D1 のコンソールで `queries.sql` の SQL を実行
-- コマンド：`npx wrangler d1 execute yokozuna-analytics --remote --command "（SQL）"`
+- 管理画面：`https://yokozuna-hit.j2prco.workers.dev/admin?key=（ADMIN_KEY）`（過去7日／30日／90日を切りかえ）
+  - 流入元ごとの人数、どこまで遊んだか（入門・場所・十両・幕内・大関・横綱）、また来たか（翌日／7日以降）、1人あたりの場所数、日ごとの利用者、最近の記録
+- SQL で見る：`queries.sql`
 
-計測できるのは導入した日以降。導入前の参考値は Web Analytics の Referer（kokoshinro.com）で見る。
+記録できるのは公開したあとから。人数は端末ごとなので、同じ人がスマホとパソコンで遊ぶと2人と数える。

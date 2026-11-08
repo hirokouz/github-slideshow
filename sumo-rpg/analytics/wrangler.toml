@@ -1,7 +1,6 @@
-# Only needed if you deploy the counter Worker from the command line (npx wrangler deploy).
-# Deploying from the dashboard (paste hit-worker.js, add the D1 binding) needs no wrangler.toml.
+# コマンドで Worker を公開するときの設定（npx wrangler deploy）。ダッシュボードやコネクタで公開するなら不要。
 name = "yokozuna-hit"
-main = "hit-worker.js"
+main = "worker.js"
 compatibility_date = "2026-11-01"
 
 [[d1_databases]]
@@ -9,4 +8,4 @@ binding = "DB"
 database_name = "yokozuna-analytics"
 database_id = "68feff66-e5fd-4699-a5d1-6162e0d46689"
 
-# secrets (not in this file):  npx wrangler secret put VISITOR_SALT   /   npx wrangler secret put STATS_KEY
+# シークレット（このファイルには書かない）:  npx wrangler secret put ADMIN_KEY

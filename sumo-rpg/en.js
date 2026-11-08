@@ -39,6 +39,7 @@ const X={
   '部屋の力士':'Rikishi in the stable','新弟子として入門する':'Join as a new recruit','新しい力士を入門させる':'Recruit a new rikishi','ご祝儀':'Prize money','ご祝儀ガチャ':'Prize-money gacha','殿堂（引退した力士たち）':'Hall of fame (retired rikishi)',
   '実績（部屋の歴代）':'Achievements (all-time)','データをすべて消して最初から':'Erase all data and start over','稽古は1場所ごとに5回。幕下以下は7番、十両から上は15番。勝ち越せば番付が上がる。':'5 training sessions per basho. 7 bouts up to Makushita, 15 from Jūryō. A winning record moves you up.',
   'バナーなどから来た人数を、個人がわからない形で数えています（名前や記録は送りません）。':'We count visits from banners and links without identifying anyone (no names or game data are sent).',
+  'サービス改善のため、遊び方の記録（どこから来たか・どこまで進んだか）を、個人がわからない形で集めています。名前やセーブデータは送りません。':'To improve the game we collect anonymous play records (where you came from and how far you got). No names or save data are sent.',
   'データの引き継ぎ（機種変更）':'Transfer data (new device)','保存データはこのブラウザの中だけにあります。別のスマホやブラウザで続きを遊ぶときは、ここで「引き継ぎコード」を作って、新しいほうで読み込んでください。':'Your save lives only in this browser. To continue on another phone or browser, create a transfer code here and load it on the new one.',
   'この端末のデータを出す':'Export this device\'s data','コードをコピー':'Copy code','ファイルに保存':'Save to file','ほかの端末のデータを読み込む':'Load data from another device','ここに引き継ぎコードを貼り付け':'Paste a transfer code here','引き継ぎコード':'Transfer code','コードから読み込む':'Load from code','ファイルから読み込む':'Load from file',
   'まだいない。幕内まで上がった力士は、引退すると親方になって部屋の格が上がる。':'None yet. A rikishi who reached Makuuchi becomes a stablemaster on retiring and raises the stable\'s standing.',

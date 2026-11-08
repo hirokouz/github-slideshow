@@ -524,6 +524,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
         <p class="xmsg" id="xMsg" aria-live="polite"></p>
       </div></details></div>
     <button type="button" class="ghost resetbtn" id="resetBtn">データをすべて消して最初から</button>
+    <p class="muted" style="font-size:11px;text-align:center;opacity:.8">サービス改善のため、遊び方の記録（どこから来たか・どこまで進んだか）を、個人がわからない形で集めています。名前やセーブデータは送りません。</p>
     <p class="muted" style="font-size:12.5px;text-align:center">稽古は1場所ごとに5回。幕下以下は7番、十両から上は15番。勝ち越せば番付が上がる。</p>
   </section>
 
@@ -724,7 +725,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 <script src="cast.js?v=03024ef888"></script>
 <script src="women.js?v=4e041303c9"></script>
 <script src="tani.js?v=6d5685c4ed"></script>
-<script src="en.js?v=becc407576"></script>
+<script src="en.js?v=de85b5f99d"></script>
 <script src="en2.js?v=cb38e2d150"></script>
 <script>
 (()=>{
@@ -733,6 +734,17 @@ const LANG=(()=>{try{return localStorage.getItem('sumo-rpg-lang')||'ja';}catch(e
 const EN=LANG==='en'&&window.I18N_EN?window.I18N_EN:null;
 /* Tj(): story & message text. Japanese mode returns the text as is; English mode looks it up in en2.js (I18N_EN.S) */
 const Tj=EN?(x=>(EN.S&&EN.S[x]!=null)?EN.S[x]:x):(x=>x);
+/* ---------- usage log (only on yokozuna-sumo.pages.dev; see analytics/): a random per-device id, the first source
+   (?from= value, else the referring site, else direct) and a few game events. No names, no IP, no save data. ---------- */
+const LOG=(()=>{const on=/(^|\.)yokozuna-sumo\.pages\.dev$/.test(location.hostname),EP='https://yokozuna-hit.j2prco.workers.dev/e';let vid='',src='direct';
+  try{const u=new URL(location.href),f=(u.searchParams.get('from')||'').toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,32);
+    vid=localStorage.getItem('ykz-vid')||'';if(!vid){vid=crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);localStorage.setItem('ykz-vid',vid);}
+    let s0=localStorage.getItem('ykz-src');
+    if(!s0){if(f)s0=f;else{let r='';try{r=document.referrer?new URL(document.referrer).hostname.replace(/^www\./,''):'';}catch(e){}s0=r&&!/yokozuna-sumo\.pages\.dev$/.test(r)?r:'direct';}localStorage.setItem('ykz-src',s0);}
+    src=s0;if(u.searchParams.has('from')){u.searchParams.delete('from');history.replaceState(history.state,'',u.pathname+u.search+u.hash);}}catch(e){}
+  return (ev,detail)=>{if(!on||!vid)return;try{const b=JSON.stringify({vid,src,ev,detail:detail==null?'':String(detail).slice(0,60),lang:LANG});
+    if(!(navigator.sendBeacon&&navigator.sendBeacon(EP,new Blob([b],{type:'text/plain'}))))fetch(EP,{method:'POST',body:b,keepalive:true,mode:'cors'}).catch(()=>{});}catch(e){}};})();
+LOG('open');
 if(EN){document.documentElement.lang='en';document.title=EN.tr(document.title);
   {const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap';document.head.append(l);}
   const C=CanvasRenderingContext2D.prototype;
@@ -1661,6 +1673,7 @@ function enter(){
       hist:[],yusho:0,makuYusho:0,kadoban:false,log:[],basho:null,deck:[],face:Object.assign({},draftFace),...profileSeed(type),age0:age,v2:1,v3:1,pBonus:prestigeBonus()};
   st.best=st.pos;st.home=$('homeIn').value||st.home;st.rival=makeRival(st);st.rival.face=oppFace();st.rival.home=pick(PREFS);
   rollPotential(st);
+  LOG('start',age+'歳/'+type+'/'+(st.home||''));
   // grew up wrestling Mongolian bokh: technique starts at C
   if(st.home==='モンゴル'){st.stats.waza=Math.max(st.stats.waza,55+rnd(0,4));st.cap.waza=Math.max(st.cap.waza,st.stats.waza+30);addLog(Tj('子どものころからモンゴル相撲（ブフ）で鍛えてきた。'));}
   st.money=300+(roster.money||0);roster.money=0; // 支度金 300 + anything left waiting in the stable purse
@@ -2364,6 +2377,7 @@ function endBasho(){
   if(B.kessenR===true&&yusho)ex.unshift(Tj('横綱決戦を制して優勝！'));
   const when=(Math.floor(st.b/6)+1)+Tj('年目 ')+BASHO[st.b%6];
   st.hist.push({when,rank:r.name,pos:old,w,l,yusho,mae:wasMae||undefined,kyu:B.kyu||undefined});
+  LOG('basho',(wasMae?'前相撲':r.div)+' '+w+'-'+l+(yusho?' 優勝':'')+(B.kyu?' 休'+B.kyu:''));
   if(w>l)B.earn=(B.earn||0)+earn(30);if(yusho)B.earn=(B.earn||0)+earn(old>=MAKU?300:150);
   // sansho for maegashira, komusubi and sekiwake
   const sansho=[];if(old>=MAKU&&old<OZEKI&&w>l){if(B.beatTop&&w>=8)sansho.push(Tj('殊勲賞'));if(w>=11)sansho.push(Tj('敢闘賞'));if((B.wazaWins||0)>=6&&w>=10)sansho.push(Tj('技能賞'));}
@@ -2377,10 +2391,10 @@ function endBasho(){
     else if(endedIdx+1>=st.vowUntil){addBuff(st,'money',-.2,6,Tj('地元の落胆'));ex.push(Tj('テレビで語った目標に届かなかった…（1年間ご祝儀 −20%）'));st.vowUntil=null;}}
   if(endedIdx%6===5){st.pendingKikyo=true;ex.push(Tj('年の瀬だ。地元に帰ろう。'));if(old>=YOKO)queueLife('hono');}
   if(old>=YOKO&&w<=9&&w>=8&&prev&&prev.pos>=YOKO&&prev.w<=9&&!(st.yokoWarnB>st.b-4)){st.yokoWarnB=st.b;queueLife('yoko_warn');}
-  if(old<JURYO&&p>=JURYO&&(st.best||0)<JURYO){queueLife('juryo');queueCongrats('juryo');}
-  if(old<MAKU&&p>=MAKU&&(st.best||0)<MAKU){queueLife('nyumaku');queueCongrats('nyumaku');}
-  if(old<OZEKI&&p>=OZEKI&&p<YOKO&&(st.best||0)<OZEKI){queueLife('ozeki_up');queueCongrats('ozeki');}
-  if(old<YOKO&&p>=YOKO&&(st.best||0)<YOKO){queueLife('yokozuna_up');queueCongrats('yokozuna');}
+  if(old<JURYO&&p>=JURYO&&(st.best||0)<JURYO){LOG('promo','juryo');queueLife('juryo');queueCongrats('juryo');}
+  if(old<MAKU&&p>=MAKU&&(st.best||0)<MAKU){LOG('promo','makuuchi');queueLife('nyumaku');queueCongrats('nyumaku');}
+  if(old<OZEKI&&p>=OZEKI&&p<YOKO&&(st.best||0)<OZEKI){LOG('promo','ozeki');queueLife('ozeki_up');queueCongrats('ozeki');}
+  if(old<YOKO&&p>=YOKO&&(st.best||0)<YOKO){LOG('promo','yokozuna');queueLife('yokozuna_up');queueCongrats('yokozuna');}
   else if(yusho&&old>=MAKU){queueLife('yusho_party');queueCongrats('yusho');}
   retireCheck(old,p,w,l);
   if(st.rom&&st.rom.waitYoko&&p>=YOKO&&st.rom.stage==='dating'){st.rom.waitYoko=false;queueLife('propose',st.rom.pid);}
@@ -2811,7 +2825,7 @@ function drawRetire(g,W,H,t,dt){if(!RT)return;const S=RT.steps[RT.i],s=RT.s;RT.t
   g.fillStyle='rgba(239,226,196,.92)';g.fillRect(W*.62,H*.12,W*.33,H*.76);g.fillStyle='#2a2118';g.textAlign='center';
   g.font=Math.round(H*.13)+'px "Yuji Boku",serif';const nm=s.name;for(let i=0;i<nm.length;i++)g.fillText(nm[i],W*.785,H*(.28+i*.15));
   g.fillStyle='#7a1f1f';g.font='700 '+Math.round(H*.07)+'px "Zen Kaku Gothic New",sans-serif';g.fillText(rank(best).name.replace(/枚目$/,''),W*.785,H*.84);}
-function retire(id,path){const s=roster.list[id];if(!s)return;path=path||(Math.max(s.best||0,s.pos)>=MAKU?'oyakata':'sewanin');if(path==='oyakata'&&Math.max(s.best||0,s.pos)<MAKU)path='sewanin';const pts=Math.round(prestigeOf(s)*(path==='chanko'||path==='sewanin'?.5:path==='kokyo'?0:1));if(path==='kokyo')earn(300);
+function retire(id,path){const s=roster.list[id];if(!s)return;LOG('retire',rank(Math.max(s.best||0,s.pos)).name+'/'+(path||''));path=path||(Math.max(s.best||0,s.pos)>=MAKU?'oyakata':'sewanin');if(path==='oyakata'&&Math.max(s.best||0,s.pos)<MAKU)path='sewanin';const pts=Math.round(prestigeOf(s)*(path==='chanko'||path==='sewanin'?.5:path==='kokyo'?0:1));if(path==='kokyo')earn(300);
   roster.hall.push({name:s.name,face:s.face,best:bestRankName(s),bestPos:Math.max(s.best||0,s.pos),makuYusho:s.makuYusho,yusho:s.yusho,w:totalWins(s),l:s.hist.reduce((a,h)=>a+h.l-(h.kyu||0),0),age:ageOf(s),years:yearOf(s),oicho:Math.max(s.best||0,s.pos)>=JURYO,path:{oyakata:Tj('親方'),son:Tj('二代目を送り出す'),chanko:Tj('ちゃんこ屋の店主'),sewanin:Tj('世話人'),kokyo:Tj('故郷へ')}[path]});
   const married=s.rom&&s.rom.stage==='married';if(path==='son'){const fb=Math.max(s.best||0,s.pos),top=Object.keys(s.stats).sort((a,b)=>s.stats[b]-s.stats[a])[0];
     roster.heir={money:s.money||0,items:s.items||{},name:s.name,best:fb,bestName:rank(fb).name,stat:top,height:s.height,mom:s.rom&&s.rom.pid,home:s.home,makuYusho:s.makuYusho||0};}if(path==='chanko')roster.shops=(roster.shops||0)+1;
@@ -3443,7 +3457,7 @@ itemBtnEl().addEventListener('click',()=>{if(st){st.itemNew=false;persist();item
 function sndUI(){const c=SND.cfg(),b=$('sndBtn'),wait=c.on&&!SND.ready();b.classList.toggle('off',!c.on);b.classList.toggle('wait',wait);b.querySelector('.si').textContent=c.on?'🔊':'🔇';b.querySelector('.st').textContent=wait?Tj('タップで音が鳴る'):c.on?Tj('音 ON'):Tj('音 OFF');
   $('sndBtn2').textContent=(c.on?'🔊':'🔇')+' 🌐';$('sndBtn2').classList.toggle('off',!c.on);$('sndOn').checked=c.on;$('sndBgm').value=c.bgm;$('sndSfx').value=c.sfx;}
 {const lb=$('langLbl');if(lb)lb.textContent=LANG==='en'?Tj('日本語'):'English';}
-const setLang=l=>{if(l===LANG)return;try{if(st&&cur!=='sTitle'){persist();sessionStorage.setItem('sumo-rpg-resume',st.id);}localStorage.setItem('sumo-rpg-lang',l);}catch(e){}location.reload();};
+const setLang=l=>{if(l===LANG)return;LOG('lang',l);try{if(st&&cur!=='sTitle'){persist();sessionStorage.setItem('sumo-rpg-resume',st.id);}localStorage.setItem('sumo-rpg-lang',l);}catch(e){}location.reload();};
 $('langBtn').addEventListener('click',()=>setLang(LANG==='en'?'ja':'en'));
 for(const b of document.querySelectorAll('.langrow [data-lang]')){b.classList.toggle('on',b.dataset.lang===LANG);b.addEventListener('click',()=>setLang(b.dataset.lang));}
 let sndWasReady=false;$('sndBtn').addEventListener('pointerdown',()=>{sndWasReady=SND.ready();},true);

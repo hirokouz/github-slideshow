@@ -220,10 +220,11 @@
 
 ---
 
-## 12.5 流入元の確認
+## 12.5 利用状況の記録
 
-- 甲子園台帳のバナーから来た訪問は、Cloudflare Web Analytics の「参照元（Referers）」で `kokoshinro.com` を見る（設定不要）
-- 人数（ユニーク）まで数える仕組み（Worker＋D1）は `analytics/` に用意してあるが、Cloudflare側の設定が必要なため未使用。D1 `yokozuna-analytics` は作成済み
+- 公開サイトで、端末ごとのランダムな番号・最初の流入元（`?from=`、なければ参照元サイト、なければ direct）・出来事（開いた／入門／場所／昇進／引退／言語）を、Worker `yokozuna-hit` 経由で D1 `yokozuna-analytics` に記録する。名前・IP・セーブデータは送らない
+- 管理画面：`https://yokozuna-hit.j2prco.workers.dev/admin?key=（合言葉）`。流入元ごとの人数、どこまで遊んだか、継続率など。詳しくは `analytics/README.md`
+- タイトル画面の下に、記録していることを表示
 
 ## 13. ファイル構成
 
