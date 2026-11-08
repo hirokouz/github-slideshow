@@ -13,12 +13,23 @@ const SNS = [[/^(t\.co|(mobile\.)?(x|twitter)\.com)$/, 'x'], [/(^|\.)instagram\.
 const normSrc = s => { for (const [re, n] of SNS) if (re.test(s)) return n; return s; };
 const day = (d = new Date()) => new Date(d.getTime() + 9 * 3600e3).toISOString().slice(0, 10); // 日本時間の日付
 const clean = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f<>]/g, '').slice(0, n);
+/* 端末のまとめ（来た・動いたの記録に付ける）：「iOS 15.2・Xアプリ｜JP｜NTT DOCOMO」。User-Agent と接続元の国・通信会社だけで、IP は残さない */
+function devSum(request) {
+  const ua = String(request.headers.get('User-Agent') || ''), cf = request.cf || {}; let m, os = '不明';
+  if ((m = ua.match(/(?:iPhone|CPU) OS (\d+)[_.](\d+)/))) os = (/iPad/.test(ua) ? 'iPadOS ' : 'iOS ') + m[1] + '.' + m[2];
+  else if ((m = ua.match(/Android (\d+(?:\.\d+)?)/))) os = 'Android ' + m[1];
+  else if (/Windows/.test(ua)) os = 'Windows'; else if (/CrOS/.test(ua)) os = 'ChromeOS'; else if (/Mac OS X/.test(ua)) os = 'Mac'; else if (/Linux/.test(ua)) os = 'Linux';
+  const bot = /bot|crawl|spider|slurp|headless|lighthouse|playwright|puppeteer|selenium|phantom|python|curl|wget|node-fetch|axios/i.test(ua) || !ua;
+  const app = /Twitter/i.test(ua) ? 'Xアプリ' : / Line\//.test(ua) ? 'LINEアプリ' : /Instagram/.test(ua) ? 'Instagramアプリ' : /FBAN|FBAV|FB_IAB/.test(ua) ? 'Facebookアプリ' : /GSA\//.test(ua) ? 'Googleアプリ' : /; wv\)/.test(ua) ? 'アプリ内' : '';
+  const br = app || (/EdgA?\/|EdgiOS/.test(ua) ? 'Edge' : /CriOS|Chrome\//.test(ua) ? 'Chrome' + (((m = ua.match(/(?:Chrome|CriOS)\/(\d+)/)) && ' ' + m[1]) || '') : /FxiOS|Firefox\//.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : 'その他');
+  return clean((bot ? '自動(ボット)・' : '') + os + '・' + br + '｜' + (cf.country || '?') + '｜' + String(cf.asOrganization || '?').slice(0, 22), 60);
+}
 const cors = o => ORIGIN_RE.test(o || '') ? { 'Access-Control-Allow-Origin': o, 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Vary': 'Origin' } : {};
 
 async function stats(env, days) {
   const since = day(new Date(Date.now() - (days - 1) * 86400e3));
   const q = (sql, ...a) => env.DB.prepare(sql).bind(...a).all().then(r => r.results || []);
-  const [sources, daily, funnel, retention, basho, shares, recent, acts, ranks] = await Promise.all([
+  const [sources, daily, funnel, retention, basho, shares, recent, acts, ranks, devs] = await Promise.all([
     // 流入元ごと：期間内に開いた人数・新しく来た人数・合計の開いた回数
     q(`WITH first AS (SELECT vid, MIN(day) AS d0 FROM events GROUP BY vid)
        SELECT e.src, COUNT(DISTINCT e.vid) AS users,
@@ -57,8 +68,10 @@ async function stats(env, days) {
     q(`SELECT ev, detail, COUNT(*) AS n, COUNT(DISTINCT vid) AS users FROM events WHERE ev IN ('life','kikyo','gacha','auto','tut') AND day >= ?1 GROUP BY ev, detail ORDER BY ev, n DESC`, since),
     // いまの番付：期間内に場所を終えた人それぞれの、最後の場所
     q(`SELECT detail FROM events WHERE id IN (SELECT MAX(id) FROM events WHERE ev='basho' AND day >= ?1 GROUP BY vid)`, since),
+    // 端末：来た人の OS・ブラウザ（国・通信会社は除いてまとめる）
+    q(`SELECT substr(detail, 1, instr(detail, '｜') - 1) AS dev, COUNT(DISTINCT vid) AS users FROM events WHERE ev IN ('land','open') AND detail LIKE '%｜%' AND day >= ?1 GROUP BY dev ORDER BY users DESC LIMIT 20`, since),
   ]);
-  return { since, until: day(), days, sources, daily, funnel, retention, basho, shares, recent, acts, ranks };
+  return { since, until: day(), days, sources, daily, funnel, retention, basho, shares, recent, acts, ranks, devs };
 }
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -176,6 +189,7 @@ function page(d, key) {
 <section class="kpis" aria-label="期間の合計">${kpi}</section>
 <h2>流入元ごと</h2>${cards}
 <h2>いまの番付</h2>${rankSec}
+<h2>端末</h2>${(d.devs || []).length ? `<ul class="list">${d.devs.map(x => `<li><span>${esc(x.dev)}</span><b>${n(x.users)}人</b></li>`).join('')}</ul>` : '<p class="none">まだ記録がありません（11/9 から記録）。</p>'}
 <h2>日ごとの利用者</h2>${daily}
 <h2>シェア</h2>${shares}
 <h2>ゲーム内の出来事</h2>${acts}
@@ -190,6 +204,7 @@ async function usersData(env, days) {
       SUM(ev='open') AS opens, SUM(ev='start') AS starts, SUM(ev='basho') AS basho, SUM(ev='share') AS shares, SUM(ev IN ('life','kikyo')) AS evs,
       MAX(CASE WHEN ev='promo' THEN CASE detail WHEN 'yokozuna' THEN 4 WHEN 'ozeki' THEN 3 WHEN 'makuuchi' THEN 2 WHEN 'juryo' THEN 1 ELSE 0 END ELSE 0 END) AS promo,
       MAX(CASE WHEN ev='start' THEN detail END) AS startd, MAX(lang) AS lang,
+      (SELECT e3.detail FROM events e3 WHERE e3.vid = e.vid AND e3.ev IN ('land','open') AND e3.detail != '' ORDER BY e3.id DESC LIMIT 1) AS dev,
       (SELECT e2.detail FROM events e2 WHERE e2.vid = e.vid AND e2.ev = 'basho' ORDER BY e2.id DESC LIMIT 1) AS lastBasho
     FROM events e WHERE vid IN (SELECT DISTINCT vid FROM events WHERE day >= ?1) GROUP BY vid ORDER BY last DESC LIMIT 300`).bind(since).all();
   return { since, until: day(), days, users: r.results || [] };
@@ -204,6 +219,7 @@ function usersPage(D, key) {
   const list = D.users.length ? `<ul class="users">${D.users.map(u => { const [sl, sc] = stage(u), lab = srcLab(u.src);
     return `<li><a class="user" href="?key=${k}&days=${D.days}&user=${encodeURIComponent(u.vid)}"><div class="uh"><span><span class="id">${esc(String(u.vid).slice(0, 6))}</span> <span class="srcl">${esc(u.src)}${lab ? '（' + esc(lab) + '）' : ''}</span></span><span class="chip ${sc}">${sl}</span></div>
       <p class="ln">初回 ${jst(u.first)}・最後 ${jst(u.last)}・来た日 ${n(u.days)}日</p>
+      ${u.dev ? `<p class="ln">端末 ${esc(u.dev)}</p>` : ''}
       ${u.startd ? `<p class="ln">入門：${esc(startLab(u.startd))}</p>` : ''}
       ${u.lastBasho ? `<p class="ln">いまの番付 <b>${esc(bp(u.lastBasho).rank)}</b>（最後の場所 ${esc(bp(u.lastBasho).rec)}）</p>${bp(u.lastBasho).gs.length ? `<p class="ln">${chips(bp(u.lastBasho).gs, bp(u.lastBasho).kg)}</p>` : ''}` : ''}
       <p class="ln">場所 ${n(u.basho)}回・イベント ${n(u.evs)}回${n(u.shares) ? '・シェア ' + n(u.shares) + '回' : ''}${u.lang && u.lang !== 'ja' ? '・' + esc(u.lang) : ''}</p>
@@ -247,7 +263,7 @@ export default {
         const src = /^[a-z0-9_.:-]{1,40}$/i.test(String(b.src || '')) ? normSrc(String(b.src).toLowerCase()) : 'other';
         const now = new Date();
         ctx.waitUntil(env.DB.prepare('INSERT INTO events (vid, src, ev, detail, lang, created_at, day) VALUES (?1,?2,?3,?4,?5,?6,?7)')
-          .bind(vid, src, ev, clean(b.detail, 60), clean(b.lang, 5), now.toISOString(), day(now)).run().catch(e => console.log('insert failed', e && e.message)));
+          .bind(vid, src, ev, ev === 'land' || ev === 'open' ? devSum(request) : clean(b.detail, 60), clean(b.lang, 5), now.toISOString(), day(now)).run().catch(e => console.log('insert failed', e && e.message)));
       }
       return new Response(null, { status: 204, headers: cors(origin) });
     }
