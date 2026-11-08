@@ -5,7 +5,7 @@
    個人情報は保存しない：vid は端末ごとのランダムな番号、IP は保存しない
    バインディング：DB（D1 yokozuna-analytics）　シークレット：ADMIN_KEY（管理画面の合言葉） */
 const ORIGIN_RE = /^https:\/\/([a-z0-9-]+\.)?yokozuna-sumo\.pages\.dev$/;
-const EVENTS = new Set(['land', 'open', 'start', 'basho', 'promo', 'retire', 'lang', 'share']);
+const EVENTS = new Set(['land', 'open', 'start', 'basho', 'promo', 'retire', 'lang', 'share', 'life', 'kikyo', 'gacha', 'auto', 'tut']);
 // SNS の参照元（アプリ内ブラウザやリンク短縮のホスト名）を SNS 名にまとめる。?from= の値はそのまま
 const SNS = [[/^(t\.co|(mobile\.)?(x|twitter)\.com)$/, 'x'], [/(^|\.)instagram\.com$/, 'instagram'], [/(^|\.)facebook\.com$|^fb\.me$/, 'facebook'],
   [/(^|\.)threads\.(net|com)$/, 'threads'], [/(^|\.)tiktok\.com$/, 'tiktok'], [/(^|\.)line\.me$/, 'line'], [/(^|\.)youtube\.com$|^youtu\.be$/, 'youtube'],
@@ -18,7 +18,7 @@ const cors = o => ORIGIN_RE.test(o || '') ? { 'Access-Control-Allow-Origin': o, 
 async function stats(env, days) {
   const since = day(new Date(Date.now() - (days - 1) * 86400e3));
   const q = (sql, ...a) => env.DB.prepare(sql).bind(...a).all().then(r => r.results || []);
-  const [sources, daily, funnel, retention, basho, shares, recent] = await Promise.all([
+  const [sources, daily, funnel, retention, basho, shares, recent, acts] = await Promise.all([
     // 流入元ごと：期間内に開いた人数・新しく来た人数・合計の開いた回数
     q(`WITH first AS (SELECT vid, MIN(day) AS d0 FROM events GROUP BY vid)
        SELECT e.src, COUNT(DISTINCT e.vid) AS users,
@@ -53,8 +53,10 @@ async function stats(env, days) {
     // シェア：どの場面で、何で（スマホの共有メニュー sheet ／ X）シェアされたか
     q(`SELECT detail, COUNT(*) AS shares, COUNT(DISTINCT vid) AS users FROM events WHERE ev='share' AND day >= ?1 GROUP BY detail ORDER BY shares DESC`, since),
     q(`SELECT created_at, src, ev, detail, lang, substr(vid,1,6) AS vid FROM events ORDER BY id DESC LIMIT 50`),
+    // ゲーム内の出来事：イベントの選択・帰省・ガチャ・オート・遊び方の説明
+    q(`SELECT ev, detail, COUNT(*) AS n, COUNT(DISTINCT vid) AS users FROM events WHERE ev IN ('life','kikyo','gacha','auto','tut') AND day >= ?1 GROUP BY ev, detail ORDER BY ev, n DESC`, since),
   ]);
-  return { since, until: day(), days, sources, daily, funnel, retention, basho, shares, recent };
+  return { since, until: day(), days, sources, daily, funnel, retention, basho, shares, recent, acts };
 }
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -66,7 +68,14 @@ const SRC_LABEL = { kokoshinro: '甲子園台帳のバナー', 'kokoshinro.com':
 const srcLab = s => { const b = String(s || '').split('_')[0]; return SRC_LABEL[s] || (b !== s && SRC_LABEL[b] && SRC_LABEL[b] + '・' + s.slice(b.length + 1)) || ''; };
 const SHARE_LABEL = { juryo: '十両昇進', nyumaku: '新入幕', ozeki: '大関昇進', yokozuna: '横綱昇進', yusho: '幕内優勝', retire: '引退', sheet: 'スマホの共有（文章のみ）', sheet_img: 'スマホの共有（画像つき）', save: '画像を保存', x: 'X' };
 const shareLab = d => String(d || '').split('/').map(x => SHARE_LABEL[x] || x).join('・');
-const EV_LABEL = { land: '来た', open: '動いた', start: '入門', basho: '場所', promo: '昇進', retire: '引退', lang: '言語', share: 'シェア' };
+const LIFE_LABEL = { juryo: '十両昇進', nyumaku: '新入幕', ozeki_up: '大関昇進', yokozuna_up: '横綱昇進', yusho_party: '優勝の祝勝会', congrat: 'お祝い', partner: '恋人・妻', tani: 'タニマチ', rival: '宿敵',
+  meet: '出会い', confess: '告白', gift: '贈り物', visit: '会いに行く', apart: 'すれ違い', breakup: '別れ', propose: 'プロポーズ', wedding: '結婚披露宴', baby: '子どもの誕生', move_out: '部屋を出る',
+  caught: '見つかる', tempt: '誘惑', scoop: '週刊誌', tani_invite: 'タニマチの誘い', tani_leave: 'タニマチが離れる', school: '相撲教習所', class: '教習所の授業', graduate: '教習所の卒業',
+  rival_yoko: '宿敵の横綱昇進', record: '優勝回数の記録', hono: '奉納土俵入り', yoko_warn: '横綱審議委員会', tsuna_advice: '綱取りの助言', retire_talk: '引退の相談', nisei_press: '二代目の取材', nisei_father: '二代目と父', nisei_pass: '二代目' };
+const actLab = (ev, d) => { const t = String(d || ''), i = t.indexOf('/'), k = i < 0 ? t : t.slice(0, i), c = i < 0 ? '' : t.slice(i + 1), j = c.indexOf(':'), pick = !c ? '' : j < 0 ? '・選択' + c : '・「' + c.slice(j + 1) + '」';
+  if (ev === 'life') { const [a, b] = k.split(':'); return (LIFE_LABEL[a] || a) + (b ? '（' + (LIFE_LABEL[b] || b) + '）' : '') + pick; }
+  if (ev === 'kikyo') return '帰省「' + k + '」' + pick; if (ev === 'gacha') return 'ガチャ ' + k + '回引き'; if (ev === 'auto') return 'オートを使った'; if (ev === 'tut') return k === 'done' ? '遊び方の説明を最後まで見た' : '遊び方の説明を飛ばした（' + k.replace('skip:', '') + '枚目）'; return d; };
+const EV_LABEL = { life: 'イベント', kikyo: '帰省', gacha: 'ガチャ', auto: 'オート', tut: '説明', land: '来た', open: '動いた', start: '入門', basho: '場所', promo: '昇進', retire: '引退', lang: '言語', share: 'シェア' };
 const PROMO = { juryo: '十両', makuuchi: '幕内', ozeki: '大関', yokozuna: '横綱' };
 const jst = iso => { const t = new Date(new Date(iso).getTime() + 9 * 3600e3).toISOString(); return t.slice(5, 7).replace(/^0/, '') + '/' + t.slice(8, 10).replace(/^0/, '') + ' ' + t.slice(11, 16); };
 /* phone-first admin page: summary numbers, one card per source (people → how far they got → came back), daily bars, shares, recent log */
@@ -95,8 +104,10 @@ function page(d, key) {
   const dk = Object.keys(days).sort().reverse(), mx = Math.max(1, ...dk.map(x => days[x].n));
   const daily = dk.length ? `<ul class="bars">${dk.map(x => `<li><span class="d">${x.slice(5).replace('-', '/').replace(/^0/, '')}</span><span class="bar"><i style="--w:${Math.round(days[x].n * 100 / mx)}%"></i></span><b>${days[x].n}</b><span class="t">${esc(days[x].top.join('・'))}</span></li>`).join('')}</ul>` : '<p class="none">まだ記録がありません。</p>';
   const shares = d.shares.length ? `<ul class="list">${d.shares.map(s => `<li><span>${esc(shareLab(s.detail))}</span><b>${n(s.shares)}回</b><small>${n(s.users)}人</small></li>`).join('')}</ul>` : '<p class="none">まだシェアはありません。昇進・優勝・引退の画面の「この記録をシェアする」で数えます。</p>';
+  const AG = { tut: '遊び方の説明', life: 'イベントと選んだ答え', kikyo: '帰省のイベント', gacha: 'ガチャ', auto: 'オート' };
+  const acts = (d.acts || []).length ? ['tut', 'life', 'kikyo', 'gacha', 'auto'].filter(e => d.acts.some(a => a.ev === e)).map(e => `<details class="acts"${e === 'tut' || e === 'life' ? ' open' : ''}><summary>${AG[e]}（${d.acts.filter(a => a.ev === e).reduce((t, a) => t + n(a.n), 0)}回）</summary><ul class="list">${d.acts.filter(a => a.ev === e).slice(0, 30).map(a => `<li><span>${esc(actLab(a.ev, a.detail))}</span><b>${n(a.n)}回</b><small>${n(a.users)}人</small></li>`).join('')}</ul></details>`).join('') : '<p class="none">まだ記録がありません。イベントで選んだ答え、帰省、ガチャ、オート、遊び方の説明を数えます。</p>';
   const TYPE = { oshi: '押し相撲', yotsu: '四つ相撲', waza: '技能派' };
-  const li = r => `<li><span class="tm">${jst(r.created_at)}</span><span class="ev">${EV_LABEL[r.ev] || esc(r.ev)}</span><span class="dt">${esc(r.ev === 'promo' ? (PROMO[r.detail] || r.detail) : r.ev === 'share' ? shareLab(r.detail) : r.ev === 'start' ? String(r.detail || '').split('/').map(x => TYPE[x] || x).join('・') : r.detail)}</span><span class="who">${esc(r.src)}・${esc(r.vid)}${r.lang && r.lang !== 'ja' ? '・' + esc(r.lang) : ''}</span></li>`;
+  const li = r => `<li><span class="tm">${jst(r.created_at)}</span><span class="ev">${EV_LABEL[r.ev] || esc(r.ev)}</span><span class="dt">${esc(r.ev === 'promo' ? (PROMO[r.detail] || r.detail) : r.ev === 'share' ? shareLab(r.detail) : ['life', 'kikyo', 'gacha', 'auto', 'tut'].includes(r.ev) ? actLab(r.ev, r.detail) : r.ev === 'start' ? String(r.detail || '').split('/').map(x => TYPE[x] || x).join('・') : r.detail)}</span><span class="who">${esc(r.src)}・${esc(r.vid)}${r.lang && r.lang !== 'ja' ? '・' + esc(r.lang) : ''}</span></li>`;
   const recent = d.recent.length ? `<ul class="log">${d.recent.slice(0, 15).map(li).join('')}</ul>` + (d.recent.length > 15 ? `<details><summary>もっと見る（${d.recent.length - 15}件）</summary><ul class="log">${d.recent.slice(15).map(li).join('')}</ul></details>` : '') : '<p class="none">まだ記録がありません。</p>';
   return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><title>横綱への道 利用状況</title>
 <style>
@@ -124,6 +135,7 @@ h2{font-size:15px;margin:4px 0 -6px;color:var(--acc)}
 .log li{display:grid;grid-template-columns:auto auto 1fr;gap:2px 10px;border-bottom:1px solid var(--line);padding:6px 0;font-size:13.5px}
 .log .tm{color:var(--mut);font-variant-numeric:tabular-nums}.log .ev{font-weight:700}.log .dt{min-width:0;word-break:break-all}.log .who{grid-column:1/-1;font-size:11.5px;color:var(--mut)}
 details summary{cursor:pointer;color:var(--acc);font-size:13.5px;padding:8px 0}
+.acts summary{font-weight:700;color:var(--fg);font-size:14px}.acts .list{margin-bottom:6px}
 .reload{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(env(safe-area-inset-bottom,0px) + 16px);z-index:5;display:flex;align-items:center;gap:6px;padding:12px 18px;border:0;border-radius:999px;background:var(--acc);color:#fff;font:700 15px/1 system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.28);cursor:pointer}
 .reload:focus-visible{outline:3px solid var(--fg);outline-offset:2px}.reload.busy{opacity:.7}
 .updated{font-size:12px;color:var(--mut);margin:0}
@@ -137,6 +149,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:13.5px;padding:8px 0}
 <h2>流入元ごと</h2>${cards}
 <h2>日ごとの利用者</h2>${daily}
 <h2>シェア</h2>${shares}
+<h2>ゲーム内の出来事</h2>${acts}
 <h2>最近の記録</h2>${recent}
 <div style="height:64px"></div></main></body></html>`;
 }

@@ -2704,7 +2704,7 @@ function drawOne(guarantee){let r=Math.random(),rar='N';for(const[k,p]of RATES){
   const scroll=gachaFrom==='sHome'&&st&&(rar==='SR'||rar==='SSR')&&Math.random()<1/6,c=pick((scroll?ITEMS:CARDS).filter(x=>x.r===rar));
   if(c.item){const ow=st,bag=bagOf(ow);ow.itemNew=true;roster.itemSeen=roster.itemSeen||{};const isNew=!roster.itemSeen[c.id];roster.itemSeen[c.id]=1;bag[c.id]=(bag[c.id]||0)+1;if(ow)ow.touched=Date.now();return{c,owner:ow?ow.name:null,isNew};}
   const isNew=!roster.cards[c.id];roster.cards[c.id]=(roster.cards[c.id]||0)+1;return{c,isNew};}
-function pull(n){const cost=n===10?PULL10:PULL1;if(money()<cost)return;addMoney(-cost);const res=[];
+function pull(n){const cost=n===10?PULL10:PULL1;if(money()<cost)return;addMoney(-cost);LOG('gacha',String(n));const res=[];
   for(let i=0;i<n;i++){const last=n===10&&i===9&&!res.some(x=>x.c.r==='SR'||x.c.r==='SSR');res.push(drawOne(last));}
   saveRoster();renderGacha(res);SND.play('gacha',res.some(x=>x.c.r==='SSR'));}
 function cardEl(c,opts={}){
@@ -3343,7 +3343,7 @@ function openLife(item){
   const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;$('kDone').hidden=true;$('kDone').textContent=Tj('部屋に戻る');
   shareKind={juryo:'juryo',nyumaku:'nyumaku',ozeki_up:'ozeki',yokozuna_up:'yokozuna',yusho_party:'yusho'}[item.kind]||null;$('kShare').hidden=true;
   for(const c of ev.ch){const b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=c.l;
-    b.addEventListener('click',()=>{SND.play('pluck');const a0=st.rom?st.rom.aff:0,r0=relSnap();let [story,fx]=c.f();fx=(fx||'')+heartbreak(r0);box.innerHTML='';if(kT&&ev.tw&&ev.tw.after)kT.show=ev.tw.after();if(kW&&ev.w){if(ev.w.after)kW.e=ev.w.after(a0);if(ev.w.afterLook)kW.look=ev.w.afterLook();}$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;$('kShare').hidden=!shareKind;
+    b.addEventListener('click',()=>{SND.play('pluck');LOG('life',item.kind+(item.kind==='congrat'?':'+String(item.pid||'').split(':')[1]:'')+'/'+(ev.ch.indexOf(c)+1)+':'+String(c.l).replace(/[「」]/g,'').slice(0,26));const a0=st.rom?st.rom.aff:0,r0=relSnap();let [story,fx]=c.f();fx=(fx||'')+heartbreak(r0);box.innerHTML='';if(kT&&ev.tw&&ev.tw.after)kT.show=ev.tw.after();if(kW&&ev.w){if(ev.w.after)kW.e=ev.w.after(a0);if(ev.w.afterLook)kW.look=ev.w.afterLook();}$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;$('kShare').hidden=!shareKind;
       if(s.lateReturn){s.used=1;s.lateReturn=false;}addLog(ev.t+'：'+story);checkAch();persist();if(s.retiring)$('kDone').textContent=Tj('引退会見へ');});box.append(b);}
   const tall=!!((kW&&kW.pid&&kScene!=='tani')||(kT&&kScene==='tani'));$('kCv').style.aspectRatio=tall?'400/300':'';
   show('sKikyo');kCv=makeCanvas($('kCv'),tall?300/400:220/400);kSnow=[];
@@ -3413,7 +3413,7 @@ function openKikyo(){
   $('kEvName').textContent=kEv.t;$('kText').textContent=kEv.text(s);
   const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;$('kDone').hidden=true;
   for(const c of kEv.ch){const b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=typeof c.l==='function'?c.l(s):c.l;
-    b.addEventListener('click',()=>{const r0=relSnap();let [story,fx]=c.f(s);fx=(fx||'')+heartbreak(r0);box.innerHTML='';$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;$('kShare').hidden=!shareKind;
+    b.addEventListener('click',()=>{LOG('kikyo',String(kEv.t||kEv.id).replace(/\//g,'・').slice(0,24)+'/'+(kEv.ch.indexOf(c)+1)+':'+String(typeof c.l==='function'?c.l(s):c.l).replace(/[「」]/g,'').slice(0,20));const r0=relSnap();let [story,fx]=c.f(s);fx=(fx||'')+heartbreak(r0);box.innerHTML='';$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;$('kShare').hidden=!shareKind;
       s.pendingKikyo=false;if(s.lateReturn){s.used=1;s.lateReturn=false;}addLog(kEv.t+'：'+story);persist();});
     box.append(b);}
   $('kCv').style.aspectRatio='';show('sKikyo');kCv=makeCanvas($('kCv'),220/400);kSnow=[];
@@ -3532,7 +3532,7 @@ function pickAct(){const S=st.stats,id=k=>ACTS.find(a=>a.id===k);
   const want=Math.min(st.kgMax-4,105+st.b*3.2);if(st.kg<want&&st.fat<55&&Math.random()<.35)return id('chanko');
   const main={oshi:'teppo',yotsu:'shiko',waza:'moushi'}[st.type]||'teppo';if(Math.random()<.45)return id(main);
   const low=Object.entries({teppo:S.oshi,shiko:S.chikara,moushi:S.waza,suri:S.hayasa}).sort((a,b)=>a[1]-b[1])[0][0];return id(low);}
-function setAuto(on){autoGrow=on;$('autoBar').hidden=!on;document.body.classList.toggle('autoOn',on);const b=$('autoBtn');if(b)b.classList.toggle('on',on);clearInterval(autoTimer);
+function setAuto(on){if(on&&!autoGrow)LOG('auto','on');autoGrow=on;$('autoBar').hidden=!on;document.body.classList.toggle('autoOn',on);const b=$('autoBtn');if(b)b.classList.toggle('on',on);clearInterval(autoTimer);
   if(on){autoTimer=setInterval(autoStep,250);toast(Tj('オート成長を始めた'));}}
 function autoStop(why){setAuto(false);if(why)toast(why);}
 function autoStep(){
@@ -3604,8 +3604,8 @@ $('sndBtn2').addEventListener('click',()=>{sndUI();openSheet('snd',Tj('音・言
 addEventListener('pointerup',()=>setTimeout(sndUI,50),{passive:true});
 $('sndOn').addEventListener('change',e=>{const c=SND.cfg();c.on=e.target.checked;SND.save(c);sndUI();});
 for(const [id,k] of [['sndBgm','bgm'],['sndSfx','sfx']])$(id).addEventListener('input',e=>{const c=SND.cfg();c[k]=+e.target.value;SND.save(c);if(k==='sfx')SND.play('pluck');});
-$('tutNext').addEventListener('click',()=>{if(tutI<tutList.length-1){tutI++;showTut();}else endTut();});
-$('tutSkip').addEventListener('click',endTut);$('tutBtn').addEventListener('click',startTut);
+$('tutNext').addEventListener('click',()=>{if(tutI<tutList.length-1){tutI++;showTut();}else{LOG('tut','done');endTut();}});
+$('tutSkip').addEventListener('click',()=>{LOG('tut','skip:'+(tutI+1));endTut();});$('tutBtn').addEventListener('click',startTut);
 addEventListener('resize',()=>{if(!$('tut').hidden)showTut();});
 $('autoOff').addEventListener('click',()=>autoStop(Tj('オート成長を止めました')));
 $('autoChk').addEventListener('change',e=>{autoMode=e.target.checked;
