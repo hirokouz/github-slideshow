@@ -13,7 +13,7 @@ const SNS = [[/^(t\.co|(mobile\.)?(x|twitter)\.com)$/, 'x'], [/(^|\.)instagram\.
 const normSrc = s => { for (const [re, n] of SNS) if (re.test(s)) return n; return s; };
 const day = (d = new Date()) => new Date(d.getTime() + 9 * 3600e3).toISOString().slice(0, 10); // 日本時間の日付
 const clean = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f<>]/g, '').slice(0, n);
-/* 端末のまとめ（来た・動いたの記録に付ける）：「iOS 15.2・Xアプリ｜JP｜NTT DOCOMO」。User-Agent と接続元の国・通信会社だけで、IP は残さない */
+/* 端末のまとめ（ユーザーのプロフィール users.dev に入れる）：「iOS 15.2・Xアプリ｜JP｜NTT DOCOMO」。User-Agent と接続元の国・通信会社だけで、IP は残さない */
 function devSum(request) {
   const ua = String(request.headers.get('User-Agent') || ''), cf = request.cf || {}; let m, os = '不明';
   if ((m = ua.match(/(?:iPhone|CPU) OS (\d+)[_.](\d+)/))) os = (/iPad/.test(ua) ? 'iPadOS ' : 'iOS ') + m[1] + '.' + m[2];
@@ -69,7 +69,7 @@ async function stats(env, days) {
     // いまの番付：期間内に場所を終えた人それぞれの、最後の場所
     q(`SELECT detail FROM events WHERE id IN (SELECT MAX(id) FROM events WHERE ev='basho' AND day >= ?1 GROUP BY vid)`, since),
     // 端末：来た人の OS・ブラウザ（国・通信会社は除いてまとめる）
-    q(`SELECT substr(detail, 1, instr(detail, '｜') - 1) AS dev, COUNT(DISTINCT vid) AS users FROM events WHERE ev IN ('land','open') AND detail LIKE '%｜%' AND day >= ?1 GROUP BY dev ORDER BY users DESC LIMIT 20`, since),
+    q(`SELECT substr(dev, 1, instr(dev, '｜') - 1) AS dev, COUNT(*) AS users FROM users WHERE vid IN (SELECT DISTINCT vid FROM events WHERE day >= ?1) AND dev LIKE '%｜%' GROUP BY 1 ORDER BY users DESC LIMIT 20`, since),
   ]);
   return { since, until: day(), days, sources, daily, funnel, retention, basho, shares, recent, acts, ranks, devs };
 }
@@ -204,7 +204,7 @@ async function usersData(env, days) {
       SUM(ev='open') AS opens, SUM(ev='start') AS starts, SUM(ev='basho') AS basho, SUM(ev='share') AS shares, SUM(ev IN ('life','kikyo')) AS evs,
       MAX(CASE WHEN ev='promo' THEN CASE detail WHEN 'yokozuna' THEN 4 WHEN 'ozeki' THEN 3 WHEN 'makuuchi' THEN 2 WHEN 'juryo' THEN 1 ELSE 0 END ELSE 0 END) AS promo,
       MAX(CASE WHEN ev='start' THEN detail END) AS startd, MAX(lang) AS lang,
-      (SELECT e3.detail FROM events e3 WHERE e3.vid = e.vid AND e3.ev IN ('land','open') AND e3.detail != '' ORDER BY e3.id DESC LIMIT 1) AS dev,
+      (SELECT u.dev FROM users u WHERE u.vid = e.vid) AS dev,
       (SELECT e2.detail FROM events e2 WHERE e2.vid = e.vid AND e2.ev = 'basho' ORDER BY e2.id DESC LIMIT 1) AS lastBasho
     FROM events e WHERE vid IN (SELECT DISTINCT vid FROM events WHERE day >= ?1) GROUP BY vid ORDER BY last DESC LIMIT 300`).bind(since).all();
   return { since, until: day(), days, users: r.results || [] };
@@ -233,6 +233,7 @@ ${list}<div style="height:64px"></div></main></body></html>`;
 }
 async function userPage(env, vid, key, days) {
   const k = encodeURIComponent(key), r = await env.DB.prepare('SELECT created_at, src, ev, detail, lang FROM events WHERE vid = ?1 ORDER BY id DESC LIMIT 2000').bind(vid).all(), rows = r.results || [];
+  const prof = ((await env.DB.prepare('SELECT dev FROM users WHERE vid = ?1').bind(vid).all()).results || [])[0] || {};
   const u = { promo: 0, basho: 0, starts: 0, opens: 0 };
   for (const x of rows) { if (x.ev === 'basho') u.basho++; if (x.ev === 'start') { u.starts++; u.startd = u.startd || x.detail; } if (x.ev === 'open') u.opens++; if (x.ev === 'promo') u.promo = Math.max(u.promo, { juryo: 1, makuuchi: 2, ozeki: 3, yokozuna: 4 }[x.detail] || 0); }
   const [sl, sc] = stage(u), src = rows.length ? rows[rows.length - 1].src : '', lab = srcLab(src);
@@ -244,6 +245,7 @@ async function userPage(env, vid, key, days) {
   return HEAD('横綱への道 ' + esc(String(vid).slice(0, 6))) + `<div class="top"><h1>端末 ${esc(String(vid).slice(0, 6))}</h1><a class="back" href="?key=${k}&days=${days}&view=users">← ユーザー別へ</a></div>
 <button type="button" class="reload" onclick="this.classList.add('busy');this.textContent='更新中…';location.reload()">↻ 更新</button>
 <article class="src"><header><div><h3>${esc(src)}</h3>${lab ? `<p class="lab">${esc(lab)}</p>` : ''}</div><span class="chip ${sc}">${sl}</span></header>
+${prof.dev ? `<p class="sub">端末 ${esc(prof.dev)}</p>` : ''}
 <p class="sub">記録 ${rows.length}件・場所 ${u.basho}回${u.startd ? '・入門：' + esc(startLab(u.startd)) : ''}</p>
 ${rows.length ? `<p class="sub">初回 ${jst(rows[rows.length - 1].created_at)}・最後 ${jst(rows[0].created_at)}（日本時間）</p>` : ''}</article>
 <h2>記録（新しい順）</h2>${items || '<p class="none">記録がありません。</p>'}<div style="height:64px"></div></main></body></html>`;
@@ -263,7 +265,10 @@ export default {
         const src = /^[a-z0-9_.:-]{1,40}$/i.test(String(b.src || '')) ? normSrc(String(b.src).toLowerCase()) : 'other';
         const now = new Date();
         ctx.waitUntil(env.DB.prepare('INSERT INTO events (vid, src, ev, detail, lang, created_at, day) VALUES (?1,?2,?3,?4,?5,?6,?7)')
-          .bind(vid, src, ev, ev === 'land' || ev === 'open' ? devSum(request) : clean(b.detail, 60), clean(b.lang, 5), now.toISOString(), day(now)).run().catch(e => console.log('insert failed', e && e.message)));
+          .bind(vid, src, ev, clean(b.detail, 60), clean(b.lang, 5), now.toISOString(), day(now)).run().catch(e => console.log('insert failed', e && e.message)));
+        // プロフィール：来た・動いたときに端末の情報を最新にする（1端末1行）
+        if (ev === 'land' || ev === 'open') ctx.waitUntil(env.DB.prepare(`INSERT INTO users (vid, src, dev, first_at, last_at) VALUES (?1,?2,?3,?4,?4)
+            ON CONFLICT(vid) DO UPDATE SET dev = excluded.dev, last_at = excluded.last_at`).bind(vid, src, devSum(request), now.toISOString()).run().catch(e => console.log('user upsert failed', e && e.message)));
       }
       return new Response(null, { status: 204, headers: cors(origin) });
     }

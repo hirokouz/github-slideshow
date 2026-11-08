@@ -12,3 +12,11 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE INDEX IF NOT EXISTS idx_events_day_src ON events(day, src);
 CREATE INDEX IF NOT EXISTS idx_events_vid ON events(vid, day);
 CREATE INDEX IF NOT EXISTS idx_events_ev ON events(ev, detail);
+-- ユーザー（端末）ごとのプロフィール：1端末1行。端末の情報は記録のたびではなく、ここに最新のものだけを持つ
+CREATE TABLE IF NOT EXISTS users (
+  vid TEXT PRIMARY KEY,
+  src TEXT,                   -- 最初の流入元
+  dev TEXT,                   -- 端末のまとめ「iOS 15.2・Xアプリ｜JP｜NTT DOCOMO」（OS・ブラウザ・国・通信会社。IP は残さない）
+  first_at TEXT,              -- 初めて来た日時（UTC）
+  last_at TEXT                -- 最後に来た日時（UTC）
+);
