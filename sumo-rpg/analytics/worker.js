@@ -5,7 +5,7 @@
    個人情報は保存しない：vid は端末ごとのランダムな番号、IP は保存しない
    バインディング：DB（D1 yokozuna-analytics）　シークレット：ADMIN_KEY（管理画面の合言葉） */
 const ORIGIN_RE = /^https:\/\/([a-z0-9-]+\.)?yokozuna-sumo\.pages\.dev$/;
-const EVENTS = new Set(['open', 'start', 'basho', 'promo', 'retire', 'lang', 'share']);
+const EVENTS = new Set(['land', 'open', 'start', 'basho', 'promo', 'retire', 'lang', 'share']);
 // SNS の参照元（アプリ内ブラウザやリンク短縮のホスト名）を SNS 名にまとめる。?from= の値はそのまま
 const SNS = [[/^(t\.co|(mobile\.)?(x|twitter)\.com)$/, 'x'], [/(^|\.)instagram\.com$/, 'instagram'], [/(^|\.)facebook\.com$|^fb\.me$/, 'facebook'],
   [/(^|\.)threads\.(net|com)$/, 'threads'], [/(^|\.)tiktok\.com$/, 'tiktok'], [/(^|\.)line\.me$/, 'line'], [/(^|\.)youtube\.com$|^youtu\.be$/, 'youtube'],
@@ -31,6 +31,7 @@ async function stats(env, days) {
     // どこまで進んだか（期間内に来た人のうち、その段階に届いた人数）
     q(`WITH u AS (SELECT DISTINCT vid, src FROM events WHERE day >= ?1)
        SELECT u.src, COUNT(*) AS users,
+         SUM(EXISTS(SELECT 1 FROM events e WHERE e.vid=u.vid AND e.ev='open')) AS loaded,
          SUM(EXISTS(SELECT 1 FROM events e WHERE e.vid=u.vid AND e.ev='start')) AS started,
          SUM(EXISTS(SELECT 1 FROM events e WHERE e.vid=u.vid AND e.ev='basho')) AS played_basho,
          SUM(EXISTS(SELECT 1 FROM events e WHERE e.vid=u.vid AND e.ev='promo' AND e.detail='juryo')) AS juryo,
@@ -65,7 +66,7 @@ const SRC_LABEL = { kokoshinro: '甲子園台帳のバナー', 'kokoshinro.com':
 const srcLab = s => { const b = String(s || '').split('_')[0]; return SRC_LABEL[s] || (b !== s && SRC_LABEL[b] && SRC_LABEL[b] + '・' + s.slice(b.length + 1)) || ''; };
 const SHARE_LABEL = { juryo: '十両昇進', nyumaku: '新入幕', ozeki: '大関昇進', yokozuna: '横綱昇進', yusho: '幕内優勝', retire: '引退', sheet: 'スマホの共有（文章のみ）', sheet_img: 'スマホの共有（画像つき）', save: '画像を保存', x: 'X' };
 const shareLab = d => String(d || '').split('/').map(x => SHARE_LABEL[x] || x).join('・');
-const EV_LABEL = { open: '開いた', start: '入門', basho: '場所', promo: '昇進', retire: '引退', lang: '言語', share: 'シェア' };
+const EV_LABEL = { land: '来た', open: '動いた', start: '入門', basho: '場所', promo: '昇進', retire: '引退', lang: '言語', share: 'シェア' };
 const PROMO = { juryo: '十両', makuuchi: '幕内', ozeki: '大関', yokozuna: '横綱' };
 const jst = iso => { const t = new Date(new Date(iso).getTime() + 9 * 3600e3).toISOString(); return t.slice(5, 7).replace(/^0/, '') + '/' + t.slice(8, 10).replace(/^0/, '') + ' ' + t.slice(11, 16); };
 /* phone-first admin page: summary numbers, one card per source (people → how far they got → came back), daily bars, shares, recent log */
@@ -80,7 +81,7 @@ function page(d, key) {
   for (const s of d.shares) tot.shares += n(s.shares);
   const kpi = [['利用者', tot.users, '人'], ['新しく来た人', tot.fresh, '人'], ['入門した人', tot.started, '人'], ['シェア', tot.shares, '回']]
     .map(([l, v, u]) => `<div class="kpi"><span class="kl">${l}</span><span class="kv">${v}<small>${u}</small></span></div>`).join('');
-  const steps = [['started', '入門'], ['played_basho', '場所'], ['juryo', '十両'], ['makuuchi', '幕内'], ['ozeki', '大関'], ['yokozuna', '横綱']];
+  const steps = [['loaded', '動いた'], ['started', '入門'], ['played_basho', '場所'], ['juryo', '十両'], ['makuuchi', '幕内'], ['ozeki', '大関'], ['yokozuna', '横綱']];
   const cards = d.sources.length ? d.sources.map(s => {
     const f = F[s.src] || {}, r = R[s.src], b = B[s.src], base = n(f.users) || n(s.users);
     const st = steps.map(([c, l]) => { const v = n(f[c]); return `<li class="${v ? '' : 'z'}"><span>${l}</span><b>${v}</b><i style="--w:${base ? Math.round(v * 100 / base) : 0}%"></i></li>`; }).join('');
@@ -88,7 +89,7 @@ function page(d, key) {
     const bs = b ? `<p class="sub">場所 ${n(b.basho)}回・1人あたり ${b.per_player}</p>` : '';
     const lab = srcLab(s.src);
     return `<article class="src"><header><div><h3>${esc(s.src)}</h3>${lab ? `<p class="lab">${esc(lab)}</p>` : ''}</div><div class="big">${n(s.users)}<small>人</small></div></header>
-      <p class="sub">新しく来た ${n(s.new_users)}人・開いた ${n(s.opens)}回</p><ul class="steps">${st}</ul>${ret}${bs}</article>`;
+      <p class="sub">新しく来た ${n(s.new_users)}人・ゲームが動いた回数 ${n(s.opens)}回</p><ul class="steps">${st}</ul>${ret}${bs}</article>`;
   }).join('') : '<p class="none">まだ記録がありません。ゲームを開いた人がいると、ここに流入元ごとに出ます。</p>';
   const days = {}; for (const r of d.daily) { const x = days[r.day] || (days[r.day] = { n: 0, top: [] }); x.n += n(r.users); x.top.push(r.src + ' ' + r.users); }
   const dk = Object.keys(days).sort().reverse(), mx = Math.max(1, ...dk.map(x => days[x].n));
@@ -113,7 +114,7 @@ h2{font-size:15px;margin:4px 0 -6px;color:var(--acc)}
 .src header{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.src h3{margin:0;font-size:16px;word-break:break-all}.lab{margin:0;font-size:12.5px;color:var(--mut)}
 .big{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.1}
 .sub{margin:0;font-size:12.5px;color:var(--mut)}
-.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}@media (min-width:600px){.steps{grid-template-columns:repeat(6,1fr)}}
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}@media (min-width:600px){.steps{grid-template-columns:repeat(7,1fr)}}
 .steps li{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:8px;padding:5px 8px;display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px}
 .steps li b{font-size:16px;font-variant-numeric:tabular-nums}.steps li i{position:absolute;left:0;bottom:0;height:3px;width:var(--w);background:var(--gold)}.steps li.z{opacity:.45}
 .bars,.list,.log{list-style:none;margin:0;padding:0;display:grid;gap:6px}

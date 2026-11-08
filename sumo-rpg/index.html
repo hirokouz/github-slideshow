@@ -64,10 +64,11 @@ p{margin:0;line-height:1.75}
 .grow{flex:1;min-width:0}
 
 /* title */
-.hero{display:grid;gap:14px;justify-items:center;text-align:center;padding-top:6px}
+.hero{display:grid;gap:14px;justify-items:center;text-align:center;padding-top:46px}
+#newBtn.booting{opacity:.75;cursor:progress}
 .logo{font-family:var(--f-brush);font-size:clamp(60px,19vw,92px);line-height:1;color:var(--shiro);text-shadow:0 0 34px rgba(226,176,74,.35)}
 .logo .sub{display:block;font-family:var(--f-mincho);font-weight:800;font-size:12px;letter-spacing:.5em;color:var(--kin);margin-bottom:12px;text-shadow:none}
-#heroCv{width:100%;max-width:440px;aspect-ratio:3/2;display:block;border-radius:10px}
+#heroCv{width:100%;max-width:440px;aspect-ratio:3/2;display:block;border-radius:10px;background:url("title.webp") center/cover no-repeat}
 
 /* create */
 input[type=text]{width:100%;box-sizing:border-box;background:#fffaf0;color:var(--sumi);border:1.5px solid var(--sumi);border-radius:6px;padding:10px 14px;font-size:26px;font-family:var(--f-brush)}
@@ -328,7 +329,7 @@ button.kyujo{background:linear-gradient(180deg,#c86a5a,#9a3b2e)!important;color:
 #sndBtn .si{font-size:16px}#sndBtn.wait{animation:sndPulse 1.4s ease-in-out infinite}@keyframes sndPulse{50%{box-shadow:0 0 0 4px rgba(226,176,74,.35)}}
 body:not(.onTitle) #sndBtn{display:none}
 .langrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.langrow button.on{background:var(--kin);color:#2a1700;border-color:var(--kin)}
-#langBtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 48px);right:8px;z-index:65;height:34px;border-radius:999px;border:1.5px solid var(--kin);background:rgba(13,20,48,.85);color:var(--kin);font-size:12px;font-weight:800;line-height:1;padding:0 12px;display:flex;align-items:center;gap:4px;cursor:pointer}
+#langBtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:8px;z-index:65;height:34px;border-radius:999px;border:1.5px solid var(--kin);background:rgba(13,20,48,.85);color:var(--kin);font-size:12px;font-weight:800;line-height:1;padding:0 12px;display:flex;align-items:center;gap:4px;cursor:pointer}
 body:not(.onTitle) #langBtn{display:none}
 #sndBtn.off,#sndBtn2.off{color:#7d7360;border-color:#5b5246;text-decoration:line-through}
 .acfg input[type=range]{accent-color:var(--kin);height:24px}
@@ -726,14 +727,26 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
   </section>
 </div>
 
+<script>
+/* boot (runs before the big art files): count the visit at once, so people who leave while loading are seen too,
+   and show on the start button that the game is still getting ready */
+(()=>{try{const on=/(^|\.)yokozuna-sumo\.pages\.dev$/.test(location.hostname),lang=localStorage.getItem('sumo-rpg-lang')||'ja';
+  let vid=localStorage.getItem('ykz-vid')||'';if(!vid){vid=crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);localStorage.setItem('ykz-vid',vid);}
+  let s0=localStorage.getItem('ykz-src');if(!s0){const f=(new URL(location.href).searchParams.get('from')||'').toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,32);let r='';try{r=document.referrer?new URL(document.referrer).hostname.replace(/^www\./,''):'';}catch(e){}
+    s0=f||(r&&!/yokozuna-sumo\.pages\.dev$/.test(r)?r:'direct');localStorage.setItem('ykz-src',s0);}
+  if(on&&navigator.sendBeacon)navigator.sendBeacon('https://yokozuna-hit.j2prco.workers.dev/e',new Blob([JSON.stringify({vid,src:s0,ev:'land',detail:'',lang})],{type:'text/plain'}));
+  const nb=document.getElementById('newBtn'),w=lang==='en'?'Loading…':'準備中…';if(nb){nb.dataset.label=nb.textContent;nb.disabled=true;nb.classList.add('booting');nb.textContent=w;}
+  window.__boot=p=>{const n=document.getElementById('newBtn');if(n&&n.classList.contains('booting'))n.textContent=w+' '+p+'%';};}catch(e){window.__boot=()=>{};}})();
+</script>
 <script src="faces.js?v=2e781a3c6f"></script>
+<script>__boot(35)</script>
 <script src="cast.js?v=03024ef888"></script>
-<script src="women.js?v=4e041303c9"></script>
-<script src="tani.js?v=6d5685c4ed"></script>
+<script>__boot(95)</script>
 <script src="en.js?v=9132ece5ea"></script>
 <script src="en2.js?v=c17151e9c8"></script>
 <script>
 (()=>{
+{const n=document.getElementById('newBtn');if(n&&n.classList.contains('booting')){n.textContent=n.dataset.label;n.disabled=false;n.classList.remove('booting');}}
 /* ---------- language: English mode translates text as it reaches the screen (see en.js) ---------- */
 const LANG=(()=>{try{return localStorage.getItem('sumo-rpg-lang')||'ja';}catch(e){return'ja';}})();
 const EN=LANG==='en'&&window.I18N_EN?window.I18N_EN:null;
@@ -750,6 +763,9 @@ const LOG=(()=>{const on=/(^|\.)yokozuna-sumo\.pages\.dev$/.test(location.hostna
   return (ev,detail)=>{if(!on||!vid)return;try{const b=JSON.stringify({vid,src,ev,detail:detail==null?'':String(detail).slice(0,60),lang:LANG});
     if(!(navigator.sendBeacon&&navigator.sendBeacon(EP,new Blob([b],{type:'text/plain'}))))fetch(EP,{method:'POST',body:b,keepalive:true,mode:'cors'}).catch(()=>{});}catch(e){}};})();
 LOG('open');
+/* romance and patron art (about 4 MB) is only needed after several basho: fetch it once the game is up */
+{const lazy=(src,done)=>{const t=document.createElement('script');t.src=src;t.onload=done;document.body.append(t);};
+  const go=()=>{lazy('women.js?v=4e041303c9',()=>fillWIMG());lazy('tani.js?v=6d5685c4ed',()=>fillTIMG());};if(document.readyState==='complete')setTimeout(go,300);else addEventListener('load',()=>setTimeout(go,300));}
 /* offline copy + installable app (Android TWA / home screen): only on the public site */
 if('serviceWorker' in navigator&&/(^|\.)yokozuna-sumo\.pages\.dev$/.test(location.hostname))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 /* ---------- share a milestone (promotion, makuuchi yusho, retirement): the phone's share sheet, else X.
@@ -1304,7 +1320,7 @@ const IMG=u=>{const im=new Image();im.src=u;return im;};
 for(const f of [...(window.AI_CAST||[]),...(window.AI_CHARS||[]),...(window.AI_FACES||[])]){const o={meta:f,img:new Image(),ex:{}};o.img.src=f.src;
   if(f.faces){o.faces={};for(const k in f.faces)o.faces[k]=IMG(f.faces[k]);o.poses={};for(const k in f.poses)o.poses[k]=f.poses[k].map(p=>IMG(p.src));}
   if(f.exprs){o.exprs={};for(const h in f.exprs){o.exprs[h]={};for(const e in f.exprs[h])o.exprs[h][e]=IMG(f.exprs[h][e]);}}if(f.ring){o.ring=new Image();o.ring.src=f.ring;}if(typeof f.side==='string'){o.side=new Image();o.side.src=f.side;o.sideLow=new Image();o.sideLow.src=f.sideLow;}if(f.ex)for(const k in f.ex){const im=new Image();im.src=f.ex[k];o.ex[k]=im;}AIF[f.id]=o;}
-const WIMG={};for(const pid in (window.AI_WOMEN||{})){const w=window.AI_WOMEN[pid],o={exprs:{},looks:{}};for(const k in w.exprs)o.exprs[k]=IMG(w.exprs[k]);for(const k in w.looks)o.looks[k]=IMG(w.looks[k]);WIMG[pid]=o;}
+const WIMG={};function fillWIMG(){for(const pid in (window.AI_WOMEN||{})){if(WIMG[pid])continue;const w=window.AI_WOMEN[pid],o={exprs:{},looks:{}};for(const k in w.exprs)o.exprs[k]=IMG(w.exprs[k]);for(const k in w.looks)o.looks[k]=IMG(w.looks[k]);WIMG[pid]=o;}}fillWIMG();
 const okImg=im=>im&&im.complete&&im.naturalWidth>0?im:null;
 function wImg(pid,kind,key){const o=WIMG[pid];return o?okImg(o[kind][key])||(kind==='exprs'?okImg(o.exprs.normal):null):null;}
 const EXMAP={blink:'blink',sleep:'blink',happy:'happy',win:'happy',lose:'lose',strain:'strain',surprise:'surprise',normal:'normal'};
@@ -3139,7 +3155,7 @@ const TANIS=[
   {id:'wakashacho',name:'IT企業の若社長',short:'若社長',say:'「君の相撲、伸びしろしかないね。応援させてよ。今度食事でもどう？」',bye:'「最近会えてないね。悪いけど、別の力士を応援することにしたよ」'},
 ];
 const taniId=T=>T&&(T.id||(TANIS.find(x=>x.name===T.name)||{}).id);
-const TIMG={};for(const id in (window.AI_TANI||{})){const a=window.AI_TANI[id],o={faces:{},looks:{}};for(const k in a.faces)o.faces[k]=IMG(a.faces[k]);for(const k in a.looks)o.looks[k]=IMG(a.looks[k]);o.scene=IMG(a.scene);o.gift=IMG(a.gift);TIMG[id]=o;}
+const TIMG={};function fillTIMG(){for(const id in (window.AI_TANI||{})){if(TIMG[id])continue;const a=window.AI_TANI[id],o={faces:{},looks:{}};for(const k in a.faces)o.faces[k]=IMG(a.faces[k]);for(const k in a.looks)o.looks[k]=IMG(a.looks[k]);o.scene=IMG(a.scene);o.gift=IMG(a.gift);TIMG[id]=o;}}fillTIMG();
 function tImg(id,kind,key){const o=TIMG[id];if(!o)return null;return okImg(key?o[kind][key]:o[kind]);}
 /* congratulations from partner, patron and rival for promotions and yusho, one person at a time */
 const CG_LAB={juryo:'十両昇進',nyumaku:'新入幕',ozeki:'大関昇進',yokozuna:'横綱昇進',yusho:'幕内優勝'};
