@@ -1,5 +1,7 @@
 # 流入元カウンター（?from=）
 
+> **いまは使っていない（未設定）。** Worker `yokozuna-hit` の作成とD1のバインディング設定が必要なため、現在は Web Analytics の参照元で確認している。使うときは、game.html に合図を送るコード（コミット b42d58f を参照）を戻し、下の手順で Worker を公開する。D1 `yokozuna-analytics` は作成済み。
+
 `https://yokozuna-sumo.pages.dev/?from=kokoshinro` のように `?from=` 付きで来た訪問を、日ごと・流入元ごとに数える。
 
 ## しくみ

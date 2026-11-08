@@ -220,10 +220,10 @@
 
 ---
 
-## 12.5 流入元の計測
+## 12.5 流入元の確認
 
-- `?from=名前` 付きのリンク（甲子園台帳のバナーは `?from=kokoshinro`）で来た訪問を、Worker `yokozuna-hit` と D1 `yokozuna-analytics` で日ごとに数える。生のIPは保存せず、1日単位のハッシュでユニーク人数を出す。詳しくは `analytics/README.md`
-- タイトル画面の下に「バナーなどから来た人数を、個人がわからない形で数えています」と表示
+- 甲子園台帳のバナーから来た訪問は、Cloudflare Web Analytics の「参照元（Referers）」で `kokoshinro.com` を見る（設定不要）
+- 人数（ユニーク）まで数える仕組み（Worker＋D1）は `analytics/` に用意してあるが、Cloudflare側の設定が必要なため未使用。D1 `yokozuna-analytics` は作成済み
 
 ## 13. ファイル構成
 

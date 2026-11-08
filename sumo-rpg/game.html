@@ -518,7 +518,6 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
         <p class="xmsg" id="xMsg" aria-live="polite"></p>
       </div></details></div>
     <button type="button" class="ghost resetbtn" id="resetBtn">データをすべて消して最初から</button>
-    <p class="muted" style="font-size:11px;text-align:center;opacity:.8">バナーなどから来た人数を、個人がわからない形で数えています（名前や記録は送りません）。</p>
     <p class="muted" style="font-size:12.5px;text-align:center">稽古は1場所ごとに5回。幕下以下は7番、十両から上は15番。勝ち越せば番付が上がる。</p>
   </section>
 
@@ -722,13 +721,6 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 <script src="en.js"></script>
 <script src="en2.js"></script>
 <script>
-/* visit source counter: a link with ?from=<source> (e.g. the kokoshinro.com banner) sends one beacon to the
-   yokozuna-hit Worker (counts per day in D1, no raw IP kept), then the parameter is dropped from the address bar */
-(()=>{try{const u=new URL(location.href),f=u.searchParams.get('from');if(!f)return;
-  if(/(^|\.)yokozuna-sumo\.pages\.dev$/.test(location.hostname)&&!sessionStorage.getItem('ykz-hit-'+f)){sessionStorage.setItem('ykz-hit-'+f,'1');
-    const ep='https://yokozuna-hit.j2prco.workers.dev/hit',b=JSON.stringify({from:f.slice(0,32),path:u.pathname});
-    if(!(navigator.sendBeacon&&navigator.sendBeacon(ep,new Blob([b],{type:'text/plain'}))))fetch(ep,{method:'POST',body:b,keepalive:true,mode:'cors'}).catch(()=>{});}
-  u.searchParams.delete('from');history.replaceState(history.state,'',u.pathname+u.search+u.hash);}catch(e){}})();
 (()=>{
 /* ---------- language: English mode translates text as it reaches the screen (see en.js) ---------- */
 const LANG=(()=>{try{return localStorage.getItem('sumo-rpg-lang')||'ja';}catch(e){return'ja';}})();
