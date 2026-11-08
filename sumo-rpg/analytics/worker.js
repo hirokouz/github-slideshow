@@ -5,7 +5,12 @@
    個人情報は保存しない：vid は端末ごとのランダムな番号、IP は保存しない
    バインディング：DB（D1 yokozuna-analytics）　シークレット：ADMIN_KEY（管理画面の合言葉） */
 const ORIGIN_RE = /^https:\/\/([a-z0-9-]+\.)?yokozuna-sumo\.pages\.dev$/;
-const EVENTS = new Set(['open', 'start', 'basho', 'promo', 'retire', 'lang']);
+const EVENTS = new Set(['open', 'start', 'basho', 'promo', 'retire', 'lang', 'share']);
+// SNS の参照元（アプリ内ブラウザやリンク短縮のホスト名）を SNS 名にまとめる。?from= の値はそのまま
+const SNS = [[/^(t\.co|(mobile\.)?(x|twitter)\.com)$/, 'x'], [/(^|\.)instagram\.com$/, 'instagram'], [/(^|\.)facebook\.com$|^fb\.me$/, 'facebook'],
+  [/(^|\.)threads\.(net|com)$/, 'threads'], [/(^|\.)tiktok\.com$/, 'tiktok'], [/(^|\.)line\.me$/, 'line'], [/(^|\.)youtube\.com$|^youtu\.be$/, 'youtube'],
+  [/(^|\.)bsky\.app$/, 'bluesky'], [/(^|\.)note\.com$/, 'note'], [/(^|\.)reddit\.com$/, 'reddit']];
+const normSrc = s => { for (const [re, n] of SNS) if (re.test(s)) return n; return s; };
 const day = (d = new Date()) => new Date(d.getTime() + 9 * 3600e3).toISOString().slice(0, 10); // 日本時間の日付
 const clean = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f<>]/g, '').slice(0, n);
 const cors = o => ORIGIN_RE.test(o || '') ? { 'Access-Control-Allow-Origin': o, 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Vary': 'Origin' } : {};
@@ -13,7 +18,7 @@ const cors = o => ORIGIN_RE.test(o || '') ? { 'Access-Control-Allow-Origin': o, 
 async function stats(env, days) {
   const since = day(new Date(Date.now() - (days - 1) * 86400e3));
   const q = (sql, ...a) => env.DB.prepare(sql).bind(...a).all().then(r => r.results || []);
-  const [sources, daily, funnel, retention, basho, recent] = await Promise.all([
+  const [sources, daily, funnel, retention, basho, shares, recent] = await Promise.all([
     // 流入元ごと：期間内に開いた人数・新しく来た人数・合計の開いた回数
     q(`WITH first AS (SELECT vid, MIN(day) AS d0 FROM events GROUP BY vid)
        SELECT e.src, COUNT(DISTINCT e.vid) AS users,
@@ -44,9 +49,11 @@ async function stats(env, days) {
     // 1人あたりの場所数
     q(`SELECT src, COUNT(*) AS basho, COUNT(DISTINCT vid) AS players, ROUND(COUNT(*)*1.0/COUNT(DISTINCT vid),1) AS per_player
        FROM events WHERE ev='basho' AND day >= ?1 GROUP BY src ORDER BY basho DESC`, since),
+    // シェア：どの場面で、何で（スマホの共有メニュー sheet ／ X）シェアされたか
+    q(`SELECT detail, COUNT(*) AS shares, COUNT(DISTINCT vid) AS users FROM events WHERE ev='share' AND day >= ?1 GROUP BY detail ORDER BY shares DESC`, since),
     q(`SELECT created_at, src, ev, detail, lang, substr(vid,1,6) AS vid FROM events ORDER BY id DESC LIMIT 50`),
   ]);
-  return { since, until: day(), days, sources, daily, funnel, retention, basho, recent };
+  return { since, until: day(), days, sources, daily, funnel, retention, basho, shares, recent };
 }
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -56,7 +63,12 @@ function table(title, note, rows, cols) {
   return `<section><h2>${esc(title)}</h2>${note ? `<p class="note">${esc(note)}</p>` : ''}<div class="wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div></section>`;
 }
 const pct = (a, b) => b ? Math.round(a * 100 / b) + '%（' + a + '/' + b + '）' : '—';
-const SRC = s => s === 'kokoshinro' ? 'kokoshinro（甲子園台帳のバナー）' : s === 'kokoshinro.com' ? 'kokoshinro.com（甲子園台帳のリンク）' : s === 'direct' ? 'direct（直接・不明）' : s;
+const SRC_LABEL = { kokoshinro: '甲子園台帳のバナー', 'kokoshinro.com': '甲子園台帳のリンク', direct: '直接・不明。LINE などのアプリ内からも多い',
+  share: 'プレイヤーのシェア・スマホの共有', share_x: 'プレイヤーのシェア・X', x: 'X', instagram: 'Instagram', ig: 'Instagram', facebook: 'Facebook', fb: 'Facebook',
+  threads: 'Threads', tiktok: 'TikTok', line: 'LINE', youtube: 'YouTube', bluesky: 'Bluesky', note: 'note', reddit: 'Reddit' };
+const SRC = s => { const b = String(s || '').split('_')[0], l = SRC_LABEL[s] || (b !== s && SRC_LABEL[b] && SRC_LABEL[b] + '・' + s.slice(b.length + 1)); return l ? s + '（' + l + '）' : s; };
+const SHARE_LABEL = { juryo: '十両昇進', nyumaku: '新入幕', ozeki: '大関昇進', yokozuna: '横綱昇進', yusho: '幕内優勝', retire: '引退', sheet: 'スマホの共有', x: 'X' };
+const shareLab = d => String(d || '').split('/').map(x => SHARE_LABEL[x] || x).join('・');
 function page(d, key) {
   const k = encodeURIComponent(key);
   const tabs = [7, 30, 90].map(n => `<a href="?key=${k}&days=${n}" class="${n === d.days ? 'on' : ''}">過去${n}日</a>`).join('');
@@ -70,8 +82,9 @@ ${table('流入元ごとの人数', '期間内にゲームを開いた人数。�
 ${table('どこまで遊んだか', '期間内に来た人のうち、その段階まで進んだ人数。', d.funnel, [['src', '流入元', r => SRC(r.src)], ['users', '来た人'], ['started', '入門した'], ['played_basho', '場所を戦った'], ['juryo', '十両'], ['makuuchi', '幕内'], ['ozeki', '大関'], ['yokozuna', '横綱']])}
 ${table('また来たか（継続率）', '期間内に初めて来た人のうち、翌日／7日以降にもう一度開いた割合。まだ日数がたっていない人は分母に入れていません。', d.retention, [['src', '流入元', r => SRC(r.src)], ['new_users', '初めて来た人'], ['n', '翌日も来た', r => pct(r.came_next_day, r.eligible_next_day)], ['n7', '7日以降も来た', r => pct(r.came_after_7days, r.eligible_7days)]])}
 ${table('場所をどれくらい戦ったか', '期間内に終えた場所の数。', d.basho, [['src', '流入元', r => SRC(r.src)], ['basho', '場所数'], ['players', '遊んだ人'], ['per_player', '1人あたり']])}
+${table('シェアされた回数', '昇進・優勝・引退の画面の「この記録をシェアする」。スマホの共有は、共有先を選んで送ったときだけ数える。シェアから来た人は流入元 share／share_x に出る。', d.shares, [['detail', '場面・方法', r => shareLab(r.detail)], ['shares', '回数'], ['users', '人数']])}
 ${table('日ごとの利用者', '', d.daily, [['day', '日付'], ['src', '流入元', r => SRC(r.src)], ['users', '人数']])}
-${table('最近の記録（50件）', 'open=開いた／start=入門／basho=場所を終えた／promo=昇進／retire=引退／lang=言語を切りかえ', d.recent, [['created_at', '日時（日本時間）', r => new Date(new Date(r.created_at).getTime() + 9 * 3600e3).toISOString().replace('T', ' ').slice(0, 16)], ['src', '流入元'], ['ev', '記録'], ['detail', '内容'], ['lang', '言語'], ['vid', '端末']])}
+${table('最近の記録（50件）', 'open=開いた／start=入門／basho=場所を終えた／promo=昇進／retire=引退／lang=言語を切りかえ／share=シェア', d.recent, [['created_at', '日時（日本時間）', r => new Date(new Date(r.created_at).getTime() + 9 * 3600e3).toISOString().replace('T', ' ').slice(0, 16)], ['src', '流入元'], ['ev', '記録'], ['detail', '内容'], ['lang', '言語'], ['vid', '端末']])}
 </main></body></html>`;
 }
 
@@ -86,7 +99,7 @@ export default {
       const ev = clean(b.ev, 16);
       const vid = clean(b.vid, 40);
       if (EVENTS.has(ev) && /^[a-z0-9-]{8,40}$/i.test(vid)) {
-        const src = /^[a-z0-9_.:-]{1,40}$/i.test(String(b.src || '')) ? String(b.src).toLowerCase() : 'other';
+        const src = /^[a-z0-9_.:-]{1,40}$/i.test(String(b.src || '')) ? normSrc(String(b.src).toLowerCase()) : 'other';
         const now = new Date();
         ctx.waitUntil(env.DB.prepare('INSERT INTO events (vid, src, ev, detail, lang, created_at, day) VALUES (?1,?2,?3,?4,?5,?6,?7)')
           .bind(vid, src, ev, clean(b.detail, 60), clean(b.lang, 5), now.toISOString(), day(now)).run().catch(e => console.log('insert failed', e && e.message)));

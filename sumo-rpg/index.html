@@ -693,6 +693,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
     <div class="washi" style="display:grid;gap:6px"><p class="label" id="kEvName"></p><p id="kText" style="font-size:14px"></p></div>
     <div class="kchoices" id="kChoices"></div>
     <div id="kResult" class="panel" hidden><p id="kResText" style="font-size:14px"></p><p id="kFx" style="font-size:12px;color:var(--kin)"></p></div>
+    <button class="ghost" id="kShare" hidden>この記録をシェアする</button>
     <button class="primary" id="kDone" hidden>新年、部屋に戻る</button>
   </section>
 
@@ -725,7 +726,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 <script src="cast.js?v=03024ef888"></script>
 <script src="women.js?v=4e041303c9"></script>
 <script src="tani.js?v=6d5685c4ed"></script>
-<script src="en.js?v=de85b5f99d"></script>
+<script src="en.js?v=0a55d880b4"></script>
 <script src="en2.js?v=cb38e2d150"></script>
 <script>
 (()=>{
@@ -745,6 +746,17 @@ const LOG=(()=>{const on=/(^|\.)yokozuna-sumo\.pages\.dev$/.test(location.hostna
   return (ev,detail)=>{if(!on||!vid)return;try{const b=JSON.stringify({vid,src,ev,detail:detail==null?'':String(detail).slice(0,60),lang:LANG});
     if(!(navigator.sendBeacon&&navigator.sendBeacon(EP,new Blob([b],{type:'text/plain'}))))fetch(EP,{method:'POST',body:b,keepalive:true,mode:'cors'}).catch(()=>{});}catch(e){}};})();
 LOG('open');
+/* ---------- share a milestone (promotion, makuuchi yusho, retirement): the phone's share sheet, else X.
+   The link carries ?from=share (share sheet) or ?from=share_x so the log can count visitors brought by shares. ---------- */
+const SITE='https://yokozuna-sumo.pages.dev/';let shareKind=null;
+function shareMsg(k,s){const T=x=>EN?EN.tr(x):x,nm=T(s.name),age=ageOf(s),W=totalWins(s),L=s.hist.reduce((a,h)=>a+h.l-(h.kyu||0),0),bn=T(rank(Math.max(s.best||0,s.pos)).name),Y=s.makuYusho||0;
+  if(EN)return {juryo:nm+' made Jūryō at '+age+' and is now a sekitori!',nyumaku:nm+' reached Makuuchi at '+age+'!',ozeki:nm+' was promoted to Ōzeki at '+age+'!',yokozuna:nm+' became Yokozuna at '+age+'! Career record '+W+'-'+L+'.',
+    yusho:nm+(Y>1?' won the Makuuchi championship (#'+Y+')!':' won his first Makuuchi championship!'),retire:nm+' retired at '+age+'. Highest rank '+bn+', career record '+W+'-'+L+(Y?', '+Y+' Makuuchi title'+(Y>1?'s':''):'')+'.'}[k]+' #横綱への道 #sumo';
+  return {juryo:nm+'、'+age+'歳で十両昇進！ ついに関取の仲間入り。',nyumaku:nm+'、'+age+'歳で新入幕！',ozeki:nm+'、'+age+'歳で大関昇進！',yokozuna:nm+'、'+age+'歳で横綱昇進！ 通算'+W+'勝'+L+'敗。',
+    yusho:nm+(Y>1?'、幕内優勝'+Y+'回目！':'、幕内初優勝！'),retire:nm+'、'+age+'歳で引退。最高位'+bn+'・通算'+W+'勝'+L+'敗'+(Y?'・幕内優勝'+Y+'回':'')+'。'}[k]+' #横綱への道 #相撲';}
+function doShare(){const k=shareKind;if(!k||!st)return;const text=shareMsg(k,st);
+  if(navigator.share){navigator.share({text,url:SITE+'?from=share'}).then(()=>LOG('share',k+'/sheet')).catch(()=>{});return;}
+  LOG('share',k+'/x');window.open('https://x.com/intent/post?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(SITE+'?from=share_x'),'_blank','noopener');}
 if(EN){document.documentElement.lang='en';document.title=EN.tr(document.title);
   {const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap';document.head.append(l);}
   const C=CanvasRenderingContext2D.prototype;
@@ -2760,7 +2772,7 @@ function retireSteps(s){const best=Math.max(s.best||0,s.pos),seki=best>=JURYO,R=
   cuts.forEach((c,i)=>steps.push({title:seki?Tj('断髪式'):Tj('断髪（部屋で）'),name:(c.tome?Tj('止めばさみ　'):Tj('はさみ入れ　'))+c.who,scene:c.tome?'tome':'cut',cut:c,n:i+1,of:cuts.length,
     text:(i===0?(seki?Tj('国技館の土俵の中央に座った。ゆかりの人たちが、ひとりずつ大銀杏にはさみを入れていく。\n\n'):Tj('部屋の稽古場で、髷を落とす日が来た。\n\n')):'')+c.who+(c.tome?Tj('が、最後のはさみを入れる。'):Tj('がはさみを入れた。'))+'\n'+c.say+(c.tome?Tj('\n\n髷が、ぽとりと落ちた。'):''),btn:i===cuts.length-1?Tj('ふりかえる'):Tj('次の人へ')}));
   const R2=s.rival;
-  steps.push({title:Tj('現役生活'),name:s.name+Tj('の土俵人生'),scene:'sum',btn:Tj('これからの道へ'),text:[
+  steps.push({title:Tj('現役生活'),name:s.name+Tj('の土俵人生'),scene:'sum',share:true,btn:Tj('これからの道へ'),text:[
     Tj('最高位　')+rank(best).name,
     Tj('通算成績　')+totalWins(s)+Tj('勝')+totalL+Tj('敗')+(totalK?totalK+Tj('休'):'')+'（'+s.hist.length+Tj('場所）'),
     Tj('幕内優勝　')+(s.makuYusho||0)+Tj('回'),
@@ -2781,7 +2793,7 @@ function openRetire(id){const s=roster.list[id];if(!s)return;if(autoGrow)autoSto
 function retireNext(){if(!RT)return;if(RT.i<RT.steps.length-1){RT.i++;showRetireStep();}}
 function showRetireStep(){const S=RT.steps[RT.i],s=RT.s;kScene='retire';kStop=false;RT.t=0;RT.snip=false;RT.hair=[];SND.sync();
   $('kTitle').textContent=S.title;$('kWhen').textContent=ageOf(s)+Tj('歳　')+(S.n?S.n+' / '+S.of:'');$('kEvName').textContent=S.name;$('kText').textContent=S.text;
-  const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;
+  const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;shareKind=S.share?'retire':null;$('kShare').hidden=!shareKind;
   if(S.choices){$('kDone').hidden=true;for(const c of S.choices){const b=document.createElement('button');b.type='button';b.className='ghost';b.innerHTML='<b></b><br><small style="opacity:.75"></small>';b.querySelector('b').textContent=c.l;b.querySelector('small').textContent=c.d;
       b.addEventListener('click',()=>{const id=RT.id;RT=null;kScene='home';retire(id,c.path);});box.append(b);}}
   else{$('kDone').hidden=false;$('kDone').textContent=S.btn||Tj('次へ');}
@@ -3206,8 +3218,9 @@ function openLife(item){
   $('kWhen').textContent=yearOf(s)+Tj('年目　')+ageOf(s)+Tj('歳');$('kTitle').textContent=ev.kt?ev.kt:ev.scene==='tani'?Tj('後援者'):ev.scene==='school'?Tj('相撲教習所'):ev.scene==='wedding'?Tj('結婚披露宴'):ev.scene==='baby'?Tj('家族'):ev.scene==='juryo'?Tj('関取昇進'):ev.scene==='oyakata'?Tj('進退'):Tj('恋と土俵');
   $('kEvName').textContent=ev.t;$('kText').textContent=ev.text;
   const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;$('kDone').hidden=true;$('kDone').textContent=Tj('部屋に戻る');
+  shareKind={juryo:'juryo',nyumaku:'nyumaku',ozeki_up:'ozeki',yokozuna_up:'yokozuna',yusho_party:'yusho'}[item.kind]||null;$('kShare').hidden=true;
   for(const c of ev.ch){const b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=c.l;
-    b.addEventListener('click',()=>{SND.play('pluck');const a0=st.rom?st.rom.aff:0,r0=relSnap();let [story,fx]=c.f();fx=(fx||'')+heartbreak(r0);box.innerHTML='';if(kT&&ev.tw&&ev.tw.after)kT.show=ev.tw.after();if(kW&&ev.w){if(ev.w.after)kW.e=ev.w.after(a0);if(ev.w.afterLook)kW.look=ev.w.afterLook();}$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;
+    b.addEventListener('click',()=>{SND.play('pluck');const a0=st.rom?st.rom.aff:0,r0=relSnap();let [story,fx]=c.f();fx=(fx||'')+heartbreak(r0);box.innerHTML='';if(kT&&ev.tw&&ev.tw.after)kT.show=ev.tw.after();if(kW&&ev.w){if(ev.w.after)kW.e=ev.w.after(a0);if(ev.w.afterLook)kW.look=ev.w.afterLook();}$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;$('kShare').hidden=!shareKind;
       if(s.lateReturn){s.used=1;s.lateReturn=false;}addLog(ev.t+'：'+story);checkAch();persist();if(s.retiring)$('kDone').textContent=Tj('引退会見へ');});box.append(b);}
   const tall=!!((kW&&kW.pid&&kScene!=='tani')||(kT&&kScene==='tani'));$('kCv').style.aspectRatio=tall?'400/300':'';
   show('sKikyo');kCv=makeCanvas($('kCv'),tall?300/400:220/400);kSnow=[];
@@ -3271,13 +3284,13 @@ function drawLifeScene(g,W,H,t,dt){
 }
 let kCv=null,kSnow=[],kEv=null;
 function openKikyo(){
-  kScene='home';kMark=null;kW=null;kT=null;kStop=false;$('kDone').textContent=Tj('新年、部屋に戻る');const s=st;kEv=pickEvent(s);s.seenEv.push(kEv.id);persist();
+  kScene='home';kMark=null;kW=null;kT=null;kStop=false;shareKind=null;$('kShare').hidden=true;$('kDone').textContent=Tj('新年、部屋に戻る');const s=st;kEv=pickEvent(s);s.seenEv.push(kEv.id);persist();
   $('kWhen').textContent=Math.max(1,yearOf(s)-1)+Tj('年目の年の瀬　')+ageOf(s)+Tj('歳');
   $('kTitle').textContent=s.home+Tj('へ帰省');
   $('kEvName').textContent=kEv.t;$('kText').textContent=kEv.text(s);
   const box=$('kChoices');box.innerHTML='';$('kResult').hidden=true;$('kDone').hidden=true;
   for(const c of kEv.ch){const b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=typeof c.l==='function'?c.l(s):c.l;
-    b.addEventListener('click',()=>{const r0=relSnap();let [story,fx]=c.f(s);fx=(fx||'')+heartbreak(r0);box.innerHTML='';$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;
+    b.addEventListener('click',()=>{const r0=relSnap();let [story,fx]=c.f(s);fx=(fx||'')+heartbreak(r0);box.innerHTML='';$('kResText').textContent=story;$('kFx').textContent=fx;$('kResult').hidden=false;$('kDone').hidden=false;$('kShare').hidden=!shareKind;
       s.pendingKikyo=false;if(s.lateReturn){s.used=1;s.lateReturn=false;}addLog(kEv.t+'：'+story);persist();});
     box.append(b);}
   $('kCv').style.aspectRatio='';show('sKikyo');kCv=makeCanvas($('kCv'),220/400);kSnow=[];
@@ -3358,6 +3371,7 @@ $('ring').addEventListener('pointerdown',()=>{if(anim&&anim.phase==='tachi')tach
 $('nextBtn').addEventListener('click',nextBout);
 $('backHome').addEventListener('click',()=>{rcData=null;if(st&&st.pendingKikyo)openKikyo();else nextAfterEvent();});
 $('kDone').addEventListener('click',()=>nextAfterEvent());
+$('kShare').addEventListener('click',()=>{SND.play('pluck');doShare();});
 $('sheetX').addEventListener('click',closeSheet);$('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet();});
 addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet();});
 const REC_T={hist:'星取表',log:'部屋の話',ach:'実績'};

@@ -5,7 +5,10 @@
 ## 記録するもの（個人情報なし）
 - 端末ごとのランダムな番号（ゲームが localStorage に作る。名前・IP・セーブデータは送らない）
 - 最初に来たときの流入元：`?from=` の値（甲子園台帳のバナーは `kokoshinro`）→ なければ参照元のサイト名（例 `kokoshinro.com`）→ どちらもなければ `direct`
-- 出来事：`open`（開いた）、`start`（入門）、`basho`（場所を終えた：段と勝敗）、`promo`（juryo / makuuchi / ozeki / yokozuna）、`retire`（引退：最高位）、`lang`（言語の切りかえ）
+- 出来事：`open`（開いた）、`start`（入門）、`basho`（場所を終えた：段と勝敗）、`promo`（juryo / makuuchi / ozeki / yokozuna）、`retire`（引退：最高位）、`lang`（言語の切りかえ）、`share`（シェア：場面／sheet か x）
+- SNS の参照元は Worker が SNS 名にまとめる（`t.co`→`x`、`l.instagram.com`→`instagram`、`lm.facebook.com`→`facebook` など）。LINE や Instagram のアプリ内ブラウザは参照元を送らないことが多く、`direct` に入る
+- SNS に投稿するリンクには `?from=` を付けると確実：`?from=x`／`ig`／`line`／`tiktok`、投稿ごとなら `?from=x_1110` のように `_` で後ろに足す（管理画面では「X・1110」と出る）
+- ゲーム内のシェアから来た人は `share`（スマホの共有）／`share_x`（X）
 - 送るのは公開サイトで動いているときだけ。タイトル画面の下に、記録していることを表示している
 
 ## 構成
