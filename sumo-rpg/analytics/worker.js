@@ -18,7 +18,7 @@ const cors = o => ORIGIN_RE.test(o || '') ? { 'Access-Control-Allow-Origin': o, 
 async function stats(env, days) {
   const since = day(new Date(Date.now() - (days - 1) * 86400e3));
   const q = (sql, ...a) => env.DB.prepare(sql).bind(...a).all().then(r => r.results || []);
-  const [sources, daily, funnel, retention, basho, shares, recent, acts] = await Promise.all([
+  const [sources, daily, funnel, retention, basho, shares, recent, acts, ranks] = await Promise.all([
     // 流入元ごと：期間内に開いた人数・新しく来た人数・合計の開いた回数
     q(`WITH first AS (SELECT vid, MIN(day) AS d0 FROM events GROUP BY vid)
        SELECT e.src, COUNT(DISTINCT e.vid) AS users,
@@ -55,8 +55,10 @@ async function stats(env, days) {
     q(`SELECT created_at, src, ev, detail, lang, substr(vid,1,6) AS vid FROM events ORDER BY id DESC LIMIT 50`),
     // ゲーム内の出来事：イベントの選択・帰省・ガチャ・オート・遊び方の説明
     q(`SELECT ev, detail, COUNT(*) AS n, COUNT(DISTINCT vid) AS users FROM events WHERE ev IN ('life','kikyo','gacha','auto','tut') AND day >= ?1 GROUP BY ev, detail ORDER BY ev, n DESC`, since),
+    // いまの番付：期間内に場所を終えた人それぞれの、最後の場所
+    q(`SELECT detail FROM events WHERE id IN (SELECT MAX(id) FROM events WHERE ev='basho' AND day >= ?1 GROUP BY vid)`, since),
   ]);
-  return { since, until: day(), days, sources, daily, funnel, retention, basho, shares, recent, acts };
+  return { since, until: day(), days, sources, daily, funnel, retention, basho, shares, recent, acts, ranks };
 }
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -76,6 +78,14 @@ const actLab = (ev, d) => { const t = String(d || ''), i = t.indexOf('/'), k = i
   if (ev === 'life') { const [a, b] = k.split(':'); return (LIFE_LABEL[a] || a) + (b ? '（' + (LIFE_LABEL[b] || b) + '）' : '') + pick; }
   if (ev === 'kikyo') return '帰省「' + k + '」' + pick; if (ev === 'gacha') return 'ガチャ ' + k + '回引き'; if (ev === 'auto') return 'オートを使った'; if (ev === 'tut') return k === 'done' ? '遊び方の説明を最後まで見た' : '遊び方の説明を飛ばした（' + k.replace('skip:', '') + '枚目）'; return d; };
 const EV_LABEL = { life: 'イベント', kikyo: '帰省', gacha: 'ガチャ', auto: 'オート', tut: '説明', land: '来た', open: '動いた', start: '入門', basho: '場所', promo: '昇進', retire: '引退', lang: '言語', share: 'シェア' };
+/* 場所の記録「東幕下12枚目 5-2 優勝｜押A88 力B79 技A90 速S102 158kg」（古い記録は「幕下 5-2」だけ）を分ける */
+const DIVS_J = ['前相撲', '序ノ口', '序二段', '三段目', '幕下', '十両', '前頭', '小結', '関脇', '大関', '横綱'];
+const bp = d => { const [a, g] = String(d || '').split('｜'), m = a.match(/^(東|西)?(前相撲|序ノ口|序二段|三段目|幕下|十両|前頭|小結|関脇|大関|横綱)(\d+枚目)?\s*(.*)$/) || [];
+  const gs = (g || '').split(' ').map(x => x.match(/^(押|力|技|速)([SABCDEF])(\d+)$/)).filter(Boolean).map(x => ({ k: x[1], g: x[2], v: +x[3] })), kg = ((g || '').match(/(\d+)kg/) || [])[1];
+  return { div: m[2] || '', rank: m[2] ? (m[1] || '') + m[2] + (m[3] || '') : a, rec: m[4] || '', gs, kg }; };
+const GRADE = v => [[100, 'S'], [85, 'A'], [70, 'B'], [55, 'C'], [40, 'D'], [25, 'E'], [0, 'F']].find(x => v >= x[0])[1];
+const chips = (gs, kg) => gs.length ? `<span class="gs">${gs.map(x => `<span class="g ${x.g}" title="${x.v}">${x.k}${x.g}<small>${x.v}</small></span>`).join('')}${kg ? `<span class="kg">${kg}kg</span>` : ''}</span>` : '';
+const bashoHtml = d => { const b = bp(d); return esc(b.rank + ' ' + b.rec) + (b.gs.length ? ' ' + chips(b.gs, b.kg) : ''); };
 const PROMO = { juryo: '十両', makuuchi: '幕内', ozeki: '大関', yokozuna: '横綱' };
 const jst = iso => { const t = new Date(new Date(iso).getTime() + 9 * 3600e3).toISOString(); return t.slice(5, 7).replace(/^0/, '') + '/' + t.slice(8, 10).replace(/^0/, '') + ' ' + t.slice(11, 16); };
 const HEAD = t => `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><title>${t}</title>
@@ -116,6 +126,9 @@ details summary{cursor:pointer;color:var(--acc);font-size:13.5px;padding:8px 0}
 .chip{font-size:12px;font-weight:700;border-radius:999px;padding:2px 10px;white-space:nowrap;background:var(--line);color:var(--fg)}.chip.c2{background:#d9b45a;color:#2a2010}.chip.c3{background:#c0522d;color:#fff}.chip.c4{background:#7a1f1f;color:#fff}
 .user .ln{font-size:12.5px;color:var(--mut);margin:0}.user .go{font-size:12.5px;color:var(--acc);text-align:right}
 .back{font-size:14px;color:var(--acc);text-decoration:none}
+.gs{display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:middle}.g{font:700 12px/1.2 ui-monospace,monospace;padding:2px 6px;border-radius:6px;background:var(--line);color:var(--fg)}.g small{font-weight:500;margin-left:2px;opacity:.8}
+.g.S{background:#7a1f1f;color:#fff}.g.A{background:#c0522d;color:#fff}.g.B{background:#d9b45a;color:#2a2010}.kg{font-size:12px;color:var(--mut);align-self:center}
+.rk li{grid-template-columns:52px 1fr 32px}.rk .t{display:flex;gap:4px;flex-wrap:wrap}
 .daysep{font-size:12.5px;font-weight:700;color:var(--acc);margin:10px 0 0;border-bottom:1px solid var(--line);padding-bottom:2px}
 </style></head><body><main>
 `;
@@ -145,10 +158,15 @@ function page(d, key) {
   const dk = Object.keys(days).sort().reverse(), mx = Math.max(1, ...dk.map(x => days[x].n));
   const daily = dk.length ? `<ul class="bars">${dk.map(x => `<li><span class="d">${x.slice(5).replace('-', '/').replace(/^0/, '')}</span><span class="bar"><i style="--w:${Math.round(days[x].n * 100 / mx)}%"></i></span><b>${days[x].n}</b><span class="t">${esc(days[x].top.join('・'))}</span></li>`).join('')}</ul>` : '<p class="none">まだ記録がありません。</p>';
   const shares = d.shares.length ? `<ul class="list">${d.shares.map(s => `<li><span>${esc(shareLab(s.detail))}</span><b>${n(s.shares)}回</b><small>${n(s.users)}人</small></li>`).join('')}</ul>` : '<p class="none">まだシェアはありません。昇進・優勝・引退の画面の「この記録をシェアする」で数えます。</p>';
+  const RK = {}; for (const r of d.ranks || []) { const b = bp(r.detail); if (!b.div) continue; const x = RK[b.div] || (RK[b.div] = { n: 0, sum: {}, c: {} }); x.n++;
+    for (const g of b.gs) { x.sum[g.k] = (x.sum[g.k] || 0) + g.v; x.c[g.k] = (x.c[g.k] || 0) + 1; } }
+  const rkMax = Math.max(1, ...Object.values(RK).map(x => x.n));
+  const rankSec = Object.keys(RK).length ? `<p class="period">期間内に場所を終えた人の、最後の場所の地位。下は能力の平均（記録がある人だけ）。</p><ul class="bars rk">${DIVS_J.slice().reverse().filter(v => RK[v]).map(v => { const x = RK[v], gs = ['押', '力', '技', '速'].filter(k => x.c[k]).map(k => { const a = Math.round(x.sum[k] / x.c[k]); return { k, g: GRADE(a), v: a }; });
+    return `<li><span class="d">${v}</span><span class="bar"><i style="--w:${Math.round(x.n * 100 / rkMax)}%"></i></span><b>${x.n}</b>${gs.length ? `<span class="t">${chips(gs)}</span>` : ''}</li>`; }).join('')}</ul>` : '<p class="none">まだ場所を終えた人がいません。</p>';
   const AG = { tut: '遊び方の説明', life: 'イベントと選んだ答え', kikyo: '帰省のイベント', gacha: 'ガチャ', auto: 'オート' };
   const acts = (d.acts || []).length ? ['tut', 'life', 'kikyo', 'gacha', 'auto'].filter(e => d.acts.some(a => a.ev === e)).map(e => `<details class="acts"${e === 'tut' || e === 'life' ? ' open' : ''}><summary>${AG[e]}（${d.acts.filter(a => a.ev === e).reduce((t, a) => t + n(a.n), 0)}回）</summary><ul class="list">${d.acts.filter(a => a.ev === e).slice(0, 30).map(a => `<li><span>${esc(actLab(a.ev, a.detail))}</span><b>${n(a.n)}回</b><small>${n(a.users)}人</small></li>`).join('')}</ul></details>`).join('') : '<p class="none">まだ記録がありません。イベントで選んだ答え、帰省、ガチャ、オート、遊び方の説明を数えます。</p>';
   const TYPE = { oshi: '押し相撲', yotsu: '四つ相撲', waza: '技能派' };
-  const li = r => `<li><span class="tm">${jst(r.created_at)}</span><span class="ev">${EV_LABEL[r.ev] || esc(r.ev)}</span><span class="dt">${esc(r.ev === 'promo' ? (PROMO[r.detail] || r.detail) : r.ev === 'share' ? shareLab(r.detail) : ['life', 'kikyo', 'gacha', 'auto', 'tut'].includes(r.ev) ? actLab(r.ev, r.detail) : r.ev === 'start' ? String(r.detail || '').split('/').map(x => TYPE[x] || x).join('・') : r.detail)}</span><span class="who">${esc(r.src)}・${esc(r.vid)}${r.lang && r.lang !== 'ja' ? '・' + esc(r.lang) : ''}</span></li>`;
+  const li = r => `<li><span class="tm">${jst(r.created_at)}</span><span class="ev">${EV_LABEL[r.ev] || esc(r.ev)}</span><span class="dt">${r.ev === 'basho' ? bashoHtml(r.detail) : esc(r.ev === 'promo' ? (PROMO[r.detail] || r.detail) : r.ev === 'share' ? shareLab(r.detail) : ['life', 'kikyo', 'gacha', 'auto', 'tut'].includes(r.ev) ? actLab(r.ev, r.detail) : r.ev === 'start' ? String(r.detail || '').split('/').map(x => TYPE[x] || x).join('・') : r.detail)}</span><span class="who">${esc(r.src)}・${esc(r.vid)}${r.lang && r.lang !== 'ja' ? '・' + esc(r.lang) : ''}</span></li>`;
   const recent = d.recent.length ? `<ul class="log">${d.recent.slice(0, 15).map(li).join('')}</ul>` + (d.recent.length > 15 ? `<details><summary>もっと見る（${d.recent.length - 15}件）</summary><ul class="log">${d.recent.slice(15).map(li).join('')}</ul></details>` : '') : '<p class="none">まだ記録がありません。</p>';
   return HEAD('横綱への道 利用状況') + `<div class="top"><h1>横綱への道 利用状況</h1><nav class="tabs" aria-label="期間">${tabs}</nav></div>
 <nav class="views" aria-label="表示"><a class="on" aria-current="page">全体</a><a href="?key=${k}&days=${d.days}&view=users">ユーザー別</a></nav>
@@ -157,6 +175,7 @@ function page(d, key) {
 <p class="period">${esc(d.since)} 〜 ${esc(d.until)}（日本時間）。人数は端末ごと（同じ人でもスマホとパソコンなら2人）。</p>
 <section class="kpis" aria-label="期間の合計">${kpi}</section>
 <h2>流入元ごと</h2>${cards}
+<h2>いまの番付</h2>${rankSec}
 <h2>日ごとの利用者</h2>${daily}
 <h2>シェア</h2>${shares}
 <h2>ゲーム内の出来事</h2>${acts}
@@ -186,7 +205,8 @@ function usersPage(D, key) {
     return `<li><a class="user" href="?key=${k}&days=${D.days}&user=${encodeURIComponent(u.vid)}"><div class="uh"><span><span class="id">${esc(String(u.vid).slice(0, 6))}</span> <span class="srcl">${esc(u.src)}${lab ? '（' + esc(lab) + '）' : ''}</span></span><span class="chip ${sc}">${sl}</span></div>
       <p class="ln">初回 ${jst(u.first)}・最後 ${jst(u.last)}・来た日 ${n(u.days)}日</p>
       ${u.startd ? `<p class="ln">入門：${esc(startLab(u.startd))}</p>` : ''}
-      <p class="ln">場所 ${n(u.basho)}回${u.lastBasho ? '・最後の場所 ' + esc(u.lastBasho) : ''}・イベント ${n(u.evs)}回${n(u.shares) ? '・シェア ' + n(u.shares) + '回' : ''}${u.lang && u.lang !== 'ja' ? '・' + esc(u.lang) : ''}</p>
+      ${u.lastBasho ? `<p class="ln">いまの番付 <b>${esc(bp(u.lastBasho).rank)}</b>（最後の場所 ${esc(bp(u.lastBasho).rec)}）</p>${bp(u.lastBasho).gs.length ? `<p class="ln">${chips(bp(u.lastBasho).gs, bp(u.lastBasho).kg)}</p>` : ''}` : ''}
+      <p class="ln">場所 ${n(u.basho)}回・イベント ${n(u.evs)}回${n(u.shares) ? '・シェア ' + n(u.shares) + '回' : ''}${u.lang && u.lang !== 'ja' ? '・' + esc(u.lang) : ''}</p>
       <span class="go">記録を見る →</span></a></li>`; }).join('')}</ul>` : '<p class="none">この期間に来た人はまだいません。</p>';
   return HEAD('横綱への道 ユーザー別') + `<div class="top"><h1>横綱への道 利用状況</h1><nav class="tabs" aria-label="期間">${tabs}</nav></div>
 <nav class="views" aria-label="表示"><a href="?key=${k}&days=${D.days}">全体</a><a class="on" aria-current="page">ユーザー別</a></nav>
@@ -203,7 +223,7 @@ async function userPage(env, vid, key, days) {
   let lastDay = '', items = '';
   for (const x of rows) { const dd = jst(x.created_at).split(' ')[0]; if (dd !== lastDay) { if (items) items += '</ul>'; items += `<p class="daysep">${dd}</p><ul class="log">`; lastDay = dd; }
     const det = x.ev === 'promo' ? (PROMO[x.detail] || x.detail) : x.ev === 'share' ? shareLab(x.detail) : ['life', 'kikyo', 'gacha', 'auto', 'tut'].includes(x.ev) ? actLab(x.ev, x.detail) : x.ev === 'start' ? startLab(x.detail) : x.detail;
-    items += `<li><span class="tm">${jst(x.created_at).split(' ')[1]}</span><span class="ev">${EV_LABEL[x.ev] || esc(x.ev)}</span><span class="dt">${esc(det)}</span></li>`; }
+    items += `<li><span class="tm">${jst(x.created_at).split(' ')[1]}</span><span class="ev">${EV_LABEL[x.ev] || esc(x.ev)}</span><span class="dt">${x.ev === 'basho' ? bashoHtml(x.detail) : esc(det)}</span></li>`; }
   if (items) items += '</ul>';
   return HEAD('横綱への道 ' + esc(String(vid).slice(0, 6))) + `<div class="top"><h1>端末 ${esc(String(vid).slice(0, 6))}</h1><a class="back" href="?key=${k}&days=${days}&view=users">← ユーザー別へ</a></div>
 <button type="button" class="reload" onclick="this.classList.add('busy');this.textContent='更新中…';location.reload()">↻ 更新</button>
