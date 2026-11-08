@@ -78,6 +78,47 @@ const actLab = (ev, d) => { const t = String(d || ''), i = t.indexOf('/'), k = i
 const EV_LABEL = { life: 'イベント', kikyo: '帰省', gacha: 'ガチャ', auto: 'オート', tut: '説明', land: '来た', open: '動いた', start: '入門', basho: '場所', promo: '昇進', retire: '引退', lang: '言語', share: 'シェア' };
 const PROMO = { juryo: '十両', makuuchi: '幕内', ozeki: '大関', yokozuna: '横綱' };
 const jst = iso => { const t = new Date(new Date(iso).getTime() + 9 * 3600e3).toISOString(); return t.slice(5, 7).replace(/^0/, '') + '/' + t.slice(8, 10).replace(/^0/, '') + ' ' + t.slice(11, 16); };
+const HEAD = t => `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><title>${t}</title>
+<style>
+:root{--bg:#f6f3ec;--card:#fffdf8;--fg:#1d1a16;--mut:#6f675a;--line:#e3dac8;--acc:#9a2b25;--gold:#b8862a;--bar:#d9b45a;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#10131f;--card:#181c2c;--fg:#f1ead8;--mut:#a59d8c;--line:#2c3248;--acc:#e2b04a;--gold:#e2b04a;--bar:#8a6a2a;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,-apple-system,"Hiragino Sans","Yu Gothic",sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:720px;margin:0 auto;padding:12px max(14px,env(safe-area-inset-right)) 40px max(14px,env(safe-area-inset-left));display:grid;gap:18px}
+.top{position:sticky;top:0;z-index:2;background:var(--bg);padding:10px 0 8px;margin:-12px 0 0;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0}.tabs{display:flex;gap:6px}.tabs a{padding:6px 12px;border:1px solid var(--line);border-radius:999px;color:var(--fg);text-decoration:none;font-size:14px;background:var(--card)}.tabs a.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.period{font-size:12.5px;color:var(--mut);margin:0}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}@media (min-width:600px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:2px}.kl{font-size:12.5px;color:var(--mut)}.kv{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}.kv small,.big small{font-size:13px;font-weight:600;margin-left:2px;color:var(--mut)}
+h2{font-size:15px;margin:4px 0 -6px;color:var(--acc)}
+.src{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:8px}
+.src header{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.src h3{margin:0;font-size:16px;word-break:break-all}.lab{margin:0;font-size:12.5px;color:var(--mut)}
+.big{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.1}
+.sub{margin:0;font-size:12.5px;color:var(--mut)}
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}@media (min-width:600px){.steps{grid-template-columns:repeat(7,1fr)}}
+.steps li{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:8px;padding:5px 8px;display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px}
+.steps li b{font-size:16px;font-variant-numeric:tabular-nums}.steps li i{position:absolute;left:0;bottom:0;height:3px;width:var(--w);background:var(--gold)}.steps li.z{opacity:.45}
+.bars,.list,.log{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.bars li{display:grid;grid-template-columns:44px 1fr 32px;gap:8px;align-items:center;font-size:13px}.bars .bar{height:12px;background:var(--line);border-radius:6px;overflow:hidden}.bars .bar i{display:block;height:100%;width:var(--w);background:var(--bar)}
+.bars b{text-align:right;font-variant-numeric:tabular-nums}.bars .t{grid-column:2/4;font-size:11.5px;color:var(--mut);margin-top:-4px;word-break:break-all}
+.list li{display:flex;gap:10px;align-items:baseline;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px}.list li span{flex:1;min-width:0}.list small{color:var(--mut)}
+.log li{display:grid;grid-template-columns:auto auto 1fr;gap:2px 10px;border-bottom:1px solid var(--line);padding:6px 0;font-size:13.5px}
+.log .tm{color:var(--mut);font-variant-numeric:tabular-nums}.log .ev{font-weight:700}.log .dt{min-width:0;word-break:break-all}.log .who{grid-column:1/-1;font-size:11.5px;color:var(--mut)}
+details summary{cursor:pointer;color:var(--acc);font-size:13.5px;padding:8px 0}
+.acts summary{font-weight:700;color:var(--fg);font-size:14px}.acts .list{margin-bottom:6px}
+.reload{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(env(safe-area-inset-bottom,0px) + 16px);z-index:5;display:flex;align-items:center;gap:6px;padding:12px 18px;border:0;border-radius:999px;background:var(--acc);color:#fff;font:700 15px/1 system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.28);cursor:pointer}
+.reload:focus-visible{outline:3px solid var(--fg);outline-offset:2px}.reload.busy{opacity:.7}
+.updated{font-size:12px;color:var(--mut);margin:0}
+.none{margin:0;color:var(--mut);font-size:13.5px;background:var(--card);border:1px dashed var(--line);border-radius:10px;padding:12px}
+.views{display:flex;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:max-content}.views a{padding:7px 16px;font-size:14px;color:var(--fg);text-decoration:none;background:var(--card)}.views a.on{background:var(--fg);color:var(--bg);font-weight:700}
+.users{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.user{display:grid;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;color:var(--fg);text-decoration:none}
+.user .uh{display:flex;justify-content:space-between;align-items:center;gap:8px}.user .id{font-weight:800;font-family:ui-monospace,monospace;font-size:15px}.user .srcl{font-size:12px;color:var(--mut)}
+.chip{font-size:12px;font-weight:700;border-radius:999px;padding:2px 10px;white-space:nowrap;background:var(--line);color:var(--fg)}.chip.c2{background:#d9b45a;color:#2a2010}.chip.c3{background:#c0522d;color:#fff}.chip.c4{background:#7a1f1f;color:#fff}
+.user .ln{font-size:12.5px;color:var(--mut);margin:0}.user .go{font-size:12.5px;color:var(--acc);text-align:right}
+.back{font-size:14px;color:var(--acc);text-decoration:none}
+.daysep{font-size:12.5px;font-weight:700;color:var(--acc);margin:10px 0 0;border-bottom:1px solid var(--line);padding-bottom:2px}
+</style></head><body><main>
+`;
 /* phone-first admin page: summary numbers, one card per source (people → how far they got → came back), daily bars, shares, recent log */
 function page(d, key) {
   const k = encodeURIComponent(key), n = v => Number(v) || 0;
@@ -109,39 +150,8 @@ function page(d, key) {
   const TYPE = { oshi: '押し相撲', yotsu: '四つ相撲', waza: '技能派' };
   const li = r => `<li><span class="tm">${jst(r.created_at)}</span><span class="ev">${EV_LABEL[r.ev] || esc(r.ev)}</span><span class="dt">${esc(r.ev === 'promo' ? (PROMO[r.detail] || r.detail) : r.ev === 'share' ? shareLab(r.detail) : ['life', 'kikyo', 'gacha', 'auto', 'tut'].includes(r.ev) ? actLab(r.ev, r.detail) : r.ev === 'start' ? String(r.detail || '').split('/').map(x => TYPE[x] || x).join('・') : r.detail)}</span><span class="who">${esc(r.src)}・${esc(r.vid)}${r.lang && r.lang !== 'ja' ? '・' + esc(r.lang) : ''}</span></li>`;
   const recent = d.recent.length ? `<ul class="log">${d.recent.slice(0, 15).map(li).join('')}</ul>` + (d.recent.length > 15 ? `<details><summary>もっと見る（${d.recent.length - 15}件）</summary><ul class="log">${d.recent.slice(15).map(li).join('')}</ul></details>` : '') : '<p class="none">まだ記録がありません。</p>';
-  return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><title>横綱への道 利用状況</title>
-<style>
-:root{--bg:#f6f3ec;--card:#fffdf8;--fg:#1d1a16;--mut:#6f675a;--line:#e3dac8;--acc:#9a2b25;--gold:#b8862a;--bar:#d9b45a;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#10131f;--card:#181c2c;--fg:#f1ead8;--mut:#a59d8c;--line:#2c3248;--acc:#e2b04a;--gold:#e2b04a;--bar:#8a6a2a;color-scheme:dark}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,-apple-system,"Hiragino Sans","Yu Gothic",sans-serif;-webkit-text-size-adjust:100%}
-main{max-width:720px;margin:0 auto;padding:12px max(14px,env(safe-area-inset-right)) 40px max(14px,env(safe-area-inset-left));display:grid;gap:18px}
-.top{position:sticky;top:0;z-index:2;background:var(--bg);padding:10px 0 8px;margin:-12px 0 0;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line)}
-h1{font-size:18px;margin:0}.tabs{display:flex;gap:6px}.tabs a{padding:6px 12px;border:1px solid var(--line);border-radius:999px;color:var(--fg);text-decoration:none;font-size:14px;background:var(--card)}.tabs a.on{background:var(--acc);border-color:var(--acc);color:#fff}
-.period{font-size:12.5px;color:var(--mut);margin:0}
-.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}@media (min-width:600px){.kpis{grid-template-columns:repeat(4,1fr)}}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:2px}.kl{font-size:12.5px;color:var(--mut)}.kv{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}.kv small,.big small{font-size:13px;font-weight:600;margin-left:2px;color:var(--mut)}
-h2{font-size:15px;margin:4px 0 -6px;color:var(--acc)}
-.src{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:8px}
-.src header{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.src h3{margin:0;font-size:16px;word-break:break-all}.lab{margin:0;font-size:12.5px;color:var(--mut)}
-.big{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.1}
-.sub{margin:0;font-size:12.5px;color:var(--mut)}
-.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}@media (min-width:600px){.steps{grid-template-columns:repeat(7,1fr)}}
-.steps li{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:8px;padding:5px 8px;display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px}
-.steps li b{font-size:16px;font-variant-numeric:tabular-nums}.steps li i{position:absolute;left:0;bottom:0;height:3px;width:var(--w);background:var(--gold)}.steps li.z{opacity:.45}
-.bars,.list,.log{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.bars li{display:grid;grid-template-columns:44px 1fr 32px;gap:8px;align-items:center;font-size:13px}.bars .bar{height:12px;background:var(--line);border-radius:6px;overflow:hidden}.bars .bar i{display:block;height:100%;width:var(--w);background:var(--bar)}
-.bars b{text-align:right;font-variant-numeric:tabular-nums}.bars .t{grid-column:2/4;font-size:11.5px;color:var(--mut);margin-top:-4px;word-break:break-all}
-.list li{display:flex;gap:10px;align-items:baseline;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px}.list li span{flex:1;min-width:0}.list small{color:var(--mut)}
-.log li{display:grid;grid-template-columns:auto auto 1fr;gap:2px 10px;border-bottom:1px solid var(--line);padding:6px 0;font-size:13.5px}
-.log .tm{color:var(--mut);font-variant-numeric:tabular-nums}.log .ev{font-weight:700}.log .dt{min-width:0;word-break:break-all}.log .who{grid-column:1/-1;font-size:11.5px;color:var(--mut)}
-details summary{cursor:pointer;color:var(--acc);font-size:13.5px;padding:8px 0}
-.acts summary{font-weight:700;color:var(--fg);font-size:14px}.acts .list{margin-bottom:6px}
-.reload{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(env(safe-area-inset-bottom,0px) + 16px);z-index:5;display:flex;align-items:center;gap:6px;padding:12px 18px;border:0;border-radius:999px;background:var(--acc);color:#fff;font:700 15px/1 system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.28);cursor:pointer}
-.reload:focus-visible{outline:3px solid var(--fg);outline-offset:2px}.reload.busy{opacity:.7}
-.updated{font-size:12px;color:var(--mut);margin:0}
-.none{margin:0;color:var(--mut);font-size:13.5px;background:var(--card);border:1px dashed var(--line);border-radius:10px;padding:12px}
-</style></head><body><main>
-<div class="top"><h1>横綱への道 利用状況</h1><nav class="tabs" aria-label="期間">${tabs}</nav></div>
+  return HEAD('横綱への道 利用状況') + `<div class="top"><h1>横綱への道 利用状況</h1><nav class="tabs" aria-label="期間">${tabs}</nav></div>
+<nav class="views" aria-label="表示"><a class="on" aria-current="page">全体</a><a href="?key=${k}&days=${d.days}&view=users">ユーザー別</a></nav>
 <p class="updated">${jst(new Date().toISOString())} 時点（日本時間）</p>
 <button type="button" class="reload" id="reload" onclick="this.classList.add('busy');this.textContent='更新中…';location.reload()">↻ 更新</button>
 <p class="period">${esc(d.since)} 〜 ${esc(d.until)}（日本時間）。人数は端末ごと（同じ人でもスマホとパソコンなら2人）。</p>
@@ -152,6 +162,55 @@ details summary{cursor:pointer;color:var(--acc);font-size:13.5px;padding:8px 0}
 <h2>ゲーム内の出来事</h2>${acts}
 <h2>最近の記録</h2>${recent}
 <div style="height:64px"></div></main></body></html>`;
+}
+
+/* ---------- per-user views ---------- */
+async function usersData(env, days) {
+  const since = day(new Date(Date.now() - (days - 1) * 86400e3));
+  const r = await env.DB.prepare(`SELECT vid, MIN(src) AS src, MIN(created_at) AS first, MAX(created_at) AS last, COUNT(*) AS n, COUNT(DISTINCT day) AS days,
+      SUM(ev='open') AS opens, SUM(ev='start') AS starts, SUM(ev='basho') AS basho, SUM(ev='share') AS shares, SUM(ev IN ('life','kikyo')) AS evs,
+      MAX(CASE WHEN ev='promo' THEN CASE detail WHEN 'yokozuna' THEN 4 WHEN 'ozeki' THEN 3 WHEN 'makuuchi' THEN 2 WHEN 'juryo' THEN 1 ELSE 0 END ELSE 0 END) AS promo,
+      MAX(CASE WHEN ev='start' THEN detail END) AS startd, MAX(lang) AS lang,
+      (SELECT e2.detail FROM events e2 WHERE e2.vid = e.vid AND e2.ev = 'basho' ORDER BY e2.id DESC LIMIT 1) AS lastBasho
+    FROM events e WHERE vid IN (SELECT DISTINCT vid FROM events WHERE day >= ?1) GROUP BY vid ORDER BY last DESC LIMIT 300`).bind(since).all();
+  return { since, until: day(), days, users: r.results || [] };
+}
+const TYPE_J = { oshi: '押し相撲', yotsu: '四つ相撲', waza: '技能派' };
+const startLab = d => String(d || '').split('/').map(x => TYPE_J[x] || x).join('・');
+const stage = u => Number(u.promo) >= 4 ? ['横綱', 'c4'] : Number(u.promo) === 3 ? ['大関', 'c4'] : Number(u.promo) === 2 ? ['幕内', 'c3'] : Number(u.promo) === 1 ? ['十両', 'c2']
+  : Number(u.basho) > 0 ? ['場所を戦った', ''] : Number(u.starts) > 0 ? ['入門した', ''] : Number(u.opens) > 0 ? ['動いた', ''] : ['来ただけ', ''];
+function usersPage(D, key) {
+  const k = encodeURIComponent(key), n = v => Number(v) || 0;
+  const tabs = [7, 30, 90].map(x => `<a href="?key=${k}&days=${x}&view=users"${x === D.days ? ' class="on" aria-current="page"' : ''}>${x}日</a>`).join('');
+  const list = D.users.length ? `<ul class="users">${D.users.map(u => { const [sl, sc] = stage(u), lab = srcLab(u.src);
+    return `<li><a class="user" href="?key=${k}&days=${D.days}&user=${encodeURIComponent(u.vid)}"><div class="uh"><span><span class="id">${esc(String(u.vid).slice(0, 6))}</span> <span class="srcl">${esc(u.src)}${lab ? '（' + esc(lab) + '）' : ''}</span></span><span class="chip ${sc}">${sl}</span></div>
+      <p class="ln">初回 ${jst(u.first)}・最後 ${jst(u.last)}・来た日 ${n(u.days)}日</p>
+      ${u.startd ? `<p class="ln">入門：${esc(startLab(u.startd))}</p>` : ''}
+      <p class="ln">場所 ${n(u.basho)}回${u.lastBasho ? '・最後の場所 ' + esc(u.lastBasho) : ''}・イベント ${n(u.evs)}回${n(u.shares) ? '・シェア ' + n(u.shares) + '回' : ''}${u.lang && u.lang !== 'ja' ? '・' + esc(u.lang) : ''}</p>
+      <span class="go">記録を見る →</span></a></li>`; }).join('')}</ul>` : '<p class="none">この期間に来た人はまだいません。</p>';
+  return HEAD('横綱への道 ユーザー別') + `<div class="top"><h1>横綱への道 利用状況</h1><nav class="tabs" aria-label="期間">${tabs}</nav></div>
+<nav class="views" aria-label="表示"><a href="?key=${k}&days=${D.days}">全体</a><a class="on" aria-current="page">ユーザー別</a></nav>
+<p class="updated">${jst(new Date().toISOString())} 時点（日本時間）・${D.users.length}人（新しく動いた順）</p>
+<button type="button" class="reload" onclick="this.classList.add('busy');this.textContent='更新中…';location.reload()">↻ 更新</button>
+<p class="period">${esc(D.since)} 〜 ${esc(D.until)} に来た人。番号は端末ごとのランダムな番号の先頭6文字です。</p>
+${list}<div style="height:64px"></div></main></body></html>`;
+}
+async function userPage(env, vid, key, days) {
+  const k = encodeURIComponent(key), r = await env.DB.prepare('SELECT created_at, src, ev, detail, lang FROM events WHERE vid = ?1 ORDER BY id DESC LIMIT 2000').bind(vid).all(), rows = r.results || [];
+  const u = { promo: 0, basho: 0, starts: 0, opens: 0 };
+  for (const x of rows) { if (x.ev === 'basho') u.basho++; if (x.ev === 'start') { u.starts++; u.startd = u.startd || x.detail; } if (x.ev === 'open') u.opens++; if (x.ev === 'promo') u.promo = Math.max(u.promo, { juryo: 1, makuuchi: 2, ozeki: 3, yokozuna: 4 }[x.detail] || 0); }
+  const [sl, sc] = stage(u), src = rows.length ? rows[rows.length - 1].src : '', lab = srcLab(src);
+  let lastDay = '', items = '';
+  for (const x of rows) { const dd = jst(x.created_at).split(' ')[0]; if (dd !== lastDay) { if (items) items += '</ul>'; items += `<p class="daysep">${dd}</p><ul class="log">`; lastDay = dd; }
+    const det = x.ev === 'promo' ? (PROMO[x.detail] || x.detail) : x.ev === 'share' ? shareLab(x.detail) : ['life', 'kikyo', 'gacha', 'auto', 'tut'].includes(x.ev) ? actLab(x.ev, x.detail) : x.ev === 'start' ? startLab(x.detail) : x.detail;
+    items += `<li><span class="tm">${jst(x.created_at).split(' ')[1]}</span><span class="ev">${EV_LABEL[x.ev] || esc(x.ev)}</span><span class="dt">${esc(det)}</span></li>`; }
+  if (items) items += '</ul>';
+  return HEAD('横綱への道 ' + esc(String(vid).slice(0, 6))) + `<div class="top"><h1>端末 ${esc(String(vid).slice(0, 6))}</h1><a class="back" href="?key=${k}&days=${days}&view=users">← ユーザー別へ</a></div>
+<button type="button" class="reload" onclick="this.classList.add('busy');this.textContent='更新中…';location.reload()">↻ 更新</button>
+<article class="src"><header><div><h3>${esc(src)}</h3>${lab ? `<p class="lab">${esc(lab)}</p>` : ''}</div><span class="chip ${sc}">${sl}</span></header>
+<p class="sub">記録 ${rows.length}件・場所 ${u.basho}回${u.startd ? '・入門：' + esc(startLab(u.startd)) : ''}</p>
+${rows.length ? `<p class="sub">初回 ${jst(rows[rows.length - 1].created_at)}・最後 ${jst(rows[0].created_at)}（日本時間）</p>` : ''}</article>
+<h2>記録（新しい順）</h2>${items || '<p class="none">記録がありません。</p>'}<div style="height:64px"></div></main></body></html>`;
 }
 
 export default {
@@ -176,6 +235,9 @@ export default {
       const key = url.searchParams.get('key') || '';
       if (!env.ADMIN_KEY || key !== env.ADMIN_KEY) return new Response('合言葉がちがいます', { status: 403, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
       const days = Math.min(365, Math.max(1, parseInt(url.searchParams.get('days') || '30', 10) || 30));
+      const H = { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } };
+      if (url.pathname === '/admin' && url.searchParams.get('user')) return new Response(await userPage(env, url.searchParams.get('user').slice(0, 40), key, days), H);
+      if (url.pathname === '/admin' && url.searchParams.get('view') === 'users') return new Response(usersPage(await usersData(env, days), key), H);
       const d = await stats(env, days);
       if (url.pathname === '/stats') return Response.json(d);
       return new Response(page(d, key), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } });
