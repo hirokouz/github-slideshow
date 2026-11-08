@@ -220,6 +220,11 @@
 
 ---
 
+## 12.5 流入元の計測
+
+- `?from=名前` 付きのリンク（甲子園台帳のバナーは `?from=kokoshinro`）で来た訪問を、Worker `yokozuna-hit` と D1 `yokozuna-analytics` で日ごとに数える。生のIPは保存せず、1日単位のハッシュでユニーク人数を出す。詳しくは `analytics/README.md`
+- タイトル画面の下に「バナーなどから来た人数を、個人がわからない形で数えています」と表示
+
 ## 13. ファイル構成
 
 | ファイル | 中身 |
@@ -233,6 +238,7 @@
 | `en2.js` | 英語モード：イベントの物語・記録の英訳 |
 | `tools/i18n_wrap.py` | 物語の文章を `Tj()` に包み、英訳が必要な文章の一覧を出す |
 | `tools/make_index.py` | `game.html` から `index.html` を作る（絵のファイルに版番号を付ける） |
+| `analytics/` | 流入元カウンター（Worker・D1のテーブル・集計SQL） |
 | `tools/build_web.py` | 公開用 `web/` と `yokozuna-web.zip` を作る |
 | `tools/women.py` / `tools/tani.py` | ChatGPTのシートから絵を切り出す |
 | `tools/women_extra.py` / `tools/women_add.py` | 私服シートの追加／新しいヒロインの追加 |
