@@ -1889,7 +1889,7 @@ function goalText(){if(st.maezumo)return Tj('前相撲：2勝すれば、来場�
   const I=st.pos<KOMU?divInfo(st.pos):null,nm=p=>rank(p).name;
   const est=w=>{const r=[];for(let k=0;k<7;k++)r.push(moveBanzuke(st.pos,w,I.d.b-w).p);r.sort((a,b)=>a-b);return r[3];};
   if(st.pos>=YOKO){const rp=renpa(st);return rp>=2?rp+Tj('連覇中！ 優勝すれば')+(rp+1)+Tj('連覇'):rp===1?Tj('前の場所で優勝。優勝すれば2連覇'):Tj('横綱：負け越すと進退問題。2場所続けて休むのも危ない');}
-  if(st.pos===OZEKI){if(st.kadoban)return Tj('カド番：負け越すと大関から陥落する');return tsunaTori(st)?Tj('綱取りの場所！ 優勝をめざせ'):Tj('綱取り：優勝か13勝のあと、次の場所で優勝すれば横綱');}
+  if(st.pos===OZEKI){if(st.kadoban)return Tj('カド番：負け越すと大関から陥落する');const ph=st.hist[st.hist.length-1];return tsunaTori(st)?(ph.yusho?Tj('綱取りの場所！ 優勝か13勝以上で横綱'):Tj('綱取りの場所！ 優勝をめざせ')):Tj('綱取り：大関で2場所続けて優勝か13勝以上（うち1回は優勝）なら横綱');}
   if(st.pos===SEKI&&st.ozekiBack===st.b)return Tj('大関復帰の場所：10勝すれば大関に戻れる');
   if(st.pos===SEKI){const l3=st.hist.slice(-2).reduce((a,h)=>a+h.w,0);return Tj('大関取りの目安：三役で3場所33勝（あと ')+Math.max(0,33-l3)+Tj('勝）');}
   if(st.pos===KOMU)return Tj('勝ち越せば三役を守れる。10勝で関脇も見える');
@@ -2499,15 +2499,17 @@ function endBasho(){
     else if(st.ozekiBack===st.b)msg=Tj('大関復帰はならず（10勝が必要だった）。');else if(w>=10)msg=Tj('大関とりへ。三役で3場所33勝が目安だ（直近3場所 ')+last3+Tj('勝）。');}
   else if(old===OZEKI){
     if(w<8){if(st.kadoban){p=SEKI;st.kadoban=false;st.ozekiBack=st.b+1;msg=Tj('カド番で負け越し、大関から陥落……。来場所10勝すれば大関に戻れる。');}else{st.kadoban=true;msg=Tj('負け越し。次の場所はカド番だ。');}}
-    else{st.kadoban=false;const good=yusho||w>=13;const prevGood=prev&&prev.pos===OZEKI&&(prev.yusho||prev.w>=13);
-      // yokozuna: every stat A or better, and as ozeki a yusho right after a yusho or a 13+ win basho.
+    else{st.kadoban=false;var tsunaShort=false;const good=yusho||w>=13;const prevGood=prev&&prev.pos===OZEKI&&(prev.yusho||prev.w>=13);
+      // yokozuna: every stat A or better, and as ozeki two straight basho of a yusho or 13+ wins, at least one of them a yusho
+      // (yusho then 13 wins counts just like 13 wins then yusho: a runner-up / play-off loss after a title is 'a record equal to a yusho').
       // without the strength the second yusho never comes (lost in a play-off), so results are never "wasted"
-      if(yusho&&prevGood&&tsunaOK(st)){p=YOKO;msg=Tj('横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。');}
+      if(good&&prevGood&&(yusho||prev.yusho)&&tsunaOK(st)){p=YOKO;msg=Tj('横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。');}
+      else if(good&&prevGood&&prev.yusho&&!tsunaOK(st)){tsunaShort=true;msg=Tj('横綱審議委員会は「力がまだ足りない」と推薦を見送った。');}
       else if(tsunaBlocked)msg=Tj('千秋楽、優勝決定戦で敗れて賜杯を逃した……。綱は、あと一歩で遠のいた。');
       else if(good)msg=Tj('来場所は綱取りの場所だ。');}
     st.ozekiN=(st.ozekiN||0)+1;
     // stalled at ozeki without the all-round strength: someone close tells him what is missing
-    if(p===OZEKI&&!tsunaOK(st)&&(tsunaBlocked||(st.ozekiN>=3&&!((st.tsunaAdvB||-99)>st.b-6)))){st.tsunaAdvB=st.b;st.tsunaAdvWhy=tsunaBlocked?'blocked':'stall';queueLife('tsuna_advice');}}
+    if(p===OZEKI&&!tsunaOK(st)&&(tsunaBlocked||tsunaShort||(st.ozekiN>=3&&!((st.tsunaAdvB||-99)>st.b-6)))){st.tsunaAdvB=st.b;st.tsunaAdvWhy=tsunaBlocked?'blocked':'stall';queueLife('tsuna_advice');}}
   if(yusho){st.yusho++;if(old>=MAKU){st.makuYusho++;if([10,20,32,45,46].includes(st.makuYusho))queueLife('record',String(st.makuYusho));}}
   if(B.kessenR===true&&yusho)ex.unshift(Tj('横綱決戦を制して優勝！'));
   const when=(Math.floor(st.b/6)+1)+Tj('年目 ')+BASHO[st.b%6];
