@@ -762,6 +762,9 @@ function shareMsg(k,s){const T=x=>EN?EN.tr(x):x,nm=T(s.name),age=ageOf(s),W=tota
 const SH_LAB={juryo:['十両昇進','Jūryō!'],nyumaku:['新入幕','Makuuchi!'],ozeki:['大関昇進','Ōzeki!'],yokozuna:['横綱昇進','Yokozuna!'],yusho:['幕内優勝','Champion!'],retire:['引退','Farewell']};
 async function shareCard(k,s){
   try{await Promise.all(['700 96px "Yuji Boku"','700 40px "Zen Kaku Gothic New"','80px "Kaushan Script"'].map(f=>document.fonts.load(f)));}catch(e){}
+  { // wait for the painted face (and its expressions) so the card never falls back to the old drawn face
+    const o=s.face&&s.face.img&&AIF[s.face.img];if(o){const ims=[o.img,...Object.values(o.ex||{}),...Object.values(o.faces||{})];for(const h in (o.exprs||{}))ims.push(...Object.values(o.exprs[h]));
+      await Promise.race([Promise.all(ims.filter(i=>i&&i.decode).map(i=>i.decode().catch(()=>{}))),new Promise(r=>setTimeout(r,4000))]);}}
   const W=1080,H=1080,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
   const T=x=>EN?EN.tr(x):x,best=Math.max(s.best||0,s.pos),ret=k==='retire',pos=ret?best:s.pos,oi=pos>=JURYO,Y=s.makuYusho||0;
   const W0=totalWins(s),L0=s.hist.reduce((a,h)=>a+h.l-(h.kyu||0),0),brush=EN?'"Kaushan Script","Yuji Boku",serif':'"Yuji Boku","Hiragino Mincho ProN",serif',goth='"Zen Kaku Gothic New","Hiragino Sans",sans-serif';
