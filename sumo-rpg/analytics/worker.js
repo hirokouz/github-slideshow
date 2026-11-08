@@ -67,7 +67,7 @@ const SRC_LABEL = { kokoshinro: '甲子園台帳のバナー', 'kokoshinro.com':
   share: 'プレイヤーのシェア・スマホの共有', share_x: 'プレイヤーのシェア・X', x: 'X', instagram: 'Instagram', ig: 'Instagram', facebook: 'Facebook', fb: 'Facebook',
   threads: 'Threads', tiktok: 'TikTok', line: 'LINE', youtube: 'YouTube', bluesky: 'Bluesky', note: 'note', reddit: 'Reddit' };
 const SRC = s => { const b = String(s || '').split('_')[0], l = SRC_LABEL[s] || (b !== s && SRC_LABEL[b] && SRC_LABEL[b] + '・' + s.slice(b.length + 1)); return l ? s + '（' + l + '）' : s; };
-const SHARE_LABEL = { juryo: '十両昇進', nyumaku: '新入幕', ozeki: '大関昇進', yokozuna: '横綱昇進', yusho: '幕内優勝', retire: '引退', sheet: 'スマホの共有', x: 'X' };
+const SHARE_LABEL = { juryo: '十両昇進', nyumaku: '新入幕', ozeki: '大関昇進', yokozuna: '横綱昇進', yusho: '幕内優勝', retire: '引退', sheet: 'スマホの共有（文章のみ）', sheet_img: 'スマホの共有（画像つき）', save: '画像を保存', x: 'X' };
 const shareLab = d => String(d || '').split('/').map(x => SHARE_LABEL[x] || x).join('・');
 function page(d, key) {
   const k = encodeURIComponent(key);
@@ -82,7 +82,7 @@ ${table('流入元ごとの人数', '期間内にゲームを開いた人数。�
 ${table('どこまで遊んだか', '期間内に来た人のうち、その段階まで進んだ人数。', d.funnel, [['src', '流入元', r => SRC(r.src)], ['users', '来た人'], ['started', '入門した'], ['played_basho', '場所を戦った'], ['juryo', '十両'], ['makuuchi', '幕内'], ['ozeki', '大関'], ['yokozuna', '横綱']])}
 ${table('また来たか（継続率）', '期間内に初めて来た人のうち、翌日／7日以降にもう一度開いた割合。まだ日数がたっていない人は分母に入れていません。', d.retention, [['src', '流入元', r => SRC(r.src)], ['new_users', '初めて来た人'], ['n', '翌日も来た', r => pct(r.came_next_day, r.eligible_next_day)], ['n7', '7日以降も来た', r => pct(r.came_after_7days, r.eligible_7days)]])}
 ${table('場所をどれくらい戦ったか', '期間内に終えた場所の数。', d.basho, [['src', '流入元', r => SRC(r.src)], ['basho', '場所数'], ['players', '遊んだ人'], ['per_player', '1人あたり']])}
-${table('シェアされた回数', '昇進・優勝・引退の画面の「この記録をシェアする」。スマホの共有は、共有先を選んで送ったときだけ数える。シェアから来た人は流入元 share／share_x に出る。', d.shares, [['detail', '場面・方法', r => shareLab(r.detail)], ['shares', '回数'], ['users', '人数']])}
+${table('シェアされた回数', '昇進・優勝・引退の画面の「この記録をシェアする」。スマホの共有は、共有先を選んで送ったときだけ数える。「画像を保存」と「X」はボタンを押した回数。シェアから来た人は流入元 share／share_x に出る。', d.shares, [['detail', '場面・方法', r => shareLab(r.detail)], ['shares', '回数'], ['users', '人数']])}
 ${table('日ごとの利用者', '', d.daily, [['day', '日付'], ['src', '流入元', r => SRC(r.src)], ['users', '人数']])}
 ${table('最近の記録（50件）', 'open=開いた／start=入門／basho=場所を終えた／promo=昇進／retire=引退／lang=言語を切りかえ／share=シェア', d.recent, [['created_at', '日時（日本時間）', r => new Date(new Date(r.created_at).getTime() + 9 * 3600e3).toISOString().replace('T', ' ').slice(0, 16)], ['src', '流入元'], ['ev', '記録'], ['detail', '内容'], ['lang', '言語'], ['vid', '端末']])}
 </main></body></html>`;

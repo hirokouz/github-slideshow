@@ -1,5 +1,14 @@
 /* English for the story & message text wrapped in Tj() in game.html (key = the Japanese literal). Built from tools/i18n_wrap.py --list */
 window.I18N_EN=window.I18N_EN||{};window.I18N_EN.S={
+"記録をシェア": "Share your record",
+"画像をつくっています…": "Making the picture…",
+"画像つきでシェア": "Share with picture",
+"シェアする": "Share",
+"この画像と文章を、LINE・X・Instagram などに送れます。": "Send this picture and message to LINE, X, Instagram and more.",
+"画像を保存して、X などの投稿に添えてください。": "Save the picture and attach it to your post on X or elsewhere.",
+"画像を保存": "Save picture",
+"X に投稿": "Post on X",
+"シェア用の画像": "Picture for sharing",
 "素質：": "Talent: ",
 "／得意 ": " / Strength: ",
 "／体重の上限 ": " / Weight cap ",
