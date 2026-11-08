@@ -61,6 +61,9 @@ p{margin:0;line-height:1.75}
 /* title */
 .hero{display:grid;gap:14px;justify-items:center;text-align:center;padding-top:46px}
 #newBtn.booting{opacity:.75;cursor:progress}
+#loadPill{position:fixed;top:calc(env(safe-area-inset-top,0px) + 54px);left:50%;transform:translateX(-50%);white-space:nowrap;z-index:70;display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:rgba(13,20,48,.88);color:#f1ead8;border:1px solid rgba(226,176,74,.6);font:600 12.5px/1 "Zen Kaku Gothic New",sans-serif;pointer-events:none}
+#loadPill[hidden]{display:none}#loadPill i{width:12px;height:12px;border-radius:50%;border:2px solid rgba(241,234,216,.3);border-top-color:#e2b04a;animation:ldspin .8s linear infinite}
+@keyframes ldspin{to{transform:rotate(360deg)}}
 .logo{font-family:var(--f-brush);font-size:clamp(60px,19vw,92px);line-height:1;color:var(--shiro);text-shadow:0 0 34px rgba(226,176,74,.35)}
 .logo .sub{display:block;font-family:var(--f-mincho);font-weight:800;font-size:12px;letter-spacing:.5em;color:var(--kin);margin-bottom:12px;text-shadow:none}
 #heroCv{width:100%;max-width:440px;aspect-ratio:3/2;display:block;border-radius:10px;background:url("title.webp") center/cover no-repeat}
@@ -490,6 +493,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
 </style>
 
 <div id="toast" role="status" aria-live="polite"></div>
+<div id="loadPill" role="status" hidden><i></i><span id="loadTxt">読み込み中…</span></div>
 <div id="updBar" role="status" hidden><span id="updTxt" style="flex:1;min-width:0"></span><button type="button" id="updGo"></button><button type="button" class="x" id="updX" aria-label="close">×</button></div>
 <button type="button" id="sndBtn" aria-label="音のオンオフ"><span class="si"></span><span class="st"></span></button>
 <button type="button" id="langBtn" aria-label="Language / 言語">🌐 <span id="langLbl">English</span></button>
@@ -767,9 +771,15 @@ const LOG=(()=>{const on=/(^|\.)yokozuna-sumo\.pages\.dev$/.test(location.hostna
   return (ev,detail)=>{if(!on||!vid)return;try{const b=JSON.stringify({vid,src,ev,detail:detail==null?'':String(detail).slice(0,60),lang:LANG});
     if(!(navigator.sendBeacon&&navigator.sendBeacon(EP,new Blob([b],{type:'text/plain'}))))fetch(EP,{method:'POST',body:b,keepalive:true,mode:'cors'}).catch(()=>{});}catch(e){}};})();
 LOG('open');
-/* romance and patron art (about 4 MB) is only needed after several basho: fetch it once the game is up */
-{const lazy=(src,done)=>{const t=document.createElement('script');t.src=src;t.onload=done;document.body.append(t);};
-  const go=()=>{lazy('women.js',()=>fillWIMG());lazy('tani.js',()=>fillTIMG());};if(document.readyState==='complete')setTimeout(go,300);else addEventListener('load',()=>setTimeout(go,300));}
+// how long players wait: seconds from opening the page until the game is ready (the start button works)
+LOG('load','開始 '+(performance.now()/1000).toFixed(1)+'秒');
+/* romance and patron art (about 5 MB) is only needed after several basho: fetch it once the game is up.
+   While it downloads, a small "読み込み中…" pill shows (only if it takes more than a moment); the time is logged */
+{let left=2,t0=0,failed=false;const pill=document.getElementById('loadPill');if(LANG==='en')document.getElementById('loadTxt').textContent='Loading…';
+  const end=ok=>{if(!ok)failed=true;if(--left>0)return;clearTimeout(showT);pill.hidden=true;LOG('load','絵 '+(failed?'失敗':((performance.now()-t0)/1000).toFixed(1)+'秒'));};
+  let showT=0;const lazy=(src,done)=>{const t=document.createElement('script');t.src=src;t.onload=()=>{try{done();}catch(e){}end(true);};t.onerror=()=>end(false);document.body.append(t);};
+  const go=()=>{t0=performance.now();showT=setTimeout(()=>{if(left>0)pill.hidden=false;},1200);lazy('women.js',()=>fillWIMG());lazy('tani.js',()=>fillTIMG());};
+  if(document.readyState==='complete')setTimeout(go,300);else addEventListener('load',()=>setTimeout(go,300));}
 /* offline copy + installable app (Android TWA / home screen): only on the public site */
 if('serviceWorker' in navigator&&/(^|\.)yokozuna-sumo\.pages\.dev$/.test(location.hostname))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 /* ---------- share a milestone (promotion, makuuchi yusho, retirement): the phone's share sheet, else X.
