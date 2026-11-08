@@ -941,7 +941,8 @@ const SAN=['小結','関脇','大関','横綱'];const JURYO=DSTART[4],MAKU=DSTAR
 function divInfo(pos){for(let i=0;i<DIVS.length;i++){const d=DIVS[i];if(pos<DSTART[i]+d.c){const slot=d.c-(pos-DSTART[i]);return{i,d,start:DSTART[i],slot,num:Math.ceil(slot/2),east:slot%2===1};}}return null;}
 // position of 「(division i) num枚目」, East by default
 function posOf(i,num,east=true){const d=DIVS[i];num=clamp(Math.round(num),1,d.c/2);return DSTART[i]+d.c-(2*num-(east?1:0));}
-function levelOf(pos){if(pos>=KOMU)return[58,61,64,68][Math.min(3,pos-KOMU)];const I=divInfo(pos);return lerp(I.d.lv[0],I.d.lv[1],(pos-I.start)/I.d.c);}
+/* sanyaku and above are the strongest men in the sport: a player needs about A (85) in everything to win 13+ as ozeki */
+function levelOf(pos){if(pos>=KOMU)return[63,68,78,86][Math.min(3,pos-KOMU)];const I=divInfo(pos);return lerp(I.d.lv[0],I.d.lv[1],(pos-I.start)/I.d.c);}
 /* v2 saves: one slot per 枚 with sizes [30,100,90,60,14,17] → now two slots per 枚 */
 const V2_DIVS=[30,100,90,60,14,17];
 function mapV2(o){let a=0;for(let i=0;i<6;i++){if(o<a+V2_DIVS[i]){const num=V2_DIVS[i]-(o-a);return posOf(i,num*DIVS[i].c/2/V2_DIVS[i]);}a+=V2_DIVS[i];}return KOMU+Math.min(3,o-a);}
@@ -2203,7 +2204,7 @@ function choose(s){
   if(!anim||(anim.phase!=='ready'&&anim.phase!=='intro'))return;B.strat=s;$('bPick').hidden=true;
   if(anim.phase==='intro'){anim.pending=true;return;}
   if(autoMode){resolve('normal');return;}
-  $('bTachi').hidden=false;anim={phase:'tachi',t:0,speed:(rnd(.75,1)+levelOf(st.pos)/140)*(st.maezumo||st.pos<DSTART[3]?.62:1)*(st.b<3?.85:1),matta:0};
+  $('bTachi').hidden=false;anim={phase:'tachi',t:0,speed:(rnd(.75,1)+(st.pos>=KOMU?[58,61,64,68][Math.min(3,st.pos-KOMU)]:levelOf(st.pos))/140)*(st.maezumo||st.pos<DSTART[3]?.62:1)*(st.b<3?.85:1),matta:0};
 }
 function tachi(){
   if(!anim||anim.phase!=='tachi')return;
@@ -2261,7 +2262,7 @@ function resolve(q,mini,force){
   const o=B.opp,s=B.strat,pa=anim;
   const ostrat=Math.random()<.65?o.style:pick(['oshi','yotsu','waza']);
   const kachi=kachiBout();
-  const D=deckFx();let me=(kachi?5:0)+(st.nisei&&st.niseiBold&&st.b<12&&(st.lstreak||0)>=2?-1.5:0)+(flag('heirImouto')&&o.rival?2:0)+(tsunaTori(st)&&!tsunaOK(st)?-3:0)+(o.rival&&spouse()==='imouto'?2:0)+(!(st.h2h||{})[o.name]?(spouse()==='kisha'?2:flag('heirKisha')?1:0):0)+power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q])+D.power+(q!=='late'?D.tachi+(flag('senseiTachi')?1:0):0)+buff('power');
+  const D=deckFx();let me=(kachi?5:0)+(st.nisei&&st.niseiBold&&st.b<12&&(st.lstreak||0)>=2?-1.5:0)+(flag('heirImouto')&&o.rival?2:0)+(o.rival&&spouse()==='imouto'?2:0)+(!(st.h2h||{})[o.name]?(spouse()==='kisha'?2:flag('heirKisha')?1:0):0)+power(st.stats,st.kg,s,st.fat,st.inj)+({sharp:6,normal:1,late:-5}[q])+D.power+(q!=='late'?D.tachi+(flag('senseiTachi')?1:0):0)+buff('power');
   const op=power(o.stats,o.kg,ostrat,0,0);
   if(BEATS[s]===ostrat)me+=7;else if(BEATS[ostrat]===s)me-=7;
   if(mini!=null)me+=(mini-.5)*14;
@@ -2487,10 +2488,6 @@ function endBasho(){
   const top=old>=JURYO;let yusho=!top?w===7:(w>=14||(w===13&&Math.random()<.4)||(w===12&&Math.random()<.1));
   if(B.kessenR===true&&w>=12)yusho=true;
   if(B.kessenR===false){yusho=false;const Rv=st.rival;Rv.yushoN=(Rv.yushoN||0)+1;ex.push(Tj('横綱決戦に敗れ、宿敵・')+Rv.name+Tj('が優勝した……'));}
-  // at ozeki and yokozuna the other contenders are the strongest men in the sport: the further his all-round strength is below A,
-  // the more often someone else ends level with him and wins the play-off. Never forced: a 15-0 always takes the Cup.
-  let playoffLost=false;if(yusho&&!wasMae&&old>=OZEKI&&w<B.n&&B.kessenR!==true){const def=Object.values(st.stats).reduce((a,v)=>a+Math.max(0,TSUNA_MIN-v),0);if(def>0&&Math.random()<Math.min(.65,def/50)){yusho=false;playoffLost=true;}}
-  const tsunaBlocked=playoffLost&&tsunaTori(st);if(playoffLost&&!tsunaBlocked)ex.push(Tj('千秋楽、優勝決定戦で敗れて賜杯を逃した。'));
   const prev=st.hist[st.hist.length-1];
   if(wasMae){p=w>=3?posOf(0,17,Math.random()<.5):w>=2?posOf(0,20):w>=1?posOf(0,23):posOf(0,25,false);yusho=false;st.maezumo=false;msg=w>=2?Tj('新序出世！ 来場所から序ノ口に名前が載る。'):Tj('前相撲を終えた。来場所は序ノ口の下位から。');}
   else if(old<KOMU){const mv=moveBanzuke(old,w,l);p=mv.p;if(mv.msg)msg=mv.msg;}
@@ -2502,18 +2499,16 @@ function endBasho(){
     else if(st.ozekiBack===st.b)msg=Tj('大関復帰はならず（10勝が必要だった）。');else if(w>=10)msg=Tj('大関とりへ。三役で3場所33勝が目安だ（直近3場所 ')+last3+Tj('勝）。');}
   else if(old===OZEKI){
     if(w<8){if(st.kadoban){p=SEKI;st.kadoban=false;st.ozekiBack=st.b+1;msg=Tj('カド番で負け越し、大関から陥落……。来場所10勝すれば大関に戻れる。');}else{st.kadoban=true;msg=Tj('負け越し。次の場所はカド番だ。');}}
-    else{st.kadoban=false;var tsunaShort=false;const good=yusho||w>=13;const prevGood=prev&&prev.pos===OZEKI&&(prev.yusho||prev.w>=13);
-      // yokozuna: two straight yusho as ozeki always; or a yusho plus a 13+ win basho (either order: a runner-up / play-off loss
-      // next to a title is 'a record equal to a yusho'), which the council accepts only with every stat A or better.
-      // weak stats are not blocked by force: they just make the title rarer (play-off losses above)
-      const renpa2=yusho&&prev&&prev.pos===OZEKI&&prev.yusho;
-      if(renpa2||(good&&prevGood&&(yusho||prev.yusho)&&tsunaOK(st))){p=YOKO;msg=Tj('横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。');}
-      else if(good&&prevGood&&(yusho||prev.yusho)){tsunaShort=true;msg=Tj('横綱審議委員会は「力がまだ足りない」と推薦を見送った。');}
-      else if(tsunaBlocked)msg=Tj('千秋楽、優勝決定戦で敗れて賜杯を逃した……。綱は、あと一歩で遠のいた。');
+    else{st.kadoban=false;const good=yusho||w>=13;const prevGood=prev&&prev.pos===OZEKI&&(prev.yusho||prev.w>=13);
+      // yokozuna: as ozeki, two straight basho of a yusho or 13+ wins with at least one yusho (either order; a runner-up or
+      // play-off loss next to a title is 'a record equal to a yusho'). Nothing is forced: the other ozeki and yokozuna are strong
+      // (levelOf), so without real strength the wins simply do not come.
+      if(good&&prevGood&&(yusho||prev.yusho)){p=YOKO;msg=Tj('横綱昇進！ 明治神宮で綱を締めて土俵入り。取組では締込のまま、綱は土俵入りだけ。');}
+      else if(prevGood)msg=Tj('綱取りはならなかった。');
       else if(good)msg=Tj('来場所は綱取りの場所だ。');}
     st.ozekiN=(st.ozekiN||0)+1;
     // stalled at ozeki without the all-round strength: someone close tells him what is missing
-    if(p===OZEKI&&!tsunaOK(st)&&(tsunaBlocked||tsunaShort||(st.ozekiN>=3&&!((st.tsunaAdvB||-99)>st.b-6)))){st.tsunaAdvB=st.b;st.tsunaAdvWhy=tsunaBlocked?'blocked':'stall';queueLife('tsuna_advice');}}
+    if(p===OZEKI&&!tsunaOK(st)&&((st.ozekiN>=3&&!((st.tsunaAdvB||-99)>st.b-6)))){st.tsunaAdvB=st.b;st.tsunaAdvWhy='stall';queueLife('tsuna_advice');}}
   if(yusho){st.yusho++;if(old>=MAKU){st.makuYusho++;if([10,20,32,45,46].includes(st.makuYusho))queueLife('record',String(st.makuYusho));}}
   if(B.kessenR===true&&yusho)ex.unshift(Tj('横綱決戦を制して優勝！'));
   const when=(Math.floor(st.b/6)+1)+Tj('年目 ')+BASHO[st.b%6];
@@ -3235,8 +3230,8 @@ const LIFE={
       tani:()=>({t:Tj('タニマチの助言'),scene:'tani',tw:{id:taniId(st.tani),show:'normal'},text:head+st.tani.name+Tj('と食事をした。\n「横綱になる人はな、どこにも穴がないんや。押し・力・技・速さ、全部A以上。あんたは')+list+Tj('がまだやろ。そこを埋めたら、綱は向こうから来るで」')}),
       wife:()=>({t:Tj('妻のひとこと'),scene:'date',w:{e:'serious',after:()=>'smile'},text:head+Tj('家に帰ると、')+firstName(st.rom.pid)+Tj('がノートを広げていた。\n「ずっと取組を見てて思ったの。横綱の人たちって、押しも力も技も速さも、全部すごいでしょ。あなたは')+list+Tj('がまだ少し弱いと思う」')})}[who]();
     return{...T,kt:Tj('綱への道'),stopAuto:true,ch:[
-      {l:list+Tj('を徹底的に鍛える'),f:()=>{addBuff(st,'growth',.15,6,Tj('綱への稽古'));return[Tj('翌朝から、いちばん苦手な稽古を真っ先にやることにした。'),Tj('横綱には全能力A以上が必要（足りないのは ')+names.join(Tj('・'))+Tj('）・1年間、稽古の伸び +15%')];}},
-      {l:Tj('秘伝書を探してみる'),f:()=>{const v=earn(300);return[Tj('ガチャの「秘伝書」「極意書」でも、能力のランクを上げられるらしい。'),Tj('横綱には全能力A以上が必要（足りないのは ')+names.join(Tj('・'))+Tj('）・ご祝儀 +')+v];}}]};},
+      {l:list+Tj('を徹底的に鍛える'),f:()=>{addBuff(st,'growth',.15,6,Tj('綱への稽古'));return[Tj('翌朝から、いちばん苦手な稽古を真っ先にやることにした。'),Tj('横綱・大関に勝ちきるには全能力A以上が目安（足りないのは ')+names.join(Tj('・'))+Tj('）・1年間、稽古の伸び +15%')];}},
+      {l:Tj('秘伝書を探してみる'),f:()=>{const v=earn(300);return[Tj('ガチャの「秘伝書」「極意書」でも、能力のランクを上げられるらしい。'),Tj('横綱・大関に勝ちきるには全能力A以上が目安（足りないのは ')+names.join(Tj('・'))+Tj('）・ご祝儀 +')+v];}}]};},
   retire_talk:()=>{const age=ageOf(st),why=st.retireWhy;
     const T={age:Tj('場所後、親方の部屋に呼ばれた。「')+age+Tj('歳か。体はどうだ。……この先のことを、そろそろ考えてもいい頃だ」'),
       fall:Tj('場所後、親方の部屋に呼ばれた。「十両から落ちたな。関取に戻る力は、まだ残っているか？」'),
