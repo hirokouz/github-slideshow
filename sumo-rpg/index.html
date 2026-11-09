@@ -338,7 +338,8 @@ body:not(.onTitle) #langBtn{display:none}
 #updBar[hidden]{display:none}#updBar button{border:0;border-radius:999px;padding:8px 16px;background:#b3261e;color:#fff;font:700 14px/1 "Zen Kaku Gothic New",sans-serif;cursor:pointer;white-space:nowrap}
 #updBar .x{background:transparent;color:#6f675a;padding:8px 6px;font-size:16px}
 
-.bgmsel{display:grid;gap:6px}.bgmsel label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13.5px}.bgmsel select{flex:0 1 60%;min-width:0;padding:6px 8px;border-radius:8px;border:1px solid var(--line,#c9bfa8);background:#fffdf8;color:#1d1a16;font:inherit;font-size:13px}
+.bgmsel{display:grid;gap:6px}.bgmsel label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13.5px}.bgmsel .bgmpv{flex:none;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--kin,#e2b04a);background:transparent;color:var(--kin,#e2b04a);font-size:13px;cursor:pointer;padding:0}.bgmsel .bgmpv.on{background:var(--kin,#e2b04a);color:#1a1612}
+.bgmsel label>span{flex:none;width:6.2em}.bgmsel select{flex:1 1 0;width:0;max-width:100%;min-width:0;padding:6px 8px;border-radius:8px;border:1px solid var(--line,#c9bfa8);background:#fffdf8;color:#1d1a16;font:inherit;font-size:13px}
 #sndBtn.off,#sndBtn2.off{color:#7d7360;border-color:#5b5246;text-decoration:line-through}
 .acfg input[type=range]{accent-color:var(--kin);height:24px}
 .tutq{margin-left:6px;border:1px solid var(--kin);background:transparent;color:var(--kin);border-radius:999px;font-size:10.5px;padding:1px 8px;letter-spacing:0;font-weight:700;vertical-align:1px}
@@ -760,7 +761,7 @@ if(window.CanvasRenderingContext2D&&!CanvasRenderingContext2D.prototype.roundRec
 <script src="cast.js?v=03024ef888"></script>
 <script>__boot(95)</script>
 <script src="en.js?v=31a2c8e1f3"></script>
-<script src="en2.js?v=a3111d8039"></script>
+<script src="en2.js?v=e438b5ab15"></script>
 <script>
 (()=>{
 {const n=document.getElementById('newBtn');if(n&&n.classList.contains('booting')){n.textContent=n.dataset.label;n.disabled=false;n.classList.remove('booting');}}
@@ -1679,7 +1680,8 @@ const SND=(()=>{
     track=name||null;bus=null;if(!track)return;bus=ctx.createGain();bus.gain.setValueAtTime(0,t);bus.gain.linearRampToValueAtTime(1,t+.8);bus.connect(bgm);step=0;nextT=t+.08;}
   // the player can pick the song for each scene (settings: BGMを選ぶ); 'auto' keeps the default, 'off' is silence
   const pk=(k,d)=>{const v=(cfg().pick||{})[k];return !v||v==='auto'?d:v==='off'?null:v;};
-  function want(){if(cur==='sTitle'||cur==='sCreate')return pk('title','title');if(cur==='sHome'||cur==='sGacha')return pk('home','home');if(cur==='sBout')return pk('basho',st&&st.b%2?'basho2':'basho');
+  let preview=null; // a song played from the settings (試聴) until the settings close
+  function want(){if(preview)return preview;if(cur==='sTitle'||cur==='sCreate')return pk('title','title');if(cur==='sHome'||cur==='sGacha')return pk('home','home');if(cur==='sBout')return pk('basho',st&&st.b%2?'basho2':'basho');
     if(cur==='sResult')return rcData&&rcData.hana?pk('hana','hana'):null;
     if(cur==='sKikyo')return['retire','oyakata'].includes(kScene)?'sad':kScene==='juryo'?pk('hana','hana'):['school','tani'].includes(kScene)?pk('home','home'):'event';return pk('home','home');}
   function sync(){if(!ctx||!unlocked)return;play(want());}
@@ -1702,13 +1704,13 @@ const SND=(()=>{
       else if(id==='moushi'){I.taiko(t,.6);I.shime(t+.12,.9);}else if(id==='chanko'){for(let k=0;k<4;k++)tone(t+k*.09,500+Math.random()*300,.06,{vol:.08,bend:.4});}
       else if(id==='rest'){I.koto(t,nt(YO,7),.5);I.koto(t+.2,nt(YO,9),.4);}else I.koto(t,nt(YO,7),.5);},
   };
-  return{ready:()=>unlocked,state:()=>ctx?ctx.state+':'+(track||'-')+(songOn?'(song '+(songOn.a.paused?'paused':'playing')+')':''):'none',sync,play:(n,...a)=>{if(ctx&&unlocked&&fx[n])try{fx[n](...a);}catch(e){}},cfg,save,unlock};
+  return{preview:n=>{preview=n||null;sync();},previewing:()=>preview,ready:()=>unlocked,state:()=>ctx?ctx.state+':'+(track||'-')+(songOn?'(song '+(songOn.a.paused?'paused':'playing')+')':''):'none',sync,play:(n,...a)=>{if(ctx&&unlocked&&fx[n])try{fx[n](...a);}catch(e){}},cfg,save,unlock};
 })();
 let navBack=false;
 function show(id){if(!navBack&&id!==cur){try{history.pushState({scr:id},'');}catch(e){}}for(const s of SCR)$(s).hidden=s!==id;cur=id;closeSheet();window.scrollTo(0,0);document.body.classList.toggle('onTitle',id==='sTitle');SND.sync();}
 function openSheet(k,title){const sh=$('sheet');sh.hidden=false;sh.querySelector('.sheet-in').classList.toggle('big',k==='who');$('sheetT').textContent=title||'';for(const el of sh.querySelectorAll('[data-p]'))el.hidden=el.dataset.p!==k;
   const rs=$('recSeg');rs.hidden=!['log','ach'].includes(k);for(const b of rs.children)b.classList.toggle('on',b.dataset.r===k);}
-function closeSheet(){const sh=$('sheet');if(sh)sh.hidden=true;}
+function closeSheet(){const sh=$('sheet');if(sh)sh.hidden=true;if(SND.previewing()){SND.preview(null);bgmPrevK=null;bgmPrevUI();}}
 
 /* ---------- title ---------- */
 let hero=null;const HERO_FACES=[randFace(),randFace()];
@@ -3739,7 +3741,7 @@ $('autoGo').addEventListener('click',startAutoFromCfg);
 $('hLog1').addEventListener('scroll',e=>{const el=e.target;el.classList.toggle('end',el.scrollTop+el.clientHeight>=el.scrollHeight-2);});
 itemBtnEl().addEventListener('click',()=>{if(st){st.itemNew=false;persist();itemBtnEl().classList.remove('new');}renderItems();openSheet('items',Tj('道具'));});
 function sndUI(){const c=SND.cfg(),b=$('sndBtn'),wait=c.on&&!SND.ready();b.classList.toggle('off',!c.on);b.classList.toggle('wait',wait);b.querySelector('.si').textContent=c.on?'🔊':'🔇';b.querySelector('.st').textContent=wait?Tj('タップで音が鳴る'):c.on?Tj('音 ON'):Tj('音 OFF');
-  $('sndBtn2').textContent=(c.on?'🔊':'🔇')+' 🌐';$('sndBtn2').classList.toggle('off',!c.on);$('sndOn').checked=c.on;$('sndBgm').value=c.bgm;$('sndSfx').value=c.sfx;for(const sel of document.querySelectorAll('#bgmSel select'))sel.value=(c.pick||{})[sel.dataset.bgm]||'auto';}
+  $('sndBtn2').textContent=(c.on?'🔊':'🔇')+' 🌐';$('sndBtn2').classList.toggle('off',!c.on);$('sndOn').checked=c.on;$('sndBgm').value=c.bgm;$('sndSfx').value=c.sfx;for(const sel of document.querySelectorAll('#bgmSel select'))sel.value=(c.pick||{})[sel.dataset.bgm]||'auto';bgmPrevUI();}
 {const lb=$('langLbl');if(lb)lb.textContent=LANG==='en'?Tj('日本語'):'English';}
 const setLang=l=>{if(l===LANG)return;LOG('lang',l);try{if(st&&cur!=='sTitle'){persist();sessionStorage.setItem('sumo-rpg-resume',st.id);}localStorage.setItem('sumo-rpg-lang',l);}catch(e){}location.reload();};
 $('langBtn').addEventListener('click',()=>setLang(LANG==='en'?'ja':'en'));
@@ -3754,7 +3756,14 @@ addEventListener('pointerup',()=>setTimeout(sndUI,50),{passive:true});
   const box=$('bgmSel');
   for(const [k,lab,def] of SCENES){const l=document.createElement('label'),sp=document.createElement('span'),sel=document.createElement('select');sp.textContent=Tj(lab);sel.dataset.bgm=k;
     for(const [v,t] of [['auto',Tj('おまかせ')+'（'+Tj(def)+'）'],...SONGS.map(([v,t])=>[v,Tj(t)]),['off',Tj('なし')]]){const o=document.createElement('option');o.value=v;o.textContent=t;sel.append(o);}
-    sel.addEventListener('change',()=>{const c=SND.cfg();c.pick=Object.assign({},c.pick,{[k]:sel.value});SND.save(c);SND.sync();});l.append(sp,sel);box.append(l);}}
+    const pv=document.createElement('button');pv.type='button';pv.className='bgmpv';pv.dataset.bgm=k;pv.setAttribute('aria-label',Tj('試聴'));
+    // what this row would play: the pick, or the default for the scene (the bout default alternates, so preview the bout theme)
+    const song=()=>sel.value==='auto'?{title:'title',home:'home',basho:'basho',hana:'hana'}[k]:sel.value==='off'?null:sel.value;
+    pv.addEventListener('click',()=>{SND.unlock();const on=bgmPrevK===k&&!!SND.previewing();bgmPrevK=on||!song()?null:k;SND.preview(bgmPrevK?song():null);if(!on&&!song())toast(Tj('この場面はBGMなしです'));bgmPrevUI();});
+    sel.addEventListener('change',()=>{const c=SND.cfg();c.pick=Object.assign({},c.pick,{[k]:sel.value});SND.save(c);if(bgmPrevK===k){bgmPrevK=song()?k:null;SND.preview(song());}else SND.sync();bgmPrevUI();});
+    l.append(sp,sel,pv);box.append(l);}}
+var bgmPrevK=null; // the row whose song is being previewed
+function bgmPrevUI(){const p=SND.previewing();for(const b of document.querySelectorAll('#bgmSel .bgmpv')){const on=!!p&&b.dataset.bgm===bgmPrevK;b.classList.toggle('on',on);b.textContent=on?'■':'▶';}}
 $('sndOn').addEventListener('change',e=>{const c=SND.cfg();c.on=e.target.checked;SND.save(c);sndUI();});
 for(const [id,k] of [['sndBgm','bgm'],['sndSfx','sfx']])$(id).addEventListener('input',e=>{const c=SND.cfg();c[k]=+e.target.value;SND.save(c);if(k==='sfx')SND.play('pluck');});
 $('tutNext').addEventListener('click',()=>{if(tutI<tutList.length-1){tutI++;showTut();}else{LOG('tut','done');endTut();}});
