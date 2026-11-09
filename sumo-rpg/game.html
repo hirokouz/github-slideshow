@@ -3758,7 +3758,9 @@ const BGM_DEF={title:'hana',home:'home',basho:'basho',hana:'hana'};
     // what this row would play: the pick, or the default for the scene
     const song=()=>sel.value==='off'?null:sel.value;
     pv.addEventListener('click',()=>{SND.unlock();const on=bgmPrevK===k&&!!SND.previewing();bgmPrevK=on||!song()?null:k;SND.preview(bgmPrevK?song():null);if(!on&&!song())toast(Tj('この場面はBGMなしです'));bgmPrevUI();});
-    sel.addEventListener('change',()=>{const c=SND.cfg();c.pick=Object.assign({},c.pick,{[k]:sel.value});SND.save(c);if(bgmPrevK===k){bgmPrevK=song()?k:null;SND.preview(song());}else SND.sync();bgmPrevUI();});
+    sel.addEventListener('change',()=>{const c=SND.cfg();c.pick=Object.assign({},c.pick,{[k]:sel.value});SND.save(c);
+      LOG('bgm',lab+'：'+(sel.value==='off'?'なし':(SONGS.find(x=>x[0]===sel.value)||[0,sel.value])[1])); // usage log, always Japanese
+     if(bgmPrevK===k){bgmPrevK=song()?k:null;SND.preview(song());}else SND.sync();bgmPrevUI();});
     l.append(sp,sel,pv);box.append(l);}}
 var bgmPrevK=null; // the row whose song is being previewed
 function bgmPrevUI(){const p=SND.previewing();for(const b of document.querySelectorAll('#bgmSel .bgmpv')){const on=!!p&&b.dataset.bgm===bgmPrevK;b.classList.toggle('on',on);b.textContent=on?'■':'▶';}}
