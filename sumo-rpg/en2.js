@@ -650,6 +650,7 @@ window.I18N_EN=window.I18N_EN||{};window.I18N_EN.S={
 "翌朝から、いちばん苦手な稽古を真っ先にやることにした。": "From the next morning, he did his weakest training first.",
 "横綱・大関に勝ちきるには全能力A以上が目安（足りないのは ": "To beat the Ōzeki and Yokozuna you need about A in every stat (missing: ",
 "新しいバージョンがあります": "A new version is available",
+"これまでのタイトル曲": "Former title theme",
 "Stand Your Ground と Make Your Mark を交互": "Stand Your Ground and Make Your Mark in turn",
 "試聴": "Listen",
 "この場面はBGMなしです": "No music is set for this scene",

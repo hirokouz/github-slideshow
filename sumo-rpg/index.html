@@ -761,7 +761,7 @@ if(window.CanvasRenderingContext2D&&!CanvasRenderingContext2D.prototype.roundRec
 <script src="cast.js?v=03024ef888"></script>
 <script>__boot(95)</script>
 <script src="en.js?v=31a2c8e1f3"></script>
-<script src="en2.js?v=64a9a8f55d"></script>
+<script src="en2.js?v=4360e7766a"></script>
 <script>
 (()=>{
 {const n=document.getElementById('newBtn');if(n&&n.classList.contains('booting')){n.textContent=n.dataset.label;n.disabled=false;n.classList.remove('booting');}}
@@ -1665,7 +1665,7 @@ const SND=(()=>{
     basho:{src:'bgm/bout.mp3',vol:.7},   // Stand Your Ground
     
     basho2:{src:'bgm/mark.mp3?v=1',vol:.7},   // 土俵上名を上げろ｜Make Your Mark: every other basho
-    hana:{src:'bgm/hanamichi.mp3?v=1',vol:.8}}; // 花道: promotions and yusho
+    hana:{src:'bgm/hanamichi.mp3?v=1',vol:.8}}; // 花道: the title screen, promotions and yusho
   const lite=()=>{try{const c=navigator.connection;return !!(c&&(c.saveData||/(^|-)2g$/.test(c.effectiveType||'')));}catch(e){return false;}};
   const songEl={};let songOn=null;
   function songFor(name){const S=SONG[name];if(!S)return null;let o=songEl[name];if(!o&&lite())return null;
@@ -1683,7 +1683,7 @@ const SND=(()=>{
   // the player can pick the song for each scene (settings: BGMを選ぶ); 'auto' keeps the default, 'off' is silence
   const pk=(k,d)=>{const v=(cfg().pick||{})[k];return !v||v==='auto'?d:v==='off'?null:v;};
   let preview=null; // a song played from the settings (試聴) until the settings close
-  function want(){if(preview)return preview;if(cur==='sTitle'||cur==='sCreate')return pk('title','title');if(cur==='sHome'||cur==='sGacha')return pk('home','home');if(cur==='sBout')return pk('basho',st&&st.b%2?'basho2':'basho');
+  function want(){if(preview)return preview;if(cur==='sTitle'||cur==='sCreate')return pk('title','hana');if(cur==='sHome'||cur==='sGacha')return pk('home','home');if(cur==='sBout')return pk('basho',st&&st.b%2?'basho2':'basho');
     if(cur==='sResult')return rcData&&rcData.hana?pk('hana','hana'):null;
     if(cur==='sKikyo')return['retire','oyakata'].includes(kScene)?'sad':kScene==='juryo'?pk('hana','hana'):['school','tani'].includes(kScene)?pk('home','home'):'event';return pk('home','home');}
   function sync(){if(!ctx||!unlocked)return;play(want());}
@@ -3753,14 +3753,14 @@ $('sndBtn').addEventListener('click',()=>{const c=SND.cfg();if(c.on&&!sndWasRead
 $('sndBtn2').addEventListener('click',()=>{sndUI();openSheet('snd',Tj('音・言語の設定'));});
 addEventListener('pointerup',()=>setTimeout(sndUI,50),{passive:true});
 /* BGM picker: one select per scene */
-{const SONGS=[['title','タイトル曲'],['home','Road to YOKOZUNA'],['basho','Stand Your Ground'],['basho2','土俵上名を上げろ（Make Your Mark）'],['hana','花道']];
-  const SCENES=[['title','最初の画面','タイトル曲'],['home','ホーム','Road to YOKOZUNA'],['basho','取組','Stand Your Ground と Make Your Mark を交互'],['hana','昇進・優勝','花道']];
+{const SONGS=[['title','これまでのタイトル曲'],['home','Road to YOKOZUNA'],['basho','Stand Your Ground'],['basho2','土俵上名を上げろ（Make Your Mark）'],['hana','花道']];
+  const SCENES=[['title','最初の画面','花道'],['home','ホーム','Road to YOKOZUNA'],['basho','取組','Stand Your Ground と Make Your Mark を交互'],['hana','昇進・優勝','花道']];
   const box=$('bgmSel');
   for(const [k,lab,def] of SCENES){const l=document.createElement('label'),sp=document.createElement('span'),sel=document.createElement('select');sp.textContent=Tj(lab);sel.dataset.bgm=k;
     for(const [v,t] of [['auto',Tj('おまかせ')+'（'+Tj(def)+'）'],...SONGS.map(([v,t])=>[v,Tj(t)]),['off',Tj('なし')]]){const o=document.createElement('option');o.value=v;o.textContent=t;sel.append(o);}
     const pv=document.createElement('button');pv.type='button';pv.className='bgmpv';pv.dataset.bgm=k;pv.setAttribute('aria-label',Tj('試聴'));
     // what this row would play: the pick, or the default for the scene (the bout default alternates, so preview the bout theme)
-    const song=()=>sel.value==='auto'?{title:'title',home:'home',basho:'basho',hana:'hana'}[k]:sel.value==='off'?null:sel.value;
+    const song=()=>sel.value==='auto'?{title:'hana',home:'home',basho:'basho',hana:'hana'}[k]:sel.value==='off'?null:sel.value;
     pv.addEventListener('click',()=>{SND.unlock();const on=bgmPrevK===k&&!!SND.previewing();bgmPrevK=on||!song()?null:k;SND.preview(bgmPrevK?song():null);if(!on&&!song())toast(Tj('この場面はBGMなしです'));bgmPrevUI();});
     sel.addEventListener('change',()=>{const c=SND.cfg();c.pick=Object.assign({},c.pick,{[k]:sel.value});SND.save(c);if(bgmPrevK===k){bgmPrevK=song()?k:null;SND.preview(song());}else SND.sync();bgmPrevUI();});
     l.append(sp,sel,pv);box.append(l);}}
