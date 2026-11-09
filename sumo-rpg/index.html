@@ -3643,6 +3643,11 @@ addEventListener('keydown',e=>{if(e.code==='Space'&&anim&&anim.phase==='tachi'){
 
 renderTitle();requestAnimationFrame(loop);
 // switched language in the middle of play: come straight back to the training room
+/* usage log: girlfriend / fiancée / wife. Checked every few seconds and logged once per change (the current one is logged once
+   for saves from before this), e.g. 彼女｜幼なじみの遥, 妻｜幼なじみの遥, 別れた｜後援会長の娘・綾乃 */
+setInterval(()=>{try{if(!st)return;const R=st.rom||{},key=(R.stage||'')+'/'+(R.pid||'');if(st.loveLog===undefined)st.loveLog='/';if(key===st.loveLog)return;
+  const nm=id=>PARTNERS[id]?PARTNERS[id].name:(id||''),was=st.loveLog.split('/')[1];
+  LOG('love',R.stage?({crush:'気になる',dating:'彼女',engaged:'婚約',married:'妻'}[R.stage]||R.stage)+'｜'+nm(R.pid):'別れた｜'+nm(was));st.loveLog=key;}catch(e){}},3000);
 /* new version: the build stamps BUILD and web/version.txt with the same hash. Checked at start, every 5 minutes and when the
    player comes back to the tab (at most once a minute). When a newer one is online, offer an update,
    on any screen. Pressed mid-bout or mid-event, it waits until the bout is decided (results are saved as each bout ends) or the

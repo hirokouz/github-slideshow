@@ -5,7 +5,7 @@
    個人情報は保存しない：vid は端末ごとのランダムな番号、IP は保存しない
    バインディング：DB（D1 yokozuna-analytics）　シークレット：ADMIN_KEY（管理画面の合言葉） */
 const ORIGIN_RE = /^https:\/\/([a-z0-9-]+\.)?yokozuna-sumo\.pages\.dev$/;
-const EVENTS = new Set(['land', 'open', 'start', 'basho', 'promo', 'retire', 'lang', 'share', 'life', 'kikyo', 'gacha', 'auto', 'tut', 'err', 'reset', 'load']);
+const EVENTS = new Set(['land', 'open', 'start', 'basho', 'promo', 'retire', 'lang', 'share', 'life', 'kikyo', 'gacha', 'auto', 'tut', 'err', 'reset', 'load', 'love']);
 // SNS の参照元（アプリ内ブラウザやリンク短縮のホスト名）を SNS 名にまとめる。?from= の値はそのまま
 const SNS = [[/^(t\.co|(mobile\.)?(x|twitter)\.com)$/, 'x'], [/(^|\.)instagram\.com$/, 'instagram'], [/(^|\.)facebook\.com$|^fb\.me$/, 'facebook'],
   [/(^|\.)threads\.(net|com)$/, 'threads'], [/(^|\.)tiktok\.com$/, 'tiktok'], [/(^|\.)line\.me$/, 'line'], [/(^|\.)youtube\.com$|^youtu\.be$/, 'youtube'],
@@ -90,7 +90,7 @@ const LIFE_LABEL = { juryo: '十両昇進', nyumaku: '新入幕', ozeki_up: '大
 const actLab = (ev, d) => { const t = String(d || ''), i = t.indexOf('/'), k = i < 0 ? t : t.slice(0, i), c = i < 0 ? '' : t.slice(i + 1), j = c.indexOf(':'), pick = !c ? '' : j < 0 ? '・選択' + c : '・「' + c.slice(j + 1) + '」';
   if (ev === 'life') { const [a, b] = k.split(':'); return (LIFE_LABEL[a] || a) + (b ? '（' + (LIFE_LABEL[b] || b) + '）' : '') + pick; }
   if (ev === 'kikyo') return '帰省「' + k + '」' + pick; if (ev === 'gacha') return 'ガチャ ' + k + '回引き'; if (ev === 'auto') return 'オートを使った'; if (ev === 'tut') return k === 'done' ? '遊び方の説明を最後まで見た' : '遊び方の説明を飛ばした（' + k.replace('skip:', '') + '枚目）'; return d; };
-const EV_LABEL = { life: 'イベント', kikyo: '帰省', gacha: 'ガチャ', auto: 'オート', tut: '説明', land: '来た', open: '動いた', start: '入門', basho: '場所', promo: '昇進', retire: '引退', lang: '言語', share: 'シェア', err: 'エラー', reset: 'データ消去', load: '読み込み' };
+const EV_LABEL = { life: 'イベント', kikyo: '帰省', gacha: 'ガチャ', auto: 'オート', tut: '説明', land: '来た', open: '動いた', start: '入門', basho: '場所', promo: '昇進', retire: '引退', lang: '言語', share: 'シェア', err: 'エラー', reset: 'データ消去', load: '読み込み', love: '恋愛' };
 /* 場所の記録「東幕下12枚目 5-2 優勝｜押A88 力B79 技A90 速S102 158kg」（古い記録は「幕下 5-2」だけ）を分ける */
 const DIVS_J = ['前相撲', '序ノ口', '序二段', '三段目', '幕下', '十両', '前頭', '小結', '関脇', '大関', '横綱'];
 const bp = d => { const [a, g] = String(d || '').split('｜'), m = a.match(/^(東|西)?(前相撲|序ノ口|序二段|三段目|幕下|十両|前頭|小結|関脇|大関|横綱)(\d+枚目)?\s*(.*)$/) || [];
@@ -179,7 +179,7 @@ function page(d, key) {
   const AG = { tut: '遊び方の説明', life: 'イベントと選んだ答え', kikyo: '帰省のイベント', gacha: 'ガチャ', auto: 'オート' };
   const acts = (d.acts || []).length ? ['tut', 'life', 'kikyo', 'gacha', 'auto'].filter(e => d.acts.some(a => a.ev === e)).map(e => `<details class="acts"${e === 'tut' || e === 'life' ? ' open' : ''}><summary>${AG[e]}（${d.acts.filter(a => a.ev === e).reduce((t, a) => t + n(a.n), 0)}回）</summary><ul class="list">${d.acts.filter(a => a.ev === e).slice(0, 30).map(a => `<li><span>${esc(actLab(a.ev, a.detail))}</span><b>${n(a.n)}回</b><small>${n(a.users)}人</small></li>`).join('')}</ul></details>`).join('') : '<p class="none">まだ記録がありません。イベントで選んだ答え、帰省、ガチャ、オート、遊び方の説明を数えます。</p>';
   const TYPE = { oshi: '押し相撲', yotsu: '四つ相撲', waza: '技能派' };
-  const li = r => `<li><span class="tm">${jst(r.created_at)}</span><span class="ev">${EV_LABEL[r.ev] || esc(r.ev)}</span><span class="dt">${r.ev === 'basho' ? bashoHtml(r.detail) : r.ev === 'land' || r.ev === 'open' ? '' : esc(r.ev === 'promo' ? (PROMO[r.detail] || r.detail) : r.ev === 'share' ? shareLab(r.detail) : ['life', 'kikyo', 'gacha', 'auto', 'tut'].includes(r.ev) ? actLab(r.ev, r.detail) : r.ev === 'start' ? String(r.detail || '').split('/').map(x => TYPE[x] || x).join('・') : r.detail)}</span><span class="who">${esc(r.src)}・${esc(r.vid)}${r.lang && r.lang !== 'ja' ? '・' + esc(r.lang) : ''}</span></li>`;
+  const li = r => `<li><span class="tm">${jst(r.created_at)}</span><span class="ev">${EV_LABEL[r.ev] || esc(r.ev)}</span><span class="dt">${r.ev === 'basho' ? bashoHtml(r.detail) : r.ev === 'land' || r.ev === 'open' ? '' : esc(r.ev === 'promo' ? (PROMO[r.detail] || r.detail) : r.ev === 'share' ? shareLab(r.detail) : ['life', 'kikyo', 'gacha', 'auto', 'tut'].includes(r.ev) ? actLab(r.ev, r.detail) : r.ev === 'love' ? String(r.detail).replace('｜', '：') : r.ev === 'start' ? String(r.detail || '').split('/').map(x => TYPE[x] || x).join('・') : r.detail)}</span><span class="who">${esc(r.src)}・${esc(r.vid)}${r.lang && r.lang !== 'ja' ? '・' + esc(r.lang) : ''}</span></li>`;
   const recent = d.recent.length ? `<ul class="log">${d.recent.slice(0, 15).map(li).join('')}</ul>` + (d.recent.length > 15 ? `<details><summary>もっと見る（${d.recent.length - 15}件）</summary><ul class="log">${d.recent.slice(15).map(li).join('')}</ul></details>` : '') : '<p class="none">まだ記録がありません。</p>';
   return HEAD('横綱への道 利用状況') + `<div class="top"><h1>横綱への道 利用状況</h1><nav class="tabs" aria-label="期間">${tabs}</nav></div>
 <nav class="views" aria-label="表示"><a class="on" aria-current="page">全体</a><a href="?key=${k}&days=${d.days}&view=users">ユーザー別</a></nav>
@@ -205,10 +205,13 @@ async function usersData(env, days) {
       MAX(CASE WHEN ev='promo' THEN CASE detail WHEN 'yokozuna' THEN 4 WHEN 'ozeki' THEN 3 WHEN 'makuuchi' THEN 2 WHEN 'juryo' THEN 1 ELSE 0 END ELSE 0 END) AS promo,
       MAX(CASE WHEN ev='start' THEN detail END) AS startd, MAX(lang) AS lang,
       (SELECT u.dev FROM users u WHERE u.vid = e.vid) AS dev,
+      (SELECT e4.detail FROM events e4 WHERE e4.vid = e.vid AND e4.ev = 'love' ORDER BY e4.id DESC LIMIT 1) AS love,
       (SELECT e2.detail FROM events e2 WHERE e2.vid = e.vid AND e2.ev = 'basho' ORDER BY e2.id DESC LIMIT 1) AS lastBasho
     FROM events e WHERE vid IN (SELECT DISTINCT vid FROM events WHERE day >= ?1) GROUP BY vid ORDER BY last DESC LIMIT 300`).bind(since).all();
   return { since, until: day(), days, users: r.results || [] };
 }
+/* 恋愛の記録「妻｜幼なじみの遥」→ 表示「妻：幼なじみの遥」（別れたあとは「いまは独り（前：…）」） */
+const loveLab = d => { const [a, b] = String(d || '').split('｜'); return a === '別れた' ? 'いまは独り（前：' + esc(b || '') + '）' : '<b>' + esc(a) + '</b>：' + esc(b || ''); };
 const TYPE_J = { oshi: '押し相撲', yotsu: '四つ相撲', waza: '技能派' };
 const startLab = d => String(d || '').split('/').map(x => TYPE_J[x] || x).join('・');
 const stage = u => Number(u.promo) >= 4 ? ['横綱', 'c4'] : Number(u.promo) === 3 ? ['大関', 'c4'] : Number(u.promo) === 2 ? ['幕内', 'c3'] : Number(u.promo) === 1 ? ['十両', 'c2']
@@ -219,6 +222,7 @@ function usersPage(D, key) {
   const list = D.users.length ? `<ul class="users">${D.users.map(u => { const [sl, sc] = stage(u), lab = srcLab(u.src);
     return `<li><a class="user" href="?key=${k}&days=${D.days}&user=${encodeURIComponent(u.vid)}"><div class="uh"><span><span class="id">${esc(String(u.vid).slice(0, 6))}</span> <span class="srcl">${esc(u.src)}${lab ? '（' + esc(lab) + '）' : ''}</span></span><span class="chip ${sc}">${sl}</span></div>
       <p class="ln">初回 ${jst(u.first)}・最後 ${jst(u.last)}・来た日 ${n(u.days)}日</p>
+      ${u.love ? `<p class="ln">${loveLab(u.love)}</p>` : ''}
       ${u.dev ? `<p class="ln">端末 ${esc(u.dev)}</p>` : ''}
       ${u.startd ? `<p class="ln">入門：${esc(startLab(u.startd))}</p>` : ''}
       ${u.lastBasho ? `<p class="ln">いまの番付 <b>${esc(bp(u.lastBasho).rank)}</b>（最後の場所 ${esc(bp(u.lastBasho).rec)}）</p>${bp(u.lastBasho).gs.length ? `<p class="ln">${chips(bp(u.lastBasho).gs, bp(u.lastBasho).kg)}</p>` : ''}` : ''}
@@ -240,11 +244,12 @@ async function userPage(env, vid, key, days) {
   let lastDay = '', items = '';
   for (const x of rows) { const dd = jst(x.created_at).split(' ')[0]; if (dd !== lastDay) { if (items) items += '</ul>'; items += `<p class="daysep">${dd}</p><ul class="log">`; lastDay = dd; }
     const det = x.ev === 'promo' ? (PROMO[x.detail] || x.detail) : x.ev === 'share' ? shareLab(x.detail) : ['life', 'kikyo', 'gacha', 'auto', 'tut'].includes(x.ev) ? actLab(x.ev, x.detail) : x.ev === 'start' ? startLab(x.detail) : x.detail;
-    items += `<li><span class="tm">${jst(x.created_at).split(' ')[1]}</span><span class="ev">${EV_LABEL[x.ev] || esc(x.ev)}</span><span class="dt">${x.ev === 'basho' ? bashoHtml(x.detail) : x.ev === 'land' || x.ev === 'open' ? '' : esc(det)}</span></li>`; }
+    items += `<li><span class="tm">${jst(x.created_at).split(' ')[1]}</span><span class="ev">${EV_LABEL[x.ev] || esc(x.ev)}</span><span class="dt">${x.ev === 'basho' ? bashoHtml(x.detail) : x.ev === 'land' || x.ev === 'open' ? '' : x.ev === 'love' ? esc(String(x.detail).replace('｜', '：')) : esc(det)}</span></li>`; }
   if (items) items += '</ul>';
   return HEAD('横綱への道 ' + esc(String(vid).slice(0, 6))) + `<div class="top"><h1>端末 ${esc(String(vid).slice(0, 6))}</h1><a class="back" href="?key=${k}&days=${days}&view=users">← ユーザー別へ</a></div>
 <button type="button" class="reload" onclick="this.classList.add('busy');this.textContent='更新中…';location.reload()">↻ 更新</button>
 <article class="src"><header><div><h3>${esc(src)}</h3>${lab ? `<p class="lab">${esc(lab)}</p>` : ''}</div><span class="chip ${sc}">${sl}</span></header>
+${rows.find(x => x.ev === 'love') ? `<p class="sub">${loveLab(rows.find(x => x.ev === 'love').detail)}</p>` : ''}
 ${prof.dev ? `<p class="sub">端末 ${esc(prof.dev)}</p>` : ''}
 <p class="sub">記録 ${rows.length}件・場所 ${u.basho}回${u.startd ? '・入門：' + esc(startLab(u.startd)) : ''}</p>
 ${rows.length ? `<p class="sub">初回 ${jst(rows[rows.length - 1].created_at)}・最後 ${jst(rows[0].created_at)}（日本時間）</p>` : ''}</article>
