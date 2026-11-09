@@ -1655,11 +1655,11 @@ const SND=(()=>{
   /* recorded songs replace a synth track when the file loads. Nothing is fetched until its scene comes (preload none, streamed),
      the files are kept 30 days by the browser (_headers; ?v= when a song changes), and with data saver or a 2G-class
      connection no song is fetched at all: the built-in synth music plays instead */
-  const SONG={title:{src:'bgm/title.mp3',vol:.9},home:{src:'bgm/home.mp3?v=2',vol:.8},   // Road to YOKOZUNA
-    basho:{src:'bgm/bout.mp3',vol:.7},   // Stand Your Ground
-    
-    basho2:{src:'bgm/mark.mp3?v=1',vol:.7},   // 土俵上名を上げろ｜Make Your Mark: by choice in the settings
-    hana:{src:'bgm/hanamichi.mp3?v=1',vol:.8}}; // 花道: the title screen, promotions and yusho
+  // vol evens out the songs: each plays at about -17.5 LUFS (measured: title/home/bout -14.9, mark -16.5, 花道 -16.8)
+  const SONG={title:{src:'bgm/title.mp3',vol:.74},home:{src:'bgm/home.mp3?v=2',vol:.74},   // Road to YOKOZUNA
+    basho:{src:'bgm/bout.mp3',vol:.74},   // Stand Your Ground
+    basho2:{src:'bgm/mark.mp3?v=1',vol:.89},   // 土俵上名を上げろ｜Make Your Mark: by choice in the settings
+    hana:{src:'bgm/hanamichi.mp3?v=1',vol:.92}}; // 花道: the title screen, promotions and yusho
   const lite=()=>{try{const c=navigator.connection;return !!(c&&(c.saveData||/(^|-)2g$/.test(c.effectiveType||'')));}catch(e){return false;}};
   const songEl={};let songOn=null;
   function songFor(name){const S=SONG[name];if(!S)return null;let o=songEl[name];if(!o&&lite())return null;
