@@ -2156,12 +2156,11 @@ function genOpp(myPos,used){
   if(st&&st.maezumo){let name;do{name=pick(OP_A)+pick(OP_B);}while(name===st.name||used.includes(name));const lv=levelOf(0)*.85,v=()=>lv*rnd(.8,1.15);
     return{name,age:Math.round(rnd(15,19)),pos:0,mae:true,style:pick(['oshi','yotsu','waza']),stats:{oshi:v(),chikara:v(),waza:v(),hayasa:v()},kg:Math.round(rnd(85,125)),height:Math.round(rnd(168,190)),face:oppFace(),mawashi:'#26262e',zan:true};}
   let p=schedulePos(myPos,B?B.day:0,B?B.n:7,B?B.w:0);
-  // the banzuke has 2 yokozuna and 3 ozeki (himself not counted). The sanyaku and maegashira up to 4枚目 meet every one of them, as in
-  // the real torikumi: when the days left only just cover the ones not met yet, they are scheduled. Never more than there are.
-  if(B&&myPos>=MAKU&&B.n===15){const M=B.met=B.met||{},capY=myPos>=YOKO?1:2,capO=myPos===OZEKI?2:3,joi=myPos>=KOMU||divInfo(myPos).num<=4;
-    if(joi){const ry=Math.max(0,capY-(M.Y||0)),ro=Math.max(0,capO-(M.O||0));if(ry+ro>=B.n-B.day)p=ry?YOKO:OZEKI;}
-    if(p>=YOKO&&(M.Y||0)>=capY)p=(M.O||0)<capO?OZEKI:SEKI;if(p===OZEKI&&(M.O||0)>=capO)p=SEKI;
-    if(p>=YOKO)M.Y=(M.Y||0)+1;else if(p===OZEKI)M.O=(M.O||0)+1;}
+  // makuuchi opponents are members of the real banzuke (mk). The sanyaku and maegashira up to 4枚目 meet every yokozuna and ozeki
+  // there is, as in the real torikumi: when the days left only just cover the ones not met yet, they are scheduled.
+  if(B&&myPos>=MAKU&&B.n===15){const L=mk().list,un=r=>L.filter(n=>n.pos===r&&!used.includes(n.name)).length,ry=un(YOKO),ro=un(OZEKI),joi=myPos>=KOMU||divInfo(myPos).num<=4;
+    const left=B.n-B.day-(rivalAhead()?1:0);if(joi&&ry+ro>0&&ry+ro>=left)p=ry?YOKO:OZEKI;}
+  if(p>=MAKU){const o=mkPick(p,used);if(o)return o;}
   let name;do{name=pick(OP_A)+pick(OP_B);}while(name===st.name||used.includes(name));
   const lvl=levelOf(p),v=()=>lvl*rnd(.88,1.12);const style=pick(['oshi','yotsu','waza']);const tf=clamp((lvl-10)/55,0,1);
   const s={oshi:v(),chikara:v(),waza:v(),hayasa:v()};s[{oshi:'oshi',yotsu:'chikara',waza:'waza'}[style]]*=1.12;
@@ -2220,7 +2219,7 @@ const counterOf=s=>Object.keys(BEATS).find(k=>BEATS[k]===s);
 function nextBout(){if(!autoMode)SND.play('hyoshigi');
   if(B.withdraw&&B.day<B.n){const rest=B.n-B.day;B.kyu=(B.kyu||0)+rest;B.l+=rest;B.marks+=Tj('や').repeat(rest);B.day=B.n;toast(Tj('ケガのため途中休場'));}
   if(B.day>=B.n){endBasho();return;}
-  const rvTop=st.rival&&st.pos>=OZEKI&&(st.rival.pos||0)>=OZEKI,rvDay=rvTop?B.n-1:Math.floor(B.n/2);
+  const rvTop=st.rival&&st.pos>=OZEKI&&(st.rival.pos||0)>=OZEKI,rvDay=rivalDay();
   B.opp=(st.rival&&B.day===rvDay&&!st.maezumo&&rivalSameDiv())?rivalOpp():genOpp(st.pos,B.used);
   if(B.opp.rival&&rvTop&&st.pos>=YOKO&&st.rival.pos>=YOKO){B.kessen=B.w>=B.n-3;toast(B.kessen?Tj('千秋楽 結びの一番、横綱決戦！ 勝ったほうが優勝だ'):Tj('千秋楽 結びの一番、東西横綱の対決'));}B.used.push(B.opp.name);renderProfile();
   {const bb=$('bBasho');bb.textContent=yearOf(st)+Tj('年目 ')+BASHO[st.b%6];const sm=document.createElement('small');sm.textContent=MONTH[st.b%6]+Tj('月・')+VENUE[st.b%6]+(st.maezumo?Tj('・前相撲'):'');bb.append(sm);}
@@ -2316,6 +2315,7 @@ function resolve(q,mini,force){
   const k=win?{oshi:'oshi',yotsu:'chikara',waza:'waza'}[s]:null;if(k)st.stats[k]+=.25*Math.max(0,1-st.stats[k]/capOf(k));
   if(st.inj>=2&&!B.withdraw){B.withdraw=true;addLog(Tj('ケガがひどく、この場所は途中休場することになった。'));}
   st.lstreak=win?0:(st.lstreak||0)+1;
+  if(o.npc)(B.vs=B.vs||{})[o.npc]=win?0:1;
   if(win){B.w++;B.marks+='○';B.earn=(B.earn||0)+earn(st.pos>=MAKU?50:st.pos>=JURYO?30:10);st.streak=(st.streak||0)+1;st.bestStreak=Math.max(st.bestStreak||0,st.streak);
     if(o.pos>=OZEKI)B.beatTop=true;if(s==='waza')B.wazaWins=(B.wazaWins||0)+1;
     if(o.pos===YOKO&&st.pos>=MAKU&&st.pos<KOMU){st.kinboshi=(st.kinboshi||0)+1;B.earn+=earn(100);toast(Tj('金星！ 横綱を破った（ご祝儀 +100）'));}
@@ -2520,6 +2520,12 @@ let rc=null,rcData=null;
 function endBasho(){
   const wasMae=!!st.maezumo,w=B.w,l=B.l,old=st.pos,r=wasMae?{div:Tj('前相撲'),name:Tj('前相撲'),bouts:3}:rank(old),endedIdx=st.b;let p=old,msg='';const ex=[];
   const top=old>=JURYO;let yusho=!top?w===7:(w>=14||(w===13&&Math.random()<.4)||(w===12&&Math.random()<.1));
+  // makuuchi: everyone's record is played out and the yusho goes to the best one (ties: a play-off)
+  let champ=null;if(!wasMae){mkBasho();champ=mkChamp(old>=MAKU,w);
+    if(old>=MAKU&&B.kessenR===undefined){yusho=!!champ.player;const c=champ.npc,cr=c?rank(c.pos).name+'・'+c.name:'';
+      if(champ.player&&champ.playoff)ex.push(Tj('優勝決定戦で')+rank(champ.playoff.pos).name+Tj('・')+champ.playoff.name+Tj('を破った！'));
+      else if(c&&champ.playoff)ex.push(Tj('優勝決定戦で')+cr+Tj('に敗れ、優勝を逃した。'));
+      else if(c)ex.push(Tj('幕内優勝は')+cr+'（'+c.w+Tj('勝')+c.l+Tj('敗）'));}}
   if(B.kessenR===true&&w>=12)yusho=true;
   if(B.kessenR===false){yusho=false;const Rv=st.rival;Rv.yushoN=(Rv.yushoN||0)+1;ex.push(Tj('横綱決戦に敗れ、宿敵・')+Rv.name+Tj('が優勝した……'));}
   const prev=st.hist[st.hist.length-1];
@@ -2583,6 +2589,7 @@ function endBasho(){
   const newBest=!wasMae&&p>(st.best||0)&&st.hist.length>1;st.newBest=newBest;
   st.pos=p;st.best=Math.max(st.best||0,p);st.b++;st.used=0;st.basho=null;st.fat=Math.max(0,st.fat-25);
   rivalBasho();
+  if(!wasMae){const news=mkAdvance(champ&&!champ.player&&B.kessenR===undefined?champ:null);if(old>=MAKU||p>=JURYO)for(const t of news.slice(0,3))addLog(t);}
   if(spouse()&&p>=JURYO&&!st.livesOut&&!(st.lifeQ||[]).some(q=>q.kind==='move_out'))queueLife('move_out');
   if(st.livesOut&&p<JURYO){st.livesOut=false;addLog(Tj('関取から落ちたので、家族と離れて部屋に戻って暮らすことになった。'));}
   if(st.nisei&&st.heir&&!st.fatherPassed&&p>st.heir.fatherBest){st.fatherPassed=true;queueLife('nisei_pass');}
@@ -2840,6 +2847,8 @@ function rivalBasho(){const R=st.rival;if(!R)return;if(R.pos===undefined)R.pos=s
   else if(R.pos===SEKI&&chase&&w>=11&&(R.prevW||0)>=10){R.pos=OZEKI;R.kado=false;addLog(Tj('宿敵・')+nm+Tj('が大関に昇進した。「次は綱だ」と言っているらしい。'));}
   else if(R.pos>=KOMU){R.pos=w>=8?Math.min(SEKI,R.pos+(w>=11?1:0)):KOMU-2;}else R.pos=moveBanzuke(R.pos,w,n-w).p;
   R.best=Math.max(R.best||0,R.pos);}
+const rivalDay=()=>{const top=st.rival&&st.pos>=OZEKI&&(st.rival.pos||0)>=OZEKI;return top?B.n-1:Math.floor(B.n/2);};
+const rivalAhead=()=>!!(st.rival&&!st.maezumo&&rivalSameDiv()&&B&&B.day<rivalDay());
 const rivalSameDiv=()=>{const R=st.rival;if(!R||R.pos===undefined)return true;if(R.pos>=MAKU&&st.pos>=MAKU)return true;if(R.pos>=KOMU||st.pos>=KOMU)return false;return divInfo(R.pos).i===divInfo(st.pos).i;};
 const rivalRank=()=>{const R=st.rival;if(!R)return'';const pos=R.pos===undefined?st.pos:R.pos;return side(pos)+' '+rank(pos).name;};
 /* the rival always gets a finished illustration face (old saves may hold a drawn placeholder) */
@@ -2849,6 +2858,92 @@ function rivalOpp(){const R=st.rival;rivalFace();const lvl=levelOf(st.pos)+R.edg
   const s={oshi:v(),chikara:v(),waza:v(),hayasa:v()};s[{oshi:'oshi',yotsu:'chikara',waza:'waza'}[R.style]]*=1.12;
   const p=R.pos===undefined?clamp(st.pos+(Math.random()<.5?-1:1),0,YOKO):R.pos;
   return{name:R.name,age:ageOf(st)+1,pos:p,style:R.style,stats:s,kg:Math.round(R.kg),height:R.height,face:R.face,mawashi:p>=JURYO?'#7a1f1f':'#26262e',rival:true};}
+
+/* ---------- makuuchi banzuke: 42 named rikishi ----------
+   The top division is a fixed cast that lives across basho: 横綱 2・大関 3・関脇 2・小結 2・前頭 33 to start with (the player and the
+   rival count as members when they are in makuuchi). Opponents in makuuchi are drawn from it, so nobody meets more yokozuna or ozeki
+   than exist and never the same man twice in a basho. After every basho each of them gets a record (the bout with the player is
+   the real result, the rest from his strength against the field of his rank), the makuuchi yusho goes to the best record (ties:
+   a play-off), and the banzuke moves by the real rules: ozeki at 33 wins over 3 sanyaku basho, kadoban, yokozuna after two
+   yusho-level basho as ozeki, at least 2 sekiwake and 2 komusubi, maegashira by record. They age, peak, fade and retire;
+   newcomers come up from juryo. */
+const MK_N=42,MK_RANKS=[YOKO,OZEKI,SEKI,KOMU],MK_START={[YOKO]:2,[OZEKI]:3,[SEKI]:2,[KOMU]:2};
+const mkLv=pos=>pos>=KOMU?[63,68,78,86][Math.min(3,pos-KOMU)]:levelOf(pos);
+function mkOthers(){const o=[];if(st&&!st.maezumo&&st.pos>=MAKU)o.push(st.pos);const R=st&&st.rival;if(R&&R.pos!==undefined&&R.pos>=MAKU)o.push(R.pos);return o;}
+function mkName(L){let n,i=0;do{n=pick(OP_A)+pick(OP_B);i++;}while(i<300&&(n===st.name||(st.rival&&n===st.rival.name)||L.some(x=>x.name===n)));return n;}
+function mkNew(L,pos,age,str,pot){const style=pick(['oshi','yotsu','waza']),prof={oshi:rnd(.92,1.08),chikara:rnd(.92,1.08),waza:rnd(.92,1.08),hayasa:rnd(.92,1.08)};
+  prof[{oshi:'oshi',yotsu:'chikara',waza:'waza'}[style]]*=1.12;const height=Math.round(rnd(172,196)),tf=clamp((str-10)/55,0,1);
+  return{id:'m'+Date.now().toString(36).slice(-4)+Math.random().toString(36).slice(2,7),name:mkName(L),pos,str:+str.toFixed(1),pot:+Math.max(str,pot||str).toFixed(1),prof,style,
+    age:+age.toFixed(2),height,kg:Math.round(clamp(lerp(98,150,tf)+rnd(-18,30)+(height-182)*.8,110,215)),face:oppFace(),mw:pick(['#1f4a7a','#7a1f1f','#1f5a3a','#4a3a1a','#3a3a3a','#6a2a5a']),
+    w:0,l:0,h:[],kado:false,yusho:0};}
+function mk(){if(st.mk&&st.mk.v===1)return st.mk;const M=st.mk={v:1,list:[],champ:null};const L=M.list,occ=mkOthers();
+  const ages={[YOKO]:[27,33],[OZEKI]:[25,31],[SEKI]:[23,30],[KOMU]:[22,30]};
+  for(const r of MK_RANKS){const n=Math.max(0,MK_START[r]-occ.filter(x=>x===r).length);for(let i=0;i<n;i++){const s0=mkLv(r)+rnd(-3,2);L.push(mkNew(L,r,rnd(...ages[r]),s0,s0+rnd(0,3)));}}
+  mkSeat();return M;}
+/* seat the maegashira: NPCs in order of where their record puts them (want), skipping the slots of the player and the rival.
+   Those beyond the 42 drop to juryo; empty seats are filled by newcomers from juryo. */
+function mkSeat(){const M=st.mk,L=M.list,occ=mkOthers(),taken=new Set(occ.filter(p=>p<KOMU));
+  const san=L.filter(n=>n.pos>=KOMU),mae=L.filter(n=>n.pos<KOMU).sort((a,b)=>((b.want!=null?b.want:b.pos)-(a.want!=null?a.want:a.pos))||(b.str-a.str));
+  const need=Math.max(0,MK_N-san.length-occ.length),slots=[];for(let p=KOMU-1;p>=MAKU&&slots.length<need;p--)if(!taken.has(p))slots.push(p);
+  // whoever's record takes him below makuuchi goes down to juryo; his seat goes to a newcomer from juryo
+  const keep=mae.filter(n=>(n.want!=null?n.want:n.pos)>=MAKU).slice(0,slots.length);keep.forEach((n,i)=>{n.pos=slots[i];delete n.want;});
+  M.list=san.concat(keep);M.down=mae.length-keep.length;
+  // talent arriving from juryo: more of it when the top is thin, less when it is crowded (keeps about 1-3 yokozuna and 2-4 ozeki)
+  const top=M.list.filter(n=>n.pos>=OZEKI).length+occ.filter(p=>p>=OZEKI).length,room=top>=6?30:top>=5?34:top<=3?42:38;
+  for(let i=keep.length;i<slots.length;i++){const lv=levelOf(MAKU);M.list.push(mkNew(M.list,slots[i],rnd(21,28),lv+rnd(-1,3),lv+rnd(1,4)+room*Math.pow(Math.random(),3.2)));}}
+/* an opponent made from a banzuke member */
+function mkOpp(n){const s={};for(const k in n.prof)s[k]=n.str*n.prof[k];
+  return{name:n.name,age:Math.round(n.age),pos:n.pos,style:n.style,stats:s,kg:n.kg,height:n.height,face:n.face,mawashi:n.mw,npc:n.id};}
+/* who he meets when the schedule asks for rank p: someone of that rank not met yet (going down the ranks if all are met),
+   for maegashira one of the nearest */
+function mkPick(p,used){const L=mk().list.filter(n=>!used.includes(n.name));if(!L.length)return null;
+  if(p>=KOMU)for(let r=Math.min(p,YOKO);r>=KOMU;r--){const c=L.filter(n=>n.pos===r);if(c.length)return mkOpp(pick(c));}
+  const c=L.filter(n=>n.pos<KOMU).sort((a,b)=>Math.abs(a.pos-p)-Math.abs(b.pos-p)).slice(0,3);return mkOpp(c.length?pick(c):pick(L));}
+/* the rest of the basho for everyone in makuuchi: a record each (bouts with the player are the real results) */
+function mkBasho(){const M=mk(),vs=(B&&B.vs)||{};
+  for(const n of M.list){let w=0,l=0,bouts=15;const kyu=Math.random()<.04?Math.round(rnd(3,15)):0;
+    if(vs[n.id]!==undefined){bouts--;if(vs[n.id])w++;else l++;}
+    const form=rnd(-4,3); // condition this basho
+    for(let d=0;d<bouts;d++){if(kyu&&d>=15-kyu){l++;continue;}
+      const op=mkLv(schedulePos(n.pos,d,15,w)),mu=pick([-7,0,7]),pw=1/(1+Math.exp(-(1.5*(n.str+form-op)+mu)/5));if(Math.random()<pw)w++;else l++;}
+    n.w=w;n.l=l;n.kyu=kyu;}}
+/* the makuuchi yusho: the best record; the player is in it when he is in makuuchi (pw: his own record) */
+function mkChamp(pIn,pw){const L=mk().list;let best=-1;for(const n of L)best=Math.max(best,n.w);const top=L.filter(n=>n.w===best);
+  if(pIn&&pw>best)return{player:true};
+  if(pIn&&pw===best){const n=pick(top),me=(st.stats.oshi+st.stats.chikara+st.stats.waza+st.stats.hayasa)/4,win=Math.random()<1/(1+Math.exp(-1.5*(me-n.str)/5));
+    return win?{player:true,playoff:n}:{npc:n,playoff:true};}
+  return{npc:top.length>1?top.reduce((a,b)=>b.pos>a.pos?b:a):top[0]};}
+/* the banzuke for next basho (the player's and the rival's own new ranks are already decided by their rules) */
+function mkAdvance(champ){const M=mk(),L=M.list,out=[];
+  for(const n of L){const y=champ&&champ.npc===n;if(y)n.yusho++;n.h.push({pos:n.pos,w:n.w,y});if(n.h.length>3)n.h.shift();
+    n.age+=1/6;if(n.age<27)n.str+=(n.pot-n.str)*.14;else if(n.age>=30)n.str-=rnd(.2,1.1);n.str=+n.str.toFixed(1);}
+  const cnt=r=>L.filter(n=>n.pos===r).length+mkOthers().filter(x=>x===r).length;
+  for(const n of L){const w=n.w,l=n.l,h=n.h,prev=h[h.length-2];
+    if(n.pos===YOKO){if(n.age>=34||n.str<74||(w<9&&prev&&prev.w<9&&n.age>=28)){n.gone=true;out.push(Tj('横綱・')+n.name+Tj('が引退した。'));}continue;}
+    if(n.pos===OZEKI){if(w<8){if(n.kado){n.pos=SEKI;n.kado=false;n.back=true;out.push(Tj('大関・')+n.name+Tj('が陥落した。'));}else n.kado=true;}
+      else{n.kado=false;const y=h[h.length-1].y,good=y||w>=13,pg=prev&&prev.pos===OZEKI&&(prev.y||prev.w>=13);
+        if(good&&pg&&(y||prev.y)){n.pos=YOKO;out.push(Tj('大関・')+n.name+Tj('が横綱に昇進した。'));}}
+      if(n.age>=34&&w<8){n.gone=true;out.push(Tj('大関・')+n.name+Tj('が引退した。'));}continue;}
+    if(n.pos===SEKI||n.pos===KOMU){const last3=h.length>=3&&h.every(x=>x.pos>=KOMU)?h.reduce((a,x)=>a+x.w,0):0;
+      if(n.back&&n.pos===SEKI&&w>=10){n.pos=OZEKI;n.back=false;out.push(Tj('関脇・')+n.name+Tj('が大関に復帰した。'));continue;}n.back=false;
+      if(last3>=33&&w>=10){n.pos=OZEKI;n.kado=false;out.push(n.name+Tj('が大関に昇進した。'));continue;}
+      if(w<8){n.want=n.pos===SEKI?(w>=6?KOMU:KOMU-1-Math.round((8-w)*1.6)):Math.max(MAKU,KOMU-1-Math.round((l-w)*.85*2));if(n.want===KOMU){n.pos=KOMU;delete n.want;}else n.pos=KOMU-1;}
+      else if(n.pos===KOMU&&w>=10)n.upS=true;continue;}
+    if(n.age>=35){n.gone=true;continue;}
+    // maegashira: about 1.25枚 up per net win, 1枚 down per net loss; 5枚目 and above stay in makuuchi
+    const net=w-l,num=divInfo(n.pos).num;let want=n.pos+Math.round(net*(net>0?1.25:1)*rnd(.9,1.1)*2);if(net>0)want=Math.max(want,n.pos+1);if(net<0)want=Math.min(want,n.pos-1);
+    if(num<=5&&want<MAKU)want=MAKU;n.want=want;n.pos=Math.min(KOMU-1,n.pos);}
+  M.list=L.filter(n=>!n.gone);const L2=M.list;
+  // sekiwake and komusubi: at least two each (the player and the rival count). Komusubi with 10 wins move up when there is room.
+  for(const n of L2.filter(x=>x.upS).sort((a,b)=>b.w-a.w)){delete n.upS;if(cnt(SEKI)<2)n.pos=SEKI;}
+  const fill=r=>{while(cnt(r)<2){const c=L2.filter(n=>n.pos<KOMU||(r===SEKI&&n.pos===KOMU)).sort((a,b)=>(b.pos===KOMU?1e3+b.w:(b.want!=null?b.want:b.pos))-(a.pos===KOMU?1e3+a.w:(a.want!=null?a.want:a.pos)))[0];if(!c)break;
+      if(c.pos===KOMU){c.pos=SEKI;}else{c.pos=r;delete c.want;}}};
+  // the banzuke needs a yokozuna or an ozeki on each side: if there are fewer than two, the best sekiwake is made ozeki
+  while(cnt(YOKO)+cnt(OZEKI)<2){const c=L2.filter(n=>n.pos===SEKI).sort((a,b)=>b.h.reduce((x,y)=>x+y.w,0)-a.h.reduce((x,y)=>x+y.w,0))[0];if(!c)break;c.pos=OZEKI;c.kado=false;out.push(c.name+Tj('が大関に昇進した。'));}
+  fill(SEKI);fill(KOMU);
+  // ex-maegashira who want to go above the top stay at 筆頭 unless seated in sanyaku
+  for(const n of L2)if(n.pos<KOMU&&n.want!=null)n.want=Math.min(n.want,KOMU-1+.5);
+  mkSeat();return out;}
 
 /* ---------- achievements (shared by the stable, each pays out once) ---------- */
 const totalWins=s=>s.hist.reduce((a,h)=>a+h.w,0)+(s.basho?s.basho.w:0);
