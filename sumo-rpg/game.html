@@ -1655,7 +1655,9 @@ const SND=(()=>{
   /* recorded songs replace a synth track when the file loads. Nothing is fetched until its scene comes (preload none, streamed),
      the files are kept 30 days by the browser (_headers; ?v= when a song changes), and with data saver or a 2G-class
      connection no song is fetched at all: the built-in synth music plays instead */
-  const SONG={title:{src:'bgm/title.mp3',vol:.9},home:{src:'bgm/home.mp3?v=2',vol:.8},basho:{src:'bgm/bout.mp3',vol:.7},
+  const SONG={title:{src:'bgm/title.mp3',vol:.9},home:{src:'bgm/home.mp3?v=2',vol:.8},   // Road to YOKOZUNA
+    basho:{src:'bgm/bout.mp3',vol:.7},   // Stand Your Ground
+    
     basho2:{src:'bgm/mark.mp3?v=1',vol:.7},   // 土俵上名を上げろ｜Make Your Mark: every other basho
     hana:{src:'bgm/hanamichi.mp3?v=1',vol:.8}}; // 花道: promotions and yusho
   const lite=()=>{try{const c=navigator.connection;return !!(c&&(c.saveData||/(^|-)2g$/.test(c.effectiveType||'')));}catch(e){return false;}};
@@ -3745,8 +3747,8 @@ $('sndBtn').addEventListener('click',()=>{const c=SND.cfg();if(c.on&&!sndWasRead
 $('sndBtn2').addEventListener('click',()=>{sndUI();openSheet('snd',Tj('音・言語の設定'));});
 addEventListener('pointerup',()=>setTimeout(sndUI,50),{passive:true});
 /* BGM picker: one select per scene */
-{const SONGS=[['title','タイトル曲'],['home','ホーム曲'],['basho','取組曲'],['basho2','土俵上名を上げろ（Make Your Mark）'],['hana','花道']];
-  const SCENES=[['title','最初の画面','タイトル曲'],['home','ホーム','ホーム曲'],['basho','取組','取組曲と Make Your Mark を交互'],['hana','昇進・優勝','花道']];
+{const SONGS=[['title','タイトル曲'],['home','Road to YOKOZUNA'],['basho','Stand Your Ground'],['basho2','土俵上名を上げろ（Make Your Mark）'],['hana','花道']];
+  const SCENES=[['title','最初の画面','タイトル曲'],['home','ホーム','Road to YOKOZUNA'],['basho','取組','Stand Your Ground と Make Your Mark を交互'],['hana','昇進・優勝','花道']];
   const box=$('bgmSel');
   for(const [k,lab,def] of SCENES){const l=document.createElement('label'),sp=document.createElement('span'),sel=document.createElement('select');sp.textContent=Tj(lab);sel.dataset.bgm=k;
     for(const [v,t] of [['auto',Tj('おまかせ')+'（'+Tj(def)+'）'],...SONGS.map(([v,t])=>[v,Tj(t)]),['off',Tj('なし')]]){const o=document.createElement('option');o.value=v;o.textContent=t;sel.append(o);}
