@@ -839,7 +839,7 @@ async function shareCard(k,s){
   // slanted portrait window with an offset accent plate behind it
   const wx=400,wy=96,ww=620,wh=700,sk=90,win=(dx,dy)=>{g.beginPath();g.moveTo(wx+sk+dx,wy+dy);g.lineTo(wx+ww+dx,wy+dy);g.lineTo(wx+ww-sk+dx,wy+wh+dy);g.lineTo(wx+dx,wy+wh+dy);g.closePath();};
   win(22,22);g.fillStyle=hex(AC,.85);g.fill();
-  const pc=portrait(s.face,ret?'normal':'happy',oi,512);let hb=null;try{hb=pc.isAi?headBox(pc):null;}catch(e){}
+  const pc=portrait(s.face,ret?'normal':'happy',ret&&!oi?'chon':oi,512);/* retirement: the rikishi in his prime (大銀杏 or a topknot), never the new-recruit hair */let hb=null;try{hb=pc.isAi?headBox(pc):null;}catch(e){}
   g.save();win(0,0);g.fillStyle=hb?hb.bg:'#f3eadb';g.fill();g.clip();
   const fx=wx+ww/2,fy=wy+70;
   if(hb){const sc=Math.min(2.2,400/(hb.x1-hb.x0)),D=Math.round(512*sc),hx=(hb.x0+hb.x1)/2*sc;
@@ -1361,12 +1361,12 @@ function drawFit(x,im,N,fit){if(!fit){x.drawImage(im,0,0,N,N);return;}const k=N/
 function portrait(F,expr,oicho,N){
   const o=aiReady(F);
   if(o){const k=EXMAP[expr]||'normal';let im=o.ex[k]&&o.ex[k].complete&&o.ex[k].naturalWidth?o.ex[k]:o.img;let hk='';
-    if(o.exprs){hk=oicho===true?'oicho':isZan(F)?'zan':'chon';const set=o.exprs[hk]||o.exprs.chon,ok=x=>x&&x.complete&&x.naturalWidth;im=ok(set[k])?set[k]:ok(set.normal)?set.normal:im;hk+=k;}
-    else if(o.faces&&im===o.img){hk=oicho===true?'oicho':isZan(F)?'zan':'chon';const fi=o.faces[hk];if(fi&&fi.complete&&fi.naturalWidth)im=fi;}
+    if(o.exprs){hk=oicho===true?'oicho':oicho==='chon'?'chon':isZan(F)?'zan':'chon';const set=o.exprs[hk]||o.exprs.chon,ok=x=>x&&x.complete&&x.naturalWidth;im=ok(set[k])?set[k]:ok(set.normal)?set.normal:im;hk+=k;}
+    else if(o.faces&&im===o.img){hk=oicho===true?'oicho':oicho==='chon'?'chon':isZan(F)?'zan':'chon';const fi=o.faces[hk];if(fi&&fi.complete&&fi.naturalWidth)im=fi;}
     const key='ai,'+F.img+','+(im===o.img?'base':k)+hk+','+N;let c=portraitCache.get(key);if(c)return c;
     c=document.createElement('canvas');c.width=c.height=N;drawFit(c.getContext('2d'),im,N,im===o.img?null:(FACE_FIT[F.img]||{})[['zan','chon','oicho'].find(b=>hk.startsWith(b))]);c.isAi=true;
     if(portraitCache.size>48)portraitCache.clear();portraitCache.set(key,c);return c;}
-  const key=[F.shape,F.brow,F.eye,F.nose,F.mouth,F.extra,F.skin,expr,oicho?1:0,N].join(',');
+  const key=[F.shape,F.brow,F.eye,F.nose,F.mouth,F.extra,F.skin,expr,oicho===true?1:oicho==='chon'?2:0,N].join(',');
   let c=portraitCache.get(key);if(c)return c;
   c=document.createElement('canvas');c.width=c.height=N;paintPortrait(c.getContext('2d'),N,F,expr,oicho);
   if(portraitCache.size>48)portraitCache.clear();portraitCache.set(key,c);return c;
