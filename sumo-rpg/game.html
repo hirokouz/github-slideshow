@@ -3737,7 +3737,7 @@ $('autoGo').addEventListener('click',startAutoFromCfg);
 $('hLog1').addEventListener('scroll',e=>{const el=e.target;el.classList.toggle('end',el.scrollTop+el.clientHeight>=el.scrollHeight-2);});
 itemBtnEl().addEventListener('click',()=>{if(st){st.itemNew=false;persist();itemBtnEl().classList.remove('new');}renderItems();openSheet('items',Tj('道具'));});
 function sndUI(){const c=SND.cfg(),b=$('sndBtn'),wait=c.on&&!SND.ready();b.classList.toggle('off',!c.on);b.classList.toggle('wait',wait);b.querySelector('.si').textContent=c.on?'🔊':'🔇';b.querySelector('.st').textContent=wait?Tj('タップで音が鳴る'):c.on?Tj('音 ON'):Tj('音 OFF');
-  $('sndBtn2').textContent=(c.on?'🔊':'🔇')+' 🌐';$('sndBtn2').classList.toggle('off',!c.on);$('sndOn').checked=c.on;$('sndBgm').value=c.bgm;$('sndSfx').value=c.sfx;for(const sel of document.querySelectorAll('#bgmSel select'))sel.value=(c.pick||{})[sel.dataset.bgm]||'auto';bgmPrevUI();}
+  $('sndBtn2').textContent=(c.on?'🔊':'🔇')+' 🌐';$('sndBtn2').classList.toggle('off',!c.on);$('sndOn').checked=c.on;$('sndBgm').value=c.bgm;$('sndSfx').value=c.sfx;for(const sel of document.querySelectorAll('#bgmSel select')){const v=(c.pick||{})[sel.dataset.bgm];sel.value=!v||v==='auto'?BGM_DEF[sel.dataset.bgm]:v;}bgmPrevUI();}
 {const lb=$('langLbl');if(lb)lb.textContent=LANG==='en'?Tj('日本語'):'English';}
 const setLang=l=>{if(l===LANG)return;LOG('lang',l);try{if(st&&cur!=='sTitle'){persist();sessionStorage.setItem('sumo-rpg-resume',st.id);}localStorage.setItem('sumo-rpg-lang',l);}catch(e){}location.reload();};
 $('langBtn').addEventListener('click',()=>setLang(LANG==='en'?'ja':'en'));
@@ -3747,14 +3747,16 @@ $('sndBtn').addEventListener('click',()=>{const c=SND.cfg();if(c.on&&!sndWasRead
 $('sndBtn2').addEventListener('click',()=>{sndUI();openSheet('snd',Tj('音・言語の設定'));});
 addEventListener('pointerup',()=>setTimeout(sndUI,50),{passive:true});
 /* BGM picker: one select per scene */
+const BGM_DEF={title:'hana',home:'home',basho:'basho',hana:'hana'};
 {const SONGS=[['title','これまでのタイトル曲'],['home','Road to YOKOZUNA'],['basho','Stand Your Ground'],['basho2','土俵上名を上げろ（Make Your Mark）'],['hana','花道']];
+  // no 'auto' entry: each select shows the scene's song itself (the default until the player picks another)
   const SCENES=[['title','最初の画面','花道'],['home','ホーム','Road to YOKOZUNA'],['basho','取組','Stand Your Ground'],['hana','昇進・優勝','花道']];
   const box=$('bgmSel');
   for(const [k,lab,def] of SCENES){const l=document.createElement('label'),sp=document.createElement('span'),sel=document.createElement('select');sp.textContent=Tj(lab);sel.dataset.bgm=k;
-    for(const [v,t] of [['auto',Tj('おまかせ')+'（'+Tj(def)+'）'],...SONGS.map(([v,t])=>[v,Tj(t)]),['off',Tj('なし')]]){const o=document.createElement('option');o.value=v;o.textContent=t;sel.append(o);}
+    for(const [v,t] of [...SONGS.map(([v,t])=>[v,Tj(t)]),['off',Tj('なし')]]){const o=document.createElement('option');o.value=v;o.textContent=t;sel.append(o);}
     const pv=document.createElement('button');pv.type='button';pv.className='bgmpv';pv.dataset.bgm=k;pv.setAttribute('aria-label',Tj('試聴'));
     // what this row would play: the pick, or the default for the scene
-    const song=()=>sel.value==='auto'?{title:'hana',home:'home',basho:'basho',hana:'hana'}[k]:sel.value==='off'?null:sel.value;
+    const song=()=>sel.value==='off'?null:sel.value;
     pv.addEventListener('click',()=>{SND.unlock();const on=bgmPrevK===k&&!!SND.previewing();bgmPrevK=on||!song()?null:k;SND.preview(bgmPrevK?song():null);if(!on&&!song())toast(Tj('この場面はBGMなしです'));bgmPrevUI();});
     sel.addEventListener('change',()=>{const c=SND.cfg();c.pick=Object.assign({},c.pick,{[k]:sel.value});SND.save(c);if(bgmPrevK===k){bgmPrevK=song()?k:null;SND.preview(song());}else SND.sync();bgmPrevUI();});
     l.append(sp,sel,pv);box.append(l);}}
