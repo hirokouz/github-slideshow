@@ -1653,10 +1653,16 @@ const SND=(()=>{
     sad:{bpm:58,len:32,fn:(i,t,b)=>{if(i%4===0)I.koto(t,nt(MIYAKO,[0,3,1,0,-1,0,2,1][i/4]+5),.5,b);
       if(i%8===0){const m=[[9,7],[8,6],[7,8],[6,5]][i/8];I.fue(t,nt(MIYAKO,m[0]+5),60/58*1.9,.9,b);I.fue(t+60/58*2,nt(MIYAKO,m[1]+5),60/58*1.9,.9,b);}}},
   };
-  function loop(){if(!ctx||!track||songOn)return;const T=TR[track],sp=60/T.bpm/2;while(nextT<ctx.currentTime+.35){T.fn(step,nextT,bus);step=(step+1)%T.len;nextT+=sp;}}
-  /* recorded songs replace a synth track when the file loads; streamed, so they cost nothing until played */
-  const SONG={title:{src:'bgm/title.mp3',vol:.9},home:{src:'bgm/home.mp3?v=2',vol:.8},basho:{src:'bgm/bout.mp3',vol:.7}};const songEl={};let songOn=null;
-  function songFor(name){const S=SONG[name];if(!S)return null;let o=songEl[name];
+  function loop(){if(!ctx||!track||songOn)return;const T=TR[track]||TR[{basho2:'basho',hana:'title'}[track]];if(!T)return;const sp=60/T.bpm/2;while(nextT<ctx.currentTime+.35){T.fn(step,nextT,bus);step=(step+1)%T.len;nextT+=sp;}}
+  /* recorded songs replace a synth track when the file loads. Nothing is fetched until its scene comes (preload none, streamed),
+     the files are kept 30 days by the browser (_headers; ?v= when a song changes), and with data saver or a 2G-class
+     connection no song is fetched at all: the built-in synth music plays instead */
+  const SONG={title:{src:'bgm/title.mp3',vol:.9},home:{src:'bgm/home.mp3?v=2',vol:.8},basho:{src:'bgm/bout.mp3',vol:.7},
+    basho2:{src:'bgm/mark.mp3?v=1',vol:.7},   // 土俵上名を上げろ｜Make Your Mark: every other basho
+    hana:{src:'bgm/hanamichi.mp3?v=1',vol:.8}}; // 花道: promotions and yusho
+  const lite=()=>{try{const c=navigator.connection;return !!(c&&(c.saveData||/(^|-)2g$/.test(c.effectiveType||'')));}catch(e){return false;}};
+  const songEl={};let songOn=null;
+  function songFor(name){const S=SONG[name];if(!S)return null;let o=songEl[name];if(!o&&lite())return null;
     if(!o){const a=new Audio();a.src=S.src;a.loop=true;a.preload='none';const g=ctx.createGain();g.gain.value=0;try{ctx.createMediaElementSource(a).connect(g);}catch(e){return null;}g.connect(bgm);
       o=songEl[name]={a,g,vol:S.vol,bad:false};a.addEventListener('error',()=>{o.bad=true;if(songOn===o){songOn=null;track=null;play(name);}});}
     return o.bad?null:o;}
@@ -1668,8 +1674,9 @@ const SND=(()=>{
     stopSong();
     if(bus){const old=bus;old.gain.setTargetAtTime(0,t,.25);setTimeout(()=>old.disconnect(),1500);}
     track=name||null;bus=null;if(!track)return;bus=ctx.createGain();bus.gain.setValueAtTime(0,t);bus.gain.linearRampToValueAtTime(1,t+.8);bus.connect(bgm);step=0;nextT=t+.08;}
-  function want(){if(cur==='sTitle'||cur==='sCreate')return'title';if(cur==='sHome'||cur==='sGacha')return'home';if(cur==='sBout')return'basho';if(cur==='sResult')return null;
-    if(cur==='sKikyo')return['retire','oyakata'].includes(kScene)?'sad':kScene==='juryo'?'title':['school','tani'].includes(kScene)?'home':'event';return'home';}
+  function want(){if(cur==='sTitle'||cur==='sCreate')return'title';if(cur==='sHome'||cur==='sGacha')return'home';if(cur==='sBout')return st&&st.b%2?'basho2':'basho';
+    if(cur==='sResult')return rcData&&rcData.hana?'hana':null;
+    if(cur==='sKikyo')return['retire','oyakata'].includes(kScene)?'sad':kScene==='juryo'?'hana':['school','tani'].includes(kScene)?'home':'event';return'home';}
   function sync(){if(!ctx||!unlocked)return;play(want());}
   function unlock(){try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}if(!init())return;if(ctx.state==='suspended')ctx.resume();if(!unlocked){unlocked=true;timer=setInterval(loop,90);sync();}}
   addEventListener('pointerdown',unlock,{passive:true});addEventListener('keydown',unlock);
@@ -2613,7 +2620,7 @@ function endBasho(){
   const vp=(el,pos)=>{el.innerHTML='';const s=document.createElement('small');s.textContent=side(pos);const n=document.createElement('span');n.textContent=rank(pos).name;el.append(divBadge(pos),s,n);};
   vp($('rOld'),old);vp($('rNew'),p);if(wasMae){$('rOld').innerHTML='';const n=document.createElement('span');n.textContent=Tj('前相撲');$('rOld').append(n);}
   addLog(when+Tj('は')+w+Tj('勝')+l+Tj('敗。')+msg);
-  persist();B=null;anim=null;fx=[];show('sResult');rc=makeCanvas($('rCv'),4/3);rcData={win:w>l,yusho,promo:p>old,body:pickBody(st),t0:performance.now()/1000};if(yusho)SND.play('fanfare',true);else if(p>old&&(old<JURYO)!==(p<JURYO)||p>=MAKU&&old<MAKU)SND.play('fanfare',false);else SND.play(w>l?'win':'lose');
+  persist();B=null;anim=null;fx=[];rcData={win:w>l,yusho,promo:p>old,hana:yusho||(p>old&&rank(p).div!==rank(old).div),body:pickBody(st),t0:performance.now()/1000};show('sResult');rc=makeCanvas($('rCv'),4/3);if(yusho)SND.play('fanfare',true);else if(p>old&&(old<JURYO)!==(p<JURYO)||p>=MAKU&&old<MAKU)SND.play('fanfare',false);else SND.play(w>l?'win':'lose');
 }
 /* full-body illustrations for the banzuke announcement and the yusho screen */
 const BODY={};for(const b of (window.AI_BODIES||[])){const im=new Image();im.src=b.src;BODY[b.id]={meta:b,img:im};}

@@ -43,7 +43,7 @@ json.dump({'id':'./','name':'横綱への道','short_name':'横綱への道','st
            {'src':'icon-maskable-512.png','sizes':'512x512','type':'image/png','purpose':'maskable'}]},
   open(os.path.join(WEB,'manifest.webmanifest'),'w',encoding='utf-8'),ensure_ascii=False,indent=1)
 # cache the big art files for a day on hosts that read _headers (Cloudflare Pages / Netlify)
-open(os.path.join(WEB,'_headers'),'w').write('/*.js\n  Cache-Control: public, max-age=86400\n/*.png\n  Cache-Control: public, max-age=604800\n/version.txt\n  Cache-Control: no-store\n')
+open(os.path.join(WEB,'_headers'),'w').write('/*.js\n  Cache-Control: public, max-age=86400\n/*.png\n  Cache-Control: public, max-age=604800\n/version.txt\n  Cache-Control: no-store\n/bgm/*\n  Cache-Control: public, max-age=2592000\n')
 z=os.path.join(ROOT,'yokozuna-web.zip')
 with zipfile.ZipFile(z,'w',zipfile.ZIP_DEFLATED) as zz:
     for dp,dn,fn in os.walk(WEB):
