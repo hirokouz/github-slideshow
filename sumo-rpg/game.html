@@ -332,6 +332,8 @@ body:not(.onTitle) #langBtn{display:none}
 #updBar{position:fixed;left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));top:calc(env(safe-area-inset-top,0px) + 8px);margin:0 auto;max-width:520px;z-index:80;display:flex;align-items:center;gap:8px;padding:6px 6px 6px 16px;border-radius:999px;background:#f3eadb;color:#1a1612;border:1.5px solid var(--kin);box-shadow:0 8px 24px rgba(0,0,0,.45);font:600 14px/1.3 "Zen Kaku Gothic New",sans-serif}
 #updBar[hidden]{display:none}#updBar button{border:0;border-radius:999px;padding:8px 16px;background:#b3261e;color:#fff;font:700 14px/1 "Zen Kaku Gothic New",sans-serif;cursor:pointer;white-space:nowrap}
 #updBar .x{background:transparent;color:#6f675a;padding:8px 6px;font-size:16px}
+
+.bgmsel{display:grid;gap:6px}.bgmsel label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13.5px}.bgmsel select{flex:0 1 60%;min-width:0;padding:6px 8px;border-radius:8px;border:1px solid var(--line,#c9bfa8);background:#fffdf8;color:#1d1a16;font:inherit;font-size:13px}
 #sndBtn.off,#sndBtn2.off{color:#7d7360;border-color:#5b5246;text-decoration:line-through}
 .acfg input[type=range]{accent-color:var(--kin);height:24px}
 .tutq{margin-left:6px;border:1px solid var(--kin);background:transparent;color:var(--kin);border-radius:999px;font-size:10.5px;padding:1px 8px;letter-spacing:0;font-weight:700;vertical-align:1px}
@@ -618,6 +620,7 @@ body.mashlock label.auto,body.mashlock .fixrow{pointer-events:none;opacity:.5}
         <label><input type="checkbox" id="sndOn"><span>音を鳴らす<small>BGMと効果音（スマホは画面を一度タップすると鳴り始めます）</small></span></label>
         <p class="label" style="margin-top:4px">BGMの音量</p><input type="range" id="sndBgm" min="0" max="1" step="0.05" style="width:100%">
         <p class="label" style="margin-top:4px">効果音の音量</p><input type="range" id="sndSfx" min="0" max="1" step="0.05" style="width:100%">
+        <p class="label" style="margin-top:10px">BGMを選ぶ</p><div class="bgmsel" id="bgmSel"></div>
         <p class="label" style="margin-top:10px">Language / 言語</p><div class="langrow"><button type="button" class="ghost" data-lang="ja">日本語</button><button type="button" class="ghost" data-lang="en">English</button></div>
       </div>
       <div data-p="auto" class="acfg">
@@ -1668,9 +1671,11 @@ const SND=(()=>{
     stopSong();
     if(bus){const old=bus;old.gain.setTargetAtTime(0,t,.25);setTimeout(()=>old.disconnect(),1500);}
     track=name||null;bus=null;if(!track)return;bus=ctx.createGain();bus.gain.setValueAtTime(0,t);bus.gain.linearRampToValueAtTime(1,t+.8);bus.connect(bgm);step=0;nextT=t+.08;}
-  function want(){if(cur==='sTitle'||cur==='sCreate')return'title';if(cur==='sHome'||cur==='sGacha')return'home';if(cur==='sBout')return st&&st.b%2?'basho2':'basho';
-    if(cur==='sResult')return rcData&&rcData.hana?'hana':null;
-    if(cur==='sKikyo')return['retire','oyakata'].includes(kScene)?'sad':kScene==='juryo'?'hana':['school','tani'].includes(kScene)?'home':'event';return'home';}
+  // the player can pick the song for each scene (settings: BGMを選ぶ); 'auto' keeps the default, 'off' is silence
+  const pk=(k,d)=>{const v=(cfg().pick||{})[k];return !v||v==='auto'?d:v==='off'?null:v;};
+  function want(){if(cur==='sTitle'||cur==='sCreate')return pk('title','title');if(cur==='sHome'||cur==='sGacha')return pk('home','home');if(cur==='sBout')return pk('basho',st&&st.b%2?'basho2':'basho');
+    if(cur==='sResult')return rcData&&rcData.hana?pk('hana','hana'):null;
+    if(cur==='sKikyo')return['retire','oyakata'].includes(kScene)?'sad':kScene==='juryo'?pk('hana','hana'):['school','tani'].includes(kScene)?pk('home','home'):'event';return pk('home','home');}
   function sync(){if(!ctx||!unlocked)return;play(want());}
   function unlock(){try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}if(!init())return;if(ctx.state==='suspended')ctx.resume();if(!unlocked){unlocked=true;timer=setInterval(loop,90);sync();}}
   addEventListener('pointerdown',unlock,{passive:true});addEventListener('keydown',unlock);
@@ -3728,7 +3733,7 @@ $('autoGo').addEventListener('click',startAutoFromCfg);
 $('hLog1').addEventListener('scroll',e=>{const el=e.target;el.classList.toggle('end',el.scrollTop+el.clientHeight>=el.scrollHeight-2);});
 itemBtnEl().addEventListener('click',()=>{if(st){st.itemNew=false;persist();itemBtnEl().classList.remove('new');}renderItems();openSheet('items',Tj('道具'));});
 function sndUI(){const c=SND.cfg(),b=$('sndBtn'),wait=c.on&&!SND.ready();b.classList.toggle('off',!c.on);b.classList.toggle('wait',wait);b.querySelector('.si').textContent=c.on?'🔊':'🔇';b.querySelector('.st').textContent=wait?Tj('タップで音が鳴る'):c.on?Tj('音 ON'):Tj('音 OFF');
-  $('sndBtn2').textContent=(c.on?'🔊':'🔇')+' 🌐';$('sndBtn2').classList.toggle('off',!c.on);$('sndOn').checked=c.on;$('sndBgm').value=c.bgm;$('sndSfx').value=c.sfx;}
+  $('sndBtn2').textContent=(c.on?'🔊':'🔇')+' 🌐';$('sndBtn2').classList.toggle('off',!c.on);$('sndOn').checked=c.on;$('sndBgm').value=c.bgm;$('sndSfx').value=c.sfx;for(const sel of document.querySelectorAll('#bgmSel select'))sel.value=(c.pick||{})[sel.dataset.bgm]||'auto';}
 {const lb=$('langLbl');if(lb)lb.textContent=LANG==='en'?Tj('日本語'):'English';}
 const setLang=l=>{if(l===LANG)return;LOG('lang',l);try{if(st&&cur!=='sTitle'){persist();sessionStorage.setItem('sumo-rpg-resume',st.id);}localStorage.setItem('sumo-rpg-lang',l);}catch(e){}location.reload();};
 $('langBtn').addEventListener('click',()=>setLang(LANG==='en'?'ja':'en'));
@@ -3737,6 +3742,13 @@ let sndWasReady=false;$('sndBtn').addEventListener('pointerdown',()=>{sndWasRead
 $('sndBtn').addEventListener('click',()=>{const c=SND.cfg();if(c.on&&!sndWasReady){sndUI();return;}c.on=!c.on;SND.save(c);if(c.on)SND.unlock();sndUI();toast(c.on?Tj('音をオンにしました'):Tj('音をオフにしました'));});
 $('sndBtn2').addEventListener('click',()=>{sndUI();openSheet('snd',Tj('音・言語の設定'));});
 addEventListener('pointerup',()=>setTimeout(sndUI,50),{passive:true});
+/* BGM picker: one select per scene */
+{const SONGS=[['title','タイトル曲'],['home','ホーム曲'],['basho','取組曲'],['basho2','土俵上名を上げろ（Make Your Mark）'],['hana','花道']];
+  const SCENES=[['title','最初の画面','タイトル曲'],['home','ホーム','ホーム曲'],['basho','取組','取組曲と Make Your Mark を交互'],['hana','昇進・優勝','花道']];
+  const box=$('bgmSel');
+  for(const [k,lab,def] of SCENES){const l=document.createElement('label'),sp=document.createElement('span'),sel=document.createElement('select');sp.textContent=Tj(lab);sel.dataset.bgm=k;
+    for(const [v,t] of [['auto',Tj('おまかせ')+'（'+Tj(def)+'）'],...SONGS.map(([v,t])=>[v,Tj(t)]),['off',Tj('なし')]]){const o=document.createElement('option');o.value=v;o.textContent=t;sel.append(o);}
+    sel.addEventListener('change',()=>{const c=SND.cfg();c.pick=Object.assign({},c.pick,{[k]:sel.value});SND.save(c);SND.sync();});l.append(sp,sel);box.append(l);}}
 $('sndOn').addEventListener('change',e=>{const c=SND.cfg();c.on=e.target.checked;SND.save(c);sndUI();});
 for(const [id,k] of [['sndBgm','bgm'],['sndSfx','sfx']])$(id).addEventListener('input',e=>{const c=SND.cfg();c[k]=+e.target.value;SND.save(c);if(k==='sfx')SND.play('pluck');});
 $('tutNext').addEventListener('click',()=>{if(tutI<tutList.length-1){tutI++;showTut();}else{LOG('tut','done');endTut();}});
