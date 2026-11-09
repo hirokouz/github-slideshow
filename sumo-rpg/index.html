@@ -2517,7 +2517,7 @@ function endBasho(){
   const prev=st.hist[st.hist.length-1];
   if(wasMae){p=w>=3?posOf(0,17,Math.random()<.5):w>=2?posOf(0,20):w>=1?posOf(0,23):posOf(0,25,false);yusho=false;st.maezumo=false;msg=w>=2?Tj('新序出世！ 来場所から序ノ口に名前が載る。'):Tj('前相撲を終えた。来場所は序ノ口の下位から。');}
   else if(old<KOMU){const mv=moveBanzuke(old,w,l);p=mv.p;if(mv.msg)msg=mv.msg;}
-  else if(old===KOMU){p=w>=8?(w>=10||(w===9&&Math.random()<.3)?SEKI:KOMU):Math.max(MAKU,KOMU-1-Math.round((l-w)*1.3*2));if(w>=8&&p===KOMU)msg=Tj('小結の地位を守った。');}
+  else if(old===KOMU){p=w>=8?(w>=10||(w===9&&Math.random()<.3)?SEKI:KOMU):Math.max(MAKU,KOMU-1-Math.round((l-w)*.85*2));if(w>=8&&p===KOMU)msg=Tj('小結の地位を守った。');}
   else if(old===SEKI){const last3=w+st.hist.slice(-2).reduce((a,h)=>a+h.w,0);
     const sanAll=st.hist.length>=2&&st.hist.slice(-2).every(h=>h.pos>=KOMU);
     if(st.ozekiBack===st.b&&w>=10){p=OZEKI;msg=Tj('大関復帰！ 陥落直後の場所で10勝し、大関に戻った。');}
@@ -2802,13 +2802,15 @@ function moveBanzuke(old,w,l){
     if(I.i===3){const need=I.num<=1?4:I.num<=3?5:I.num<=5?6:I.num<=15?7:99;
       if(w>=need)p=posOf(4,I.num<=2&&w>=6?rnd(9,12):rnd(11,14),eastR());
       else if(p>=JURYO){p=posOf(3,1,true);msg=Tj('十両昇進はならず。幕下筆頭で次こそ。');}}}
-  else{ // 十両・前頭 (15 bouts): about 1.3枚 per net win
-    p=mono(old+Math.round(net*(net>0?1.25:1.4)*rnd(.85,1.15)*2));
+  else{ // 十両・前頭 (15 bouts): up about 1.25枚 per net win; down about 1枚 per net loss in makuuchi, 1.1 in juryo (real banzuke)
+    p=mono(old+Math.round(net*(net>0?1.25:I.i===5?1:1.1)*rnd(.9,1.1)*2));
     if(I.i===4){
       if(p>=MAKU||(I.num<=1&&w>l)){const ok=w>l&&net>=I.num;if(ok)p=posOf(5,rnd(13,17),eastR());else{p=posOf(4,1,true);msg=Tj('入幕はお預け。十両筆頭で迎える来場所が勝負だ。');}}
       else if(p<JURYO)msg=Tj('十両から陥落……。幕下で出直しだ。');}
     if(I.i===5){
       if(p>=KOMU||(I.num<=1&&w>l)){const ok=(I.num<=1&&w>l&&Math.random()<.6)||(I.num<=2&&net>=2)||(I.num<=5&&w>=11)||w>=12;p=ok?KOMU:Math.min(p,KOMU-1);}
+      // the upper maegashira (5枚目 and above) do not drop straight to juryo, however bad the record: they land at the foot of makuuchi
+      else if(p<MAKU&&I.num<=5)p=posOf(5,Math.random()<.5?16:17,eastR());
       else if(p<MAKU)msg=Tj('十両に陥落。もう一度幕内へ。');}}
   return{p:clamp(p,0,KOMU),msg};
 }
