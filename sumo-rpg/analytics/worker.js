@@ -12,6 +12,7 @@ const SNS = [[/^(t\.co|(mobile\.)?(x|twitter)\.com)$/, 'x'], [/(^|\.)instagram\.
   [/(^|\.)bsky\.app$/, 'bluesky'], [/(^|\.)note\.com$/, 'note'], [/(^|\.)reddit\.com$/, 'reddit']];
 const normSrc = s => { for (const [re, n] of SNS) if (re.test(s)) return n; return s; };
 const day = (d = new Date()) => new Date(d.getTime() + 9 * 3600e3).toISOString().slice(0, 10); // 日本時間の日付
+let IDX = false; const MEMO = new Map(); // index made once per isolate; admin pages reused for 20 s
 const clean = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f<>]/g, '').slice(0, n);
 /* 端末のまとめ（来た・動いたの記録に毎回残し、ユーザーのプロフィール users.dev には最新を入れる。画面に出すのはプロフィールだけ）：「iOS 15.2・Xアプリ｜JP｜NTT DOCOMO」。User-Agent と接続元の国・通信会社だけで、IP は残さない */
 function devSum(request) {
@@ -40,24 +41,19 @@ async function stats(env, days) {
     // 日ごと・流入元ごとの利用者数
     q(`SELECT day, src, COUNT(DISTINCT vid) AS users FROM events WHERE day >= ?1 GROUP BY day, src ORDER BY day DESC, users DESC`, since),
     // どこまで進んだか（期間内に来た人のうち、その段階に届いた人数）
-    q(`WITH u AS (SELECT DISTINCT vid, src FROM events WHERE day >= ?1)
-       SELECT u.src, COUNT(*) AS users,
-         SUM(EXISTS(SELECT 1 FROM events e WHERE e.vid=u.vid AND e.ev='open')) AS loaded,
-         SUM(EXISTS(SELECT 1 FROM events e WHERE e.vid=u.vid AND e.ev='start')) AS started,
-         SUM(EXISTS(SELECT 1 FROM events e WHERE e.vid=u.vid AND e.ev='basho')) AS played_basho,
-         SUM(EXISTS(SELECT 1 FROM events e WHERE e.vid=u.vid AND e.ev='promo' AND e.detail='juryo')) AS juryo,
-         SUM(EXISTS(SELECT 1 FROM events e WHERE e.vid=u.vid AND e.ev='promo' AND e.detail='makuuchi')) AS makuuchi,
-         SUM(EXISTS(SELECT 1 FROM events e WHERE e.vid=u.vid AND e.ev='promo' AND e.detail='ozeki')) AS ozeki,
-         SUM(EXISTS(SELECT 1 FROM events e WHERE e.vid=u.vid AND e.ev='promo' AND e.detail='yokozuna')) AS yokozuna
-       FROM u GROUP BY u.src ORDER BY users DESC`, since),
+    // (one pass over the events, grouped per player: reading every player's rows 7 times hit D1's daily read limit)
+    q(`WITH p AS (SELECT vid, MIN(src) AS src, MAX(ev='open') AS o, MAX(ev='start') AS s, MAX(ev='basho') AS b,
+           MAX(ev='promo' AND detail='juryo') AS j, MAX(ev='promo' AND detail='makuuchi') AS m, MAX(ev='promo' AND detail='ozeki') AS oz, MAX(ev='promo' AND detail='yokozuna') AS y,
+           MAX(day) AS last FROM events GROUP BY vid)
+       SELECT src, COUNT(*) AS users, SUM(o) AS loaded, SUM(s) AS started, SUM(b) AS played_basho, SUM(j) AS juryo, SUM(m) AS makuuchi, SUM(oz) AS ozeki, SUM(y) AS yokozuna
+       FROM p WHERE last >= ?1 GROUP BY src ORDER BY users DESC`, since),
     // また来たか：初めて来た日の翌日・7日以降に、もう一度開いた人の割合
-    q(`WITH f AS (SELECT vid, MIN(src) AS src, MIN(day) AS d0 FROM events GROUP BY vid HAVING MIN(day) >= ?1)
-       SELECT f.src, COUNT(*) AS new_users,
-         SUM(EXISTS(SELECT 1 FROM events e WHERE e.vid=f.vid AND e.day = date(f.d0,'+1 day'))) AS came_next_day,
-         SUM(EXISTS(SELECT 1 FROM events e WHERE e.vid=f.vid AND e.day >= date(f.d0,'+7 day'))) AS came_after_7days,
-         SUM(f.d0 <= date(?2,'-1 day')) AS eligible_next_day,
-         SUM(f.d0 <= date(?2,'-7 day')) AS eligible_7days
-       FROM f GROUP BY f.src ORDER BY new_users DESC`, since, day()),
+    q(`WITH f AS (SELECT vid, MIN(src) AS src, MIN(day) AS d0, MAX(day) AS d1 FROM events GROUP BY vid HAVING MIN(day) >= ?1),
+         g AS (SELECT f.vid, f.src, f.d0, MAX(e.day = date(f.d0,'+1 day')) AS nd, MAX(e.day >= date(f.d0,'+7 day')) AS d7
+               FROM f JOIN events e ON e.vid = f.vid AND e.day > f.d0 GROUP BY f.vid)
+       SELECT f.src, COUNT(*) AS new_users, SUM(COALESCE(g.nd,0)) AS came_next_day, SUM(COALESCE(g.d7,0)) AS came_after_7days,
+         SUM(f.d0 <= date(?2,'-1 day')) AS eligible_next_day, SUM(f.d0 <= date(?2,'-7 day')) AS eligible_7days
+       FROM f LEFT JOIN g ON g.vid = f.vid GROUP BY f.src ORDER BY new_users DESC`, since, day()),
     // 1人あたりの場所数
     q(`SELECT src, COUNT(*) AS basho, COUNT(DISTINCT vid) AS players, ROUND(COUNT(*)*1.0/COUNT(DISTINCT vid),1) AS per_player
        FROM events WHERE ev='basho' AND day >= ?1 GROUP BY src ORDER BY basho DESC`, since),
@@ -282,12 +278,20 @@ export default {
       if (!env.ADMIN_KEY || key !== env.ADMIN_KEY) return new Response('合言葉がちがいます', { status: 403, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
       const days = Math.min(365, Math.max(1, parseInt(url.searchParams.get('days') || '30', 10) || 30));
       const H = { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } };
-      if (url.pathname === '/admin' && url.searchParams.get('user')) return new Response(await userPage(env, url.searchParams.get('user').slice(0, 40), key, days), H);
-      if (url.pathname === '/admin' && url.searchParams.get('view') === 'users') return new Response(usersPage(await usersData(env, days), key), H);
-      const d = await stats(env, days);
-      if (url.pathname === '/stats') return Response.json(d);
-      return new Response(page(d, key), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } });
+      const hit = MEMO.get(url.search); if (hit && Date.now() - hit.t < 20e3 && url.pathname === '/admin') return new Response(hit.html, H);
+      try {
+      if (!IDX) { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_events_vid_ev ON events(vid, ev, detail)').run(); IDX = true; }
+      const html = await adminHtml(env, url, key, days); if (url.pathname === '/stats') return Response.json(await stats(env, days));
+      if (MEMO.size > 50) MEMO.clear(); MEMO.set(url.search, { t: Date.now(), html }); return new Response(html, H);
+      } catch (e) { const m = String(e && e.message || e), lim = /exceeded|limit/i.test(m);
+        return new Response(HEAD('横綱への道 利用状況') + `<h1>利用状況を読み込めませんでした</h1><p class="none">${lim ? 'データベース（Cloudflare D1 の無料枠）の1日に読める量の上限に達しています。日本時間の朝9時（UTC 0時）に戻ります。' : esc(m.slice(0, 200))}</p></main></body></html>`, { status: 503, headers: H.headers }); }
     }
     return new Response('not found', { status: 404 });
   },
 };
+async function adminHtml(env, url, key, days) {
+      if (url.pathname === '/stats') return '';
+      if (url.searchParams.get('user')) return await userPage(env, url.searchParams.get('user').slice(0, 40), key, days);
+      if (url.searchParams.get('view') === 'users') return usersPage(await usersData(env, days), key);
+      return page(await stats(env, days), key);
+}

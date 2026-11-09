@@ -20,3 +20,5 @@ CREATE TABLE IF NOT EXISTS users (
   first_at TEXT,              -- 初めて来た日時（UTC）
   last_at TEXT                -- 最後に来た日時（UTC）
 );
+-- 端末ごとの集計を速くする（ダッシュボードが1日の読み取り上限に当たらないように）。Worker も初回に作る
+CREATE INDEX IF NOT EXISTS idx_events_vid_ev ON events(vid, ev, detail);
