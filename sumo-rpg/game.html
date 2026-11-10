@@ -1819,7 +1819,9 @@ function buildAiPick(){const box=$('aiPick');box.innerHTML='';
 function setFaceMode(m){faceMode=m;$('modeAi').classList.toggle('on',m==='ai');$('modeParts').classList.toggle('on',m==='parts');$('aiPick').hidden=m!=='ai';$('faceOpts').hidden=m!=='parts';
   if(m==='ai'&&!draftFace.img)draftFace=randAiFace();if(m==='parts'&&draftFace.img){delete draftFace.img;}buildAiPick();buildFaceOpts();facePop=1;}
 function fillHomes(){const h=$('homeIn');if(h.options.length)return;for(const p of PREFS){const o=document.createElement('option');o.value=p;o.textContent=p+Tj('出身');h.append(o);}}
-function openCreate(){fillHomes();$('homeIn').value=pick(PREFS);const a15=$('a15');if(a15)a15.checked=true;const to=$('tOshi');if(to)to.checked=true;setTimeout(descs,0);$('nameIn').value=pick(NAMES);draftFace=entryIds().length?aiFace(entryIds()[0]):randFace();faceMode=draftFace.img?'ai':'parts';setFaceMode(faceMode);{const H=roster.heir,hn=$('heirNote');hn.hidden=!H;if(H){hn.textContent=Tj('二代目として入門　父：')+H.name+Tj('（最高位 ')+H.bestName+'）'+(H.mom?Tj('・母：')+firstName(H.mom):'');$('nameIn').value=H.name[0]+pick(OP_B).slice(-1);$('homeIn').value=H.home||$('homeIn').value;}}show('sCreate');facePrev=makeCanvas($('facePrev'),1);}
+function openCreate(){fillHomes();$('homeIn').value=pick(PREFS);const a15=$('a15');if(a15)a15.checked=true;const to=$('tOshi');if(to)to.checked=true;setTimeout(descs,0);$('nameIn').value=pick(NAMES);draftFace=entryIds().length?aiFace(entryIds()[0]):randFace();faceMode=draftFace.img?'ai':'parts';setFaceMode(faceMode);{const H=roster.heir,hn=$('heirNote');hn.hidden=!H;if(H){hn.textContent=Tj('二代目として入門　父：')+H.name+Tj('（最高位 ')+H.bestName+'）'+(H.mom?Tj('・母：')+firstName(H.mom):'');$('nameIn').value=H.name[0]+pick(OP_B).slice(-1);$('homeIn').value=H.home||$('homeIn').value;}
+  // a son (not yet made heir) or a younger brother starts from the family's hometown; the player may still change it
+  if(!H&&roster.sonOf&&roster.sonHome)$('homeIn').value=roster.sonHome;if(roster.siblingOf&&roster.siblingHome)$('homeIn').value=roster.siblingHome;}show('sCreate');facePrev=makeCanvas($('facePrev'),1);}
 function buildFaceOpts(){
   const box=$('faceOpts');box.innerHTML='';
   for(const k in FACE_OPTS){const o=FACE_OPTS[k];const row=document.createElement('div');row.className='fopt';
@@ -1858,14 +1860,14 @@ function enter(){
     for(const k in st.stats)st.stats[k]+=tier;for(const k in st.cap)st.cap[k]+=capUp;
     const dr={oshi:'teppo',chikara:'shiko',waza:'moushi',hayasa:'suri'}[H.stat];if(dr)st.affin[dr]=+clamp(st.affin[dr]*1.25,.6,1.8).toFixed(2);
     if(H.height)st.height=Math.round(clamp(H.height+rnd(-3,4),168,200));if(fb>=MAKU)st.kgMax+=10;st.kgRate=+(st.kgRate*1.1).toFixed(2);
-    st.home=H.home||st.home;addBuff(st,'growth',.1,999,Tj('父の血'));
+    addBuff(st,'growth',.1,999,Tj('父の血')); // hometown: the create screen starts at the father's, the player may change it
     const mom={osana:()=>addBuff(st,'power',1,999,Tj('母ゆずりの勝負強さ')),reijo:()=>addBuff(st,'money',.2,999,Tj('母の実家の後援会')),eiyo:()=>{addBuff(st,'inj',-.25,999,Tj('母の献立'));st.kgRate=+(st.kgRate*1.15).toFixed(2);},
       imouto:()=>{setFlag(st,'heirImouto');addLog(Tj('母・千夏ゆずりの負けん気：勝ち越しをかけた一番に強い（取組の力 +5）。宿敵との取組でも力 +2'));},deshi:()=>addBuff(st,'growth',.08,999,Tj('母の励まし')),kisha:()=>{setFlag(st,'heirKisha');addLog(Tj('母・奈央子の取材ノートを受け継いだ：初めて当たる相手との取組で力 +1'));}}[H.mom];if(mom)mom();
     if(H.money){st.money=(st.money||0)+H.money;addLog(Tj('父から、ご祝儀 ')+H.money+Tj(' を受け継いだ。'));}
     if(H.items&&Object.keys(H.items).length){st.items=Object.assign(st.items||{},H.items);addLog(Tj('父から、秘伝書を受け継いだ。'));}
     st.nisei=true;st.heir={father:H.name,fatherBest:fb,fatherBestName:H.bestName,mom:H.mom,stat:H.stat};
     addLog(Tj('父・')+H.name+Tj('（最高位 ')+H.bestName+Tj('）の背中を追って入門した。'));st.lifeQ=st.lifeQ||[];st.lifeQ.push({kind:'nisei_press'});roster.heir=null;}
-  if(roster.siblingOf){for(const k in st.stats)st.stats[k]+=3;st.home=roster.siblingHome||st.home;addBuff(st,'growth',.1,999,Tj('兄の背中'));addLog(Tj('兄・')+roster.siblingOf+Tj('の背中を追って入門した。'));roster.siblingOf=null;}
+  if(roster.siblingOf){for(const k in st.stats)st.stats[k]+=3;addBuff(st,'growth',.1,999,Tj('兄の背中'));addLog(Tj('兄・')+roster.siblingOf+Tj('の背中を追って入門した。'));roster.siblingOf=null;}
   addLog(st.maezumo?Tj('親方「まずは前相撲だ。勝てば来場所から序ノ口に名前が載る」'):Tj('付出の新弟子は前相撲なし。いきなり三段目の土俵に上がる。'));
   if(st.pBonus>0)addLog(Tj('部屋の格のおかげで稽古がはかどる（成長 +')+Math.round(st.pBonus*100)+'%）');
   addLog(age===22?Tj('親方「大学で鍛えた体だ。三段目付出から一気に駆け上がれ」'):age===18?Tj('親方「高校相撲の経験を生かせ。まずは序ノ口で勝ち越しだ」'):Tj('親方「今日からお前は')+name+Tj('だ。若さが武器だ、とことん鍛えるぞ」'));
@@ -3609,7 +3611,7 @@ $('hGacha').addEventListener('click',()=>{persist();openGacha('sHome');});
 $('hSpk').addEventListener('click',e=>openWho(e.currentTarget.dataset.who));
 $('g1').addEventListener('click',()=>pull(1));$('g10').addEventListener('click',()=>pull(10));
 const gachaBack=()=>{if(gachaFrom==='sHome'&&st)renderHome();else renderTitle();};$('gBack').addEventListener('click',gachaBack);$('gBackTop').addEventListener('click',gachaBack);
-$('randName').addEventListener('click',()=>{$('nameIn').value=pick(NAMES);$('homeIn').value=pick(PREFS);});
+$('randName').addEventListener('click',()=>{$('nameIn').value=pick(NAMES);}); // only the name: the chosen hometown stays
 $('faceRand').addEventListener('click',()=>{draftFace=randAiFace();buildAiPick();buildFaceOpts();facePop=1;});
 $('modeAi').addEventListener('click',()=>setFaceMode('ai'));$('modeParts').addEventListener('click',()=>setFaceMode('parts'));
 $('enterBtn').addEventListener('click',enter);
